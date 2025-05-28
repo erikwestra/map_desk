@@ -179,3 +179,70 @@ There was some leftover files in map_desk, but I asked Cursor why, and it remove
 
 I also created empty `docs`, `explore` and `plan` directories.
 
+## Creating an initial exploration.
+
+Let’s create a modified prompt to create the initial exploration options for this app.
+
+```
+I want you to write a explore options and approaches of a simple MVP using Flutter.
+
+The aim is to create a simple Mac OS X app that lets the user create documents which are saved locally, import GPX files, and show those files on a map.
+
+Make the focus of this exploration phase high level rather than technical.
+
+Use the following blog posts for context about what I want:
+
+https://medium.com/realworld-ai-use-cases/speeding-up-your-cursor-ai-project-on-larger-codebases-part-1-compression-525a02ff1cb5
+
+https://medium.com/@chrisdunlop_37984/how-the-cursor-team-uses-cursor-tips-and-tricks-70de7e580946
+
+https://medium.com/realworld-ai-use-cases/the-cursor-500-rule-keeping-your-file-sizes-small-a7d70a5bd9ab
+
+https://medium.com/realworld-ai-use-cases/cursor-tip-want-to-speed-up-your-vibe-coding-do-json-first-184ee9c87e3c
+
+https://medium.com/realworld-ai-use-cases/its-actually-extremely-hard-for-cursor-ai-to-fix-bugs-so-here-s-what-to-do-instead-45327accddf4
+```
+
+I tried doing this in Cursor, which had some interesting ideas, but I’m not sure I did this right.  I then repeated the prompt in ChatGPT instead (while saving the Cursor results for reference)
+
+After some tweaking, I quite like the overall summary.  So...
+
+```
+ok now write a detailed description so that another LLM understands the essence of this thread and the exploration so that a second LLM can go ahead and make a plan for this and write your answer in Markdown
+```
+
+Once again, I saved this into `explore/project-exploration.md`
+
+I then went back to Cursor, and said:
+
+```
+Given the @project-exploration.md file, make a plan for what you want to do step by step to implement the MVP version of MapDesk.
+
+I need you to be ruthless on the features you introduce here so delineate the minimal version of the MVP that actually works as it will be easier to add things later.
+
+Save this plan into the /plan folder.
+
+In this plan I am expecting there to be a description of the overall organisation of the app, the file structure, the proposed UI, and detailed user stories for each proposed feature.
+
+If you need to write a Markdown file longer than 500 lines instead generate a second Markdown file
+```
+
+The result wasn’t too bad for an MVP.  I didn’t like the user stories it came up with.  So I deleted that file, and made a few other tweaks to remove unnecessary guff.
+
+I then asked:
+
+```
+how would you simplify this further?
+```
+
+It suggested four simplifications:
+
+1. Removing the menu bar.
+2. Removing the on-screen map controls.
+3. Removing the keyboard shortcuts to pan and zoom the map.
+4. Removing the ability to zoom back to a default location.
+
+I agreed with #3 and #4, so I asked it to include these two options in the plan.
+
+
+
