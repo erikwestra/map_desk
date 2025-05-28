@@ -150,5 +150,32 @@ I then removed the demo functionality, coming up with a very basic Flutter app t
 
 # Next Steps
 
-- I next need to setup a Git repository for this project, and commit the current app to it.
+I next need to setup a Git repository for this project, and commit the current app to it.
+
+Here’s what I did:
+
+- `cd` into the top-level directory for this project.
+- Typed `git init` to initalise the repository.
+- Added a `.gitignore` file to remove unwanted files.
+- Added all existing files to the repository: `git add *`
+- Committed the change: `git commit -m ‘Initial commit’`
+- I then went to Github and signed in, creating a new repository there for the `map_desk` app.
+- I then linked my local repository to GitHub using: `git remote add origin git@github.com:erikwestra/map_desk.git`
+- Then I pushed my code using `git branch -M main` and `git push -u origin main`
+
+Very nice -- Cursor had already set up a .gitignore in the source directory to exclude all temporary build files.  So all I have is the actual source to the app.
+
+###############
+
+I then looked at the source files, and realised I wanted to rename the topmost project directory from “map_desk” to “app”.  So I got Cursor to do this for me:
+
+```
+I want to rename the flutter project directory from 'map_desk' to 'app'
+```
+
+It renamed the directory, updated the .cursorrules file and rebuilt everything so that it works.
+
+There was some leftover files in map_desk, but I asked Cursor why, and it removed them.
+
+I also created empty `docs`, `explore` and `plan` directories.
 
