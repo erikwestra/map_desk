@@ -6,16 +6,16 @@ This is a Flutter desktop application for macOS called "map_desk" that will inte
 ## Project Structure
 - **Language**: Dart (Flutter)
 - **Platform**: macOS Desktop (primary target)
-- **Main Directory**: `map_desk/` (Flutter project root)
-- **Source Code**: `map_desk/lib/main.dart`
-- **Dependencies**: Managed via `map_desk/pubspec.yaml`
+- **Main Directory**: `app/` (Flutter project root)
+- **Source Code**: `app/lib/main.dart`
+- **Dependencies**: Managed via `app/pubspec.yaml`
 
 ## Development Environment
 - **Flutter SDK**: ^3.8.0
 - **Target Platform**: macOS desktop
 - **Build Commands**: 
-  - Development: `cd map_desk && flutter run -d macos`
-  - Production: `cd map_desk && flutter build macos`
+  - Development: `cd app && flutter run -d macos`
+  - Production: `cd app && flutter build macos`
 
 ## Current State
 - ✅ Basic Flutter project setup complete
@@ -37,51 +37,51 @@ This is a Flutter desktop application for macOS called "map_desk" that will inte
 - File handling for GPX import/export
 
 ## Development Workflow
-1. **CRITICAL**: Always run Flutter commands from the `map_desk/` directory
-2. Use `cd map_desk && flutter run -d macos` for development
+1. **CRITICAL**: Always run Flutter commands from the `app/` directory
+2. Use `cd app && flutter run -d macos` for development
 3. Use hot reload (`r`) for quick iterations
-4. Build release versions with `cd map_desk && flutter build macos`
+4. Build release versions with `cd app && flutter build macos`
 
 ## File Locations
-- **Main App**: `map_desk/lib/main.dart`
-- **Dependencies**: `map_desk/pubspec.yaml`
-- **Tests**: `map_desk/test/`
-- **Built App**: `map_desk/build/macos/Build/Products/Release/map_desk.app`
+- **Main App**: `app/lib/main.dart`
+- **Dependencies**: `app/pubspec.yaml`
+- **Tests**: `app/test/`
+- **Built App**: `app/build/macos/Build/Products/Release/map_desk.app`
 
 ## Common Commands
-**IMPORTANT**: All Flutter commands must be run from the `map_desk/` directory!
+**IMPORTANT**: All Flutter commands must be run from the `app/` directory!
 
 ```bash
 # Navigate to project (ALWAYS DO THIS FIRST)
-cd map_desk
+cd app
 
-# Run in development (from map_desk directory)
+# Run in development (from app directory)
 flutter run -d macos
 
 # Hot reload (when app is running)
 r
 
-# Build release (from map_desk directory)
+# Build release (from app directory)
 flutter build macos
 
-# Open built app (from map_desk directory)
+# Open built app (from app directory)
 open build/macos/Build/Products/Release/map_desk.app
 
-# Add dependencies (from map_desk directory)
+# Add dependencies (from app directory)
 flutter pub add package_name
 
-# Get dependencies (from map_desk directory)
+# Get dependencies (from app directory)
 flutter pub get
 ```
 
 ## Command Templates for AI Assistant
 When running Flutter commands, ALWAYS use these patterns:
 
-- **Run App**: `cd map_desk && flutter run -d macos`
-- **Build App**: `cd map_desk && flutter build macos`
-- **Add Dependency**: `cd map_desk && flutter pub add package_name`
-- **Get Dependencies**: `cd map_desk && flutter pub get`
-- **Open Built App**: `cd map_desk && open build/macos/Build/Products/Release/map_desk.app`
+- **Run App**: `cd app && flutter run -d macos`
+- **Build App**: `cd app && flutter build macos`
+- **Add Dependency**: `cd app && flutter pub add package_name`
+- **Get Dependencies**: `cd app && flutter pub get`
+- **Open Built App**: `cd app && open build/macos/Build/Products/Release/map_desk.app`
 
 ## Next Development Steps
 1. Add flutter_map dependency
@@ -95,4 +95,4 @@ When running Flutter commands, ALWAYS use these patterns:
 - Debug banner is disabled for clean UI
 - Focus on desktop UX patterns for macOS
 - Prioritize performance for map rendering
-- **REMEMBER**: Flutter project root is `map_desk/`, not the parent directory 
+- **REMEMBER**: Flutter project root is `app/`, not the parent directory 
