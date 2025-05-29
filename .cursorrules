@@ -1,98 +1,188 @@
 # MapDesk Flutter Project - Cursor AI Rules
 
 ## Project Overview
-This is a Flutter desktop application for macOS called "map_desk" that will integrate mapping functionality with GPX data support. The project is in early development, currently based on the default Flutter counter template but intended to become a full-featured mapping application.
+This is a Flutter desktop application for macOS called "MapDesk" that integrates mapping functionality with GPX data support. The project follows a versioned development approach with clear architectural patterns.
 
 ## Project Structure
 - **Language**: Dart (Flutter)
 - **Platform**: macOS Desktop (primary target)
 - **Main Directory**: `app/` (Flutter project root)
-- **Source Code**: `app/lib/main.dart`
+- **Source Code**: `app/lib/`
 - **Dependencies**: Managed via `app/pubspec.yaml`
 
-## Development Environment
-- **Flutter SDK**: ^3.8.0
-- **Target Platform**: macOS desktop
-- **Build Commands**: 
-  - Development: `cd app && flutter run -d macos`
-  - Production: `cd app && flutter build macos`
+## Development Versions
+- **v001 (COMPLETE)**: Menu bar, GPX file loading, placeholder map
+- **v002 (Planned)**: Interactive map display with OpenStreetMap
+- **Future**: v003, v004, etc. with advanced mapping features
 
-## Current State
-- ✅ Basic Flutter project setup complete
-- ✅ AppBar removed for full-screen layout
-- ✅ Debug banner disabled
-- 🔄 Planning to integrate flutter_map for OpenStreetMap
-- 🔄 Planning to add GPX data support
+## File Organization
+```
+app/
+├── lib/
+│   ├── main.dart                 # App entry point
+│   ├── models/
+│   │   └── gpx_track.dart       # GPX data models
+│   ├── services/
+│   │   ├── gpx_service.dart     # GPX file parsing
+│   │   └── map_service.dart     # Map state management (v002)
+│   ├── widgets/
+│   │   ├── placeholder_map.dart # v001 placeholder
+│   │   ├── map_view.dart        # v002 map widget
+│   │   └── map_controls.dart    # v002 controls
+│   └── screens/
+│       └── home_screen.dart     # Main app screen
+├── pubspec.yaml                 # Dependencies
+├── macos/Runner/Info.plist      # macOS app configuration
+└── plan/                        # Implementation plans
+    ├── v001-implementation-plan.md   # v001 plan
+    └── v002-implementation-plan.md   # v002 plan
+```
 
 ## Coding Standards
-- Use Material Design components
-- Follow Flutter/Dart naming conventions
+
+### Flutter/Dart Conventions
+- Use Material Design components with macOS adaptations
+- Follow Flutter/Dart naming conventions (camelCase, PascalCase)
 - Prefer stateful widgets for interactive components
 - Use const constructors where possible
 - Include meaningful comments for complex logic
 
-## Key Dependencies (Planned)
-- `flutter_map`: For OpenStreetMap integration
-- GPX parsing libraries (TBD)
-- File handling for GPX import/export
+### Architecture Patterns
+- **Widget-based architecture** following Flutter best practices
+- **Service layer** for business logic (GPX parsing, map state)
+- **Model layer** for data structures
+- **PlatformMenuBar** for native macOS menu integration
+- **Provider pattern** for state management (v002+)
+
+### Menu Structure (macOS Native)
+```
+MapDesk (Application Menu)
+├── Quit                    ⌘Q
+
+File
+├── Open                    ⌘O
+
+Window
+├── MapDesk                 (no shortcut)
+```
+
+### Dependencies by Version
+**v001 (IMPLEMENTED):**
+- `file_picker: ^6.1.1` - File selection
+- `xml: ^6.3.0` - GPX parsing
+
+**v002 (Planned):**
+- `flutter_map: ^6.0.1` - OpenStreetMap integration
+- `latlong2: ^0.8.1` - Coordinate handling
+- `provider: ^6.1.1` - State management
 
 ## Development Workflow
-1. **CRITICAL**: Always run Flutter commands from the `app/` directory
-2. Use `cd app && flutter run -d macos` for development
-3. Use hot reload (`r`) for quick iterations
-4. Build release versions with `cd app && flutter build macos`
 
-## File Locations
-- **Main App**: `app/lib/main.dart`
-- **Dependencies**: `app/pubspec.yaml`
-- **Tests**: `app/test/`
-- **Built App**: `app/build/macos/Build/Products/Release/map_desk.app`
+### Critical Rules
+1. **ALWAYS run Flutter commands from the `app/` directory**
+2. **CocoaPods Path**: Export PATH="/opt/homebrew/lib/ruby/gems/3.4.0/bin:$PATH" before running
+3. **Target Platform**: macOS desktop only
+4. **Hot Reload**: Use `r` for quick iterations during development
 
-## Common Commands
-**IMPORTANT**: All Flutter commands must be run from the `app/` directory!
-
+### Common Commands
 ```bash
 # Navigate to project (ALWAYS DO THIS FIRST)
 cd app
 
-# Run in development (from app directory)
-flutter run -d macos
+# Run in development (with CocoaPods path fix)
+export PATH="/opt/homebrew/lib/ruby/gems/3.4.0/bin:$PATH" && flutter run -d macos
 
-# Hot reload (when app is running)
-r
-
-# Build release (from app directory)
-flutter build macos
-
-# Open built app (from app directory)
-open build/macos/Build/Products/Release/map_desk.app
-
-# Add dependencies (from app directory)
+# Add dependencies
 flutter pub add package_name
 
-# Get dependencies (from app directory)
+# Get dependencies
 flutter pub get
+
+# Clean build (if needed)
+flutter clean
+
+# Build release
+flutter build macos
 ```
 
-## Command Templates for AI Assistant
-When running Flutter commands, ALWAYS use these patterns:
+## Design Philosophy
+- **Map data is central** — platform revolves around geographic visualization
+- **Minimalism by default** — clean, distraction-free interface
+- **Desktop-first** — optimized for macOS desktop experience
+- **Versioned development** — build solid foundation before adding complexity
 
-- **Run App**: `cd app && flutter run -d macos`
-- **Build App**: `cd app && flutter build macos`
-- **Add Dependency**: `cd app && flutter pub add package_name`
-- **Get Dependencies**: `cd app && flutter pub get`
-- **Open Built App**: `cd app && open build/macos/Build/Products/Release/map_desk.app`
+## UI/UX Guidelines
 
-## Next Development Steps
-1. Add flutter_map dependency
-2. Replace counter UI with basic map view
-3. Implement GPX file loading
-4. Add map interaction features
-5. Implement GPX track visualization
+### v001 Interface (IMPLEMENTED)
+- Native macOS menu bar integration using PlatformMenuBar
+- "Map goes here" placeholder with status display
+- Clean error handling and user feedback
+- System colors and fonts (SF Pro on macOS)
+- Full-screen map area (no custom menu bar widget)
+
+### Color Scheme
+- **Primary**: System blue (#007AFF)
+- **Background**: Light gray (#F5F5F5) for placeholder
+- **Success**: Green shades for loaded files
+- **Error**: Red shades for error states
+- **Text**: Dark gray (#1C1C1E) for content
+
+### Typography
+- **System font** (SF Pro on macOS)
+- **Placeholder text**: 24pt light weight
+- **Status text**: 16pt regular weight
+- **Menu text**: Standard macOS styling
+
+## Implementation Details
+
+### macOS Configuration
+- **App Name**: Set in `macos/Runner/Info.plist` as `CFBundleName = "MapDesk"`
+- **Menu Integration**: Uses Flutter's `PlatformMenuBar` for native menu bar
+- **Keyboard Shortcuts**: Implemented with `SingleActivator` for ⌘O and ⌘Q
+
+### GPX File Handling
+- **File Selection**: Uses `file_picker` with `.gpx` extension filter
+- **Parsing**: Robust XML parsing with error handling
+- **Data Model**: Clean `GpxTrack` and `GpxPoint` classes
+- **Status Display**: Shows track name, point count, and description
+
+### Error Handling
+- Graceful GPX parsing error handling
+- Clear user feedback for file loading issues
+- Non-blocking UI during file operations
+- Meaningful error messages with visual indicators
+
+## Testing Approach
+- Test GPX file loading with various file formats
+- Verify menu functionality and keyboard shortcuts
+- Ensure proper macOS integration
+- Test error scenarios (invalid files, permissions)
+
+## v001 Success Metrics (ACHIEVED)
+- [x] App launches without errors
+- [x] Native menu bar displays with proper menus
+- [x] File > Open opens file picker for GPX files
+- [x] MapDesk > Quit closes the application
+- [x] GPX files parse and display track information
+- [x] Error handling works for invalid files
+- [x] Keyboard shortcuts work (⌘O, ⌘Q)
+- [x] Clean, professional interface
+- [x] Follows macOS conventions
+
+## Future Considerations
+- Architecture supports multiple track loading
+- Clean separation between file handling and map logic
+- Extensible for additional map providers
+- Ready for v002 map integration
+
+## Known Issues & Workarounds
+- **File picker warnings**: Plugin architecture warnings are harmless and don't affect functionality
+- **CocoaPods path**: Must export gem bin directory to PATH before running
+- **Build cache**: Use `flutter clean` if encountering build issues
+- **Menu naming**: Application menu shows "MapDesk" via Info.plist configuration
 
 ## Notes
-- The project uses a clean, full-screen layout (no AppBar)
-- Debug banner is disabled for clean UI
-- Focus on desktop UX patterns for macOS
-- Prioritize performance for map rendering
-- **REMEMBER**: Flutter project root is `app/`, not the parent directory 
+- v001 is complete and fully functional
+- Focus on v002 map integration for next development cycle
+- Maintain clean, minimal interface throughout development
+- All v001 success metrics have been achieved 
