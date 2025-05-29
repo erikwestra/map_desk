@@ -79,7 +79,7 @@ The app is:
 - Support for viewing multiple GPX tracks simultaneously  
 - Offline map support through tile caching  
 - Snapshot/export of map view as image  
-- Mobile/tablet version using Flutter’s cross-platform ability  
+- Mobile/tablet version using Flutter's cross-platform ability  
 
 ---
 
@@ -97,6 +97,6 @@ A second LLM or developer could now proceed to:
   - File import
   - GPX parsing
   - Map rendering
-- Define the app’s UI layout and interaction flow
+- Define the app's UI layout and interaction flow
 - Outline a milestone-based build plan
-- Create a wireframe or visual mockup if needed
+- Create a wireframe or visual mockup if needed 
