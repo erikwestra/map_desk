@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/segment.dart';
 import '../models/gpx_track.dart';
+import 'package:latlong2/latlong.dart';
 
 /// Service for handling database operations
 class DatabaseService {
@@ -86,7 +87,6 @@ class DatabaseService {
           'latitude': p.latitude,
           'longitude': p.longitude,
           'elevation': p.elevation,
-          'time': p.time?.toIso8601String(),
         }).toList()),
         'created_at': segment.createdAt.millisecondsSinceEpoch,
       },
@@ -107,11 +107,10 @@ class DatabaseService {
       return Segment(
         id: maps[i]['id'] as String,
         name: maps[i]['name'] as String,
-        points: points.map((p) => GpxPoint(
+        points: points.map((p) => SegmentPoint(
           latitude: p['latitude'] as double,
           longitude: p['longitude'] as double,
           elevation: p['elevation'] as double?,
-          time: p['time'] != null ? DateTime.parse(p['time'] as String) : null,
         )).toList(),
         createdAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['created_at'] as int),
       );
@@ -138,11 +137,10 @@ class DatabaseService {
     return Segment(
       id: maps[0]['id'] as String,
       name: maps[0]['name'] as String,
-      points: points.map((p) => GpxPoint(
+      points: points.map((p) => SegmentPoint(
         latitude: p['latitude'] as double,
         longitude: p['longitude'] as double,
         elevation: p['elevation'] as double?,
-        time: p['time'] != null ? DateTime.parse(p['time'] as String) : null,
       )).toList(),
       createdAt: DateTime.fromMillisecondsSinceEpoch(maps[0]['created_at'] as int),
     );

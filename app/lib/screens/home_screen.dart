@@ -27,6 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final mapService = context.watch<MapService>();
+
     return PlatformMenuBar(
       menus: [
         PlatformMenu(
@@ -74,6 +76,32 @@ class _HomeScreenState extends State<HomeScreen> {
         body: Stack(
           children: [
             const MapView(),
+            if (mapService.isTrackLoaded)
+              Positioned(
+                top: 16,
+                left: 16,
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Split Mode',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(width: 8),
+                        Switch(
+                          value: mapService.isSplitMode,
+                          onChanged: (value) {
+                            mapService.toggleSplitMode();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             if (_errorMessage != null)
               Positioned(
                 bottom: 16,

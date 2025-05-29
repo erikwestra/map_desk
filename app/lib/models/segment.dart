@@ -1,30 +1,63 @@
 import 'dart:convert';
 import 'gpx_track.dart';
+import 'package:latlong2/latlong.dart';
+
+class SegmentPoint {
+  final double latitude;
+  final double longitude;
+  final double? elevation;
+
+  const SegmentPoint({
+    required this.latitude,
+    required this.longitude,
+    this.elevation,
+  });
+
+  LatLng toLatLng() => LatLng(latitude, longitude);
+
+  Map<String, dynamic> toJson() => {
+    'latitude': latitude,
+    'longitude': longitude,
+    'elevation': elevation,
+  };
+
+  factory SegmentPoint.fromJson(Map<String, dynamic> json) => SegmentPoint(
+    latitude: json['latitude'] as double,
+    longitude: json['longitude'] as double,
+    elevation: json['elevation'] as double?,
+  );
+}
 
 /// A segment represents a named section of a track that can be saved and reused
 class Segment {
   final String id;
   final String name;
-  final List<GpxPoint> points;
+  final List<SegmentPoint> points;
   final DateTime createdAt;
+  final String? description;
 
   const Segment({
     required this.id,
     required this.name,
     required this.points,
     required this.createdAt,
+    this.description,
   });
 
   /// Create a new segment from a list of points
   factory Segment.fromPoints({
     required String name,
-    required List<GpxPoint> points,
+    required List<SegmentPoint> allPoints,
+    required int startIndex,
+    required int endIndex,
+    String? description,
   }) {
     return Segment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
-      points: points,
+      points: allPoints.sublist(startIndex, endIndex + 1),
       createdAt: DateTime.now(),
+      description: description,
     );
   }
 
@@ -33,13 +66,9 @@ class Segment {
     return {
       'id': id,
       'name': name,
-      'points': points.map((point) => {
-        'latitude': point.latitude,
-        'longitude': point.longitude,
-        'elevation': point.elevation,
-        'time': point.time?.toIso8601String(),
-      }).toList(),
+      'points': points.map((p) => p.toJson()).toList(),
       'created_at': createdAt.millisecondsSinceEpoch,
+      'description': description,
     };
   }
 
@@ -48,15 +77,9 @@ class Segment {
     return Segment(
       id: json['id'] as String,
       name: json['name'] as String,
-      points: (json['points'] as List).map((pointJson) => GpxPoint(
-        latitude: pointJson['latitude'] as double,
-        longitude: pointJson['longitude'] as double,
-        elevation: pointJson['elevation'] as double?,
-        time: pointJson['time'] != null 
-          ? DateTime.parse(pointJson['time'] as String)
-          : null,
-      )).toList(),
+      points: (json['points'] as List).map((p) => SegmentPoint.fromJson(p)).toList(),
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['created_at'] as int),
+      description: json['description'] as String?,
     );
   }
 
@@ -70,6 +93,50 @@ class Segment {
   String get info {
     if (!hasPoints) return 'No points';
     return '$pointCount points';
+  }
+
+  /// Calculates the total distance of the segment in meters
+  double get distance {
+    if (points.length < 2) return 0;
+    
+    final Distance distance = Distance();
+    double totalDistance = 0;
+    
+    for (int i = 0; i < points.length - 1; i++) {
+      totalDistance += distance.as(
+        LengthUnit.Meter,
+        points[i].toLatLng(),
+        points[i + 1].toLatLng(),
+      );
+    }
+    
+    return totalDistance;
+  }
+
+  /// Converts the segment to a Map for storage
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'points': points.map((p) => [p.latitude, p.longitude]).toList(),
+      'createdAt': createdAt.toIso8601String(),
+      'description': description,
+    };
+  }
+
+  /// Creates a Segment from a Map
+  factory Segment.fromMap(Map<String, dynamic> map) {
+    return Segment(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: map['name'] as String,
+      points: (map['points'] as List)
+          .map((point) => SegmentPoint(
+        latitude: point[0] as double,
+        longitude: point[1] as double,
+      ))
+          .toList(),
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      description: map['description'] as String?,
+    );
   }
 
   @override

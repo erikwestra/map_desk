@@ -4,13 +4,48 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../services/map_service.dart';
 import 'map_controls.dart';
+import 'segment_splitter.dart';
 
-class MapView extends StatelessWidget {
+class MapView extends StatefulWidget {
   const MapView({super.key});
+
+  @override
+  State<MapView> createState() => _MapViewState();
+}
+
+class _MapViewState extends State<MapView> {
+  int? _splitStartIndex;
+  int? _splitEndIndex;
+
+  void _handlePointSelect(int index) {
+    setState(() {
+      if (_splitStartIndex == null) {
+        _splitStartIndex = index;
+      } else if (_splitEndIndex == null) {
+        if (index > _splitStartIndex!) {
+          _splitEndIndex = index;
+        } else {
+          _splitStartIndex = index;
+        }
+      } else {
+        _splitStartIndex = index;
+        _splitEndIndex = null;
+      }
+    });
+  }
+
+  void _handleCancel() {
+    setState(() {
+      _splitStartIndex = null;
+      _splitEndIndex = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final mapService = context.watch<MapService>();
+    final isSplitMode = mapService.isTrackLoaded && mapService.isSplitMode;
+    final trackPoints = mapService.trackPoints;
 
     return Stack(
       children: [
@@ -37,16 +72,81 @@ class MapView extends StatelessWidget {
               PolylineLayer(
                 polylines: [
                   Polyline(
-                    points: mapService.trackPoints,
+                    points: trackPoints,
                     color: const Color(0xFFFF3B30),
                     strokeWidth: 3.0,
                   ),
                 ],
               ),
+              PolylineLayer(
+                polylines: mapService.segments.map((segment) {
+                  return Polyline(
+                    points: segment.points.map((p) => p.toLatLng()).toList(),
+                    color: Colors.blue,
+                    strokeWidth: 4.0,
+                  );
+                }).toList(),
+              ),
+              // Start and end markers
+              CircleLayer(
+                circles: [
+                  CircleMarker(
+                    point: trackPoints.first,
+                    color: Colors.green,
+                    radius: 8.0,
+                  ),
+                  CircleMarker(
+                    point: trackPoints.last,
+                    color: Colors.red,
+                    radius: 8.0,
+                  ),
+                ],
+              ),
+              if (isSplitMode)
+                MarkerLayer(
+                  markers: trackPoints.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final point = entry.value;
+                    final isSelected = index == _splitStartIndex || index == _splitEndIndex;
+                    return Marker(
+                      point: point,
+                      width: 24,
+                      height: 24,
+                      child: GestureDetector(
+                        onTap: () => _handlePointSelect(index),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.blue : Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          width: 16,
+                          height: 16,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
             ],
           ],
         ),
         MapControls(mapController: mapService.mapController),
+        if (isSplitMode)
+          SegmentSplitter(
+            track: mapService.track!,
+            onSegmentCreated: (segment) {
+              mapService.addSegment(segment);
+              mapService.toggleSplitMode();
+              _handleCancel();
+            },
+            onCancel: () {
+              mapService.toggleSplitMode();
+              _handleCancel();
+            },
+            startIndex: _splitStartIndex,
+            endIndex: _splitEndIndex,
+            onPointSelected: _handlePointSelect,
+          ),
       ],
     );
   }

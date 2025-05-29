@@ -2,37 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
 import '../models/gpx_track.dart';
+import '../models/segment.dart';
 
 class MapService extends ChangeNotifier {
-  GpxTrack? _currentTrack;
-  MapController mapController = MapController();
-  bool _isTrackLoaded = false;
+  final MapController mapController = MapController();
+  GpxTrack? _track;
+  bool _isSplitMode = false;
+  List<Segment> _segments = [];
 
-  GpxTrack? get currentTrack => _currentTrack;
-  bool get isTrackLoaded => _isTrackLoaded;
+  bool get isTrackLoaded => _track != null;
+  bool get isSplitMode => _isSplitMode;
+  List<Segment> get segments => List.unmodifiable(_segments);
+  List<LatLng> get trackPoints => _track?.points.map((p) => LatLng(p.latitude, p.longitude)).toList() ?? [];
+  GpxTrack? get track => _track;
 
   void setTrack(GpxTrack track) {
-    _currentTrack = track;
-    _isTrackLoaded = true;
-    
-    // Calculate track bounds and fit map to them
-    if (track.points.isNotEmpty) {
-      final points = track.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
-      final bounds = LatLngBounds.fromPoints(points);
-      mapController.fitBounds(bounds, options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)));
-    }
-    
+    _track = track;
+    _zoomToTrackBounds();
     notifyListeners();
   }
 
   void clearTrack() {
-    _currentTrack = null;
-    _isTrackLoaded = false;
+    _track = null;
     notifyListeners();
   }
 
-  List<LatLng> get trackPoints {
-    if (_currentTrack == null) return [];
-    return _currentTrack!.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+  void toggleSplitMode() {
+    _isSplitMode = !_isSplitMode;
+    notifyListeners();
+  }
+
+  void addSegment(Segment segment) {
+    _segments.add(segment);
+    notifyListeners();
+  }
+
+  void removeSegment(Segment segment) {
+    _segments.remove(segment);
+    notifyListeners();
+  }
+
+  void clearSegments() {
+    _segments.clear();
+    notifyListeners();
+  }
+
+  void _zoomToTrackBounds() {
+    if (_track == null || _track!.points.isEmpty) return;
+    final points = _track!.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+    final bounds = LatLngBounds.fromPoints(points);
+    mapController.fitBounds(bounds, options: const FitBoundsOptions(padding: EdgeInsets.all(50)));
   }
 } 
