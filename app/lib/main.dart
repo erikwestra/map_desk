@@ -2,19 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'services/map_service.dart';
+import 'services/database_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MapDeskApp());
+  
+  // Initialize database service
+  final databaseService = DatabaseService();
+  
+  runApp(MapDeskApp(databaseService: databaseService));
 }
 
 class MapDeskApp extends StatelessWidget {
-  const MapDeskApp({super.key});
+  final DatabaseService databaseService;
+  
+  const MapDeskApp({
+    super.key,
+    required this.databaseService,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => MapService(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MapService()),
+        Provider<DatabaseService>.value(value: databaseService),
+      ],
       child: MaterialApp(
         title: 'MapDesk',
         debugShowCheckedModeBanner: false,

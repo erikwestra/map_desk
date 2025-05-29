@@ -6,6 +6,7 @@ import '../models/gpx_track.dart';
 import '../services/gpx_service.dart';
 import '../services/map_service.dart';
 import '../widgets/map_view.dart';
+import '../services/database_service.dart';
 
 /// Main home screen for MapDesk Phase 2
 class HomeScreen extends StatefulWidget {
@@ -18,6 +19,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String? _errorMessage;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,49 +71,31 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
       child: Scaffold(
-        body: Focus(
-          autofocus: true,
-          onKeyEvent: (node, event) {
-            if (event is KeyDownEvent) {
-              final bool isMetaPressed = HardwareKeyboard.instance.isMetaPressed;
-              if (event.logicalKey == LogicalKeyboardKey.keyQ && 
-                  isMetaPressed) {
-                _quitApp();
-                return KeyEventResult.handled;
-              } else if (event.logicalKey == LogicalKeyboardKey.keyO && 
-                        isMetaPressed) {
-                _openGpxFile();
-                return KeyEventResult.handled;
-              }
-            }
-            return KeyEventResult.ignored;
-          },
-          child: Stack(
-            children: [
-              const MapView(),
-              if (_errorMessage != null)
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: Colors.white),
-                    ),
+        body: Stack(
+          children: [
+            const MapView(),
+            if (_errorMessage != null)
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
-              if (_isLoading)
-                const Center(
-                  child: CircularProgressIndicator(),
-                ),
-            ],
-          ),
+              ),
+            if (_isLoading)
+              const Center(
+                child: CircularProgressIndicator(),
+              ),
+          ],
         ),
       ),
     );
