@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'screens/home_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MapDeskApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MapDeskApp extends StatelessWidget {
+  const MapDeskApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,25 +14,12 @@ class MyApp extends StatelessWidget {
       title: 'MapDesk',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(),
-    );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text(
-          'MapDesk',
-          style: TextStyle(fontSize: 24),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF007AFF), // System blue
         ),
+        useMaterial3: true,
       ),
+      home: const HomeScreen(),
     );
   }
 }
