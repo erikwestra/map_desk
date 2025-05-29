@@ -1,68 +1,67 @@
-# MapDesk MVP Plan
+# MapDesk Phase 1 Implementation Plan
 
 ## Project Overview
 
-MapDesk is a minimal desktop mapping application for macOS that focuses on **GPX data visualization and basic map interaction**. Following the philosophy of "content is central" from the project exploration, this MVP prioritizes **map data and GPX tracks** over complex features.
+MapDesk Phase 1 focuses on establishing the **foundational application structure** with menu bar functionality and GPX file loading capabilities. This phase creates the basic app framework with a placeholder map area, setting up the architecture for Phase 2's map integration.
 
-## 🌟 North Star Purpose
+## 🌟 Phase 1 Purpose
 
-To create a focused, distraction-free desktop mapping application that allows users to:
-- View interactive maps
-- Load and visualize GPX tracks
-- Perform basic map navigation
+To create the foundational desktop application that:
+- Establishes the basic app structure and menu system
+- Implements GPX file loading and parsing
+- Creates the UI framework for future map integration
+- Validates the core architecture patterns
 
-The MVP is deliberately minimal, designed for iterative expansion, and focused on core mapping functionality.
+Phase 1 is deliberately focused on infrastructure, designed to prove the app concept and prepare for Phase 2's map functionality.
 
 ## 🧠 Design Philosophy
 
-- **Map data is central** — the platform revolves around geographic visualization
-- **Minimalism by default** — no complex UI, social features, or unnecessary widgets
-- **Clarity over complexity** — clean, intuitive map interaction
-- **Desktop-first** — optimized for macOS desktop experience
-- **Built to grow** — architecture supports future feature expansion
+- **Foundation first** — establish solid app architecture
+- **Menu-driven interaction** — macOS-native menu bar experience
+- **File handling focus** — robust GPX parsing and validation
+- **Architecture validation** — prove patterns before complexity
+- **Built to extend** — clean handoff to Phase 2
 
-## 🎯 MVP Scope (Ruthlessly Minimal)
+## 🎯 Phase 1 Scope (Foundation Only)
 
 ### Core Features (Must Have)
 
-#### 1. **Interactive Map Display**
-- OpenStreetMap integration using flutter_map
-- Pan and zoom functionality
-- Clean, full-screen map interface
-- Basic map controls (zoom in/out buttons)
+#### 1. **Application Structure**
+- Basic Flutter macOS desktop app
+- Clean window with menu bar
+- Placeholder content area with "Map goes here" message
+- Standard macOS window behavior
 
-#### 2. **GPX File Loading**
-- Minimal menu bar with File > Open GPX option
-- File picker to select GPX files from local system
-- Parse and display GPX tracks on the map
-- Show track as colored line overlay
-- Fit map view to loaded track bounds
-
-#### 3. **Basic Map Navigation**
-- Mouse/trackpad pan and zoom only
-- Floating zoom controls (+/- buttons)
-
-#### 4. **Minimal Menu Bar**
+#### 2. **Menu Bar Implementation**
 - File menu with "Open GPX..." and "Quit" options
 - Standard macOS menu bar behavior
 - Keyboard shortcuts (⌘O for Open, ⌘Q for Quit)
+- Native macOS menu integration
 
-### 🚫 Explicitly Excluded from MVP
+#### 3. **GPX File Loading**
+- File picker to select GPX files from local system
+- GPX file parsing and validation
+- Basic error handling for invalid files
+- Display loaded track information in placeholder area
+- Store parsed track data for Phase 2
 
-- Multiple map providers (only OpenStreetMap)
-- GPX editing or creation
-- Track analysis (distance, elevation, etc.)
-- Waypoint management
+#### 4. **Basic UI Framework**
+- Main screen layout with placeholder map area
+- Status display for loaded GPX files
+- Error messaging for file loading issues
+- Clean, minimal interface ready for map integration
+
+### 🚫 Explicitly Excluded from Phase 1
+
+- Map display (placeholder only)
+- Map navigation or interaction
+- Track visualization on maps
+- Zoom controls
+- Map providers or tiles
+- Geographic coordinate display
+- Track styling or rendering
 - Multiple track loading
-- Track styling options
-- Export functionality
-- Settings/preferences
-- Complex menu structure or additional menus
-- Track metadata display
-- Search functionality
-- Bookmarks or saved locations
-- Keyboard navigation (arrow keys, +/- zoom)
-- Reset view to default location feature
+- Track analysis features
 
 ## 📁 File Structure
 
@@ -73,11 +72,9 @@ app/
 │   ├── models/
 │   │   └── gpx_track.dart       # GPX data model
 │   ├── services/
-│   │   ├── gpx_service.dart     # GPX file parsing
-│   │   └── map_service.dart     # Map state management
+│   │   └── gpx_service.dart     # GPX file parsing
 │   ├── widgets/
-│   │   ├── map_view.dart        # Main map widget
-│   │   ├── map_controls.dart    # Zoom controls
+│   │   ├── placeholder_map.dart # "Map goes here" widget
 │   │   └── menu_bar.dart        # Application menu bar
 │   └── screens/
 │       └── home_screen.dart     # Main app screen
@@ -89,31 +86,28 @@ app/
 ## 🎨 UI Design Approach
 
 ### Layout Philosophy
-- **Full-screen map** — map takes up entire window below menu bar
-- **Minimal menu bar** — only essential File menu options
-- **Floating controls** — minimal UI overlays on map
+- **Placeholder-driven** — clear space reserved for future map
+- **Menu-centric** — primary interaction through menu bar
+- **Status-aware** — clear feedback on file loading state
 - **macOS native** — follows macOS design patterns
-- **Mouse/trackpad focused** — optimized for pointer interaction
 
 ### Visual Design
 - Clean, minimal interface
-- Map occupies 100% of screen real estate below menu bar
-- Floating action buttons for essential controls
-- Subtle shadows and transparency for overlays
-- System colors and fonts
+- Large placeholder area for future map (with centered text)
 - Standard macOS menu bar styling
+- System colors and fonts
+- Clear status messaging
 
-### Control Placement
+### Phase 1 Layout
 ```
 ┌─────────────────────────────────────┐
 │ File                                │ ← Menu bar
 ├─────────────────────────────────────┤
-│                             [+]     │ ← Floating controls
-│                             [-]     │
-│                                     │
-│           MAP AREA                  │
 │                                     │
 │                                     │
+│           "Map goes here"           │ ← Placeholder area
+│                                     │
+│         [GPX file status]           │ ← Status display
 │                                     │
 │                                     │
 └─────────────────────────────────────┘
@@ -123,21 +117,21 @@ app/
 
 ### Architecture Pattern
 - **Widget-based architecture** following Flutter best practices
-- **Service layer** for business logic (GPX parsing, map state)
-- **Model layer** for data structures
-- **Stateful widgets** for interactive components
+- **Service layer** for GPX parsing business logic
+- **Model layer** for GPX data structures
+- **Stateful widgets** for file loading state
 
 ### State Management
 - **Built-in Flutter state management** (setState)
-- **Provider pattern** for sharing map state between widgets
+- Simple state for file loading status
 - No external state management libraries (keeping it simple)
 
 ### Data Flow
 1. User selects File > Open GPX → Menu action
-2. GPX file parsed → GPXService
-3. Track data stored → MapService
-4. Map updated → MapView widget
-5. UI reflects changes → Map displays track
+2. File picker opens → User selects GPX file
+3. GPX file parsed → GPXService
+4. Track data stored → App state
+5. UI updates → Status display shows loaded file info
 
 ## 🔧 Technical Dependencies
 
@@ -146,11 +140,8 @@ app/
 dependencies:
   flutter:
     sdk: flutter
-  flutter_map: ^6.0.1           # OpenStreetMap integration
-  latlong2: ^0.8.1              # Coordinate handling
   file_picker: ^6.1.1           # File selection
   xml: ^6.3.0                   # GPX parsing
-  provider: ^6.1.1              # State management
 ```
 
 ### Platform Requirements
@@ -161,10 +152,10 @@ dependencies:
 ## 📱 User Interface Specifications
 
 ### Main Screen Layout
-- **Minimal menu bar** with File menu
-- **Full-screen map view** below menu bar
-- **Zoom controls** (top-right corner)
-- **Minimal visual chrome** to maximize map space
+- **Menu bar** with File menu
+- **Large placeholder area** with "Map goes here" text
+- **Status area** showing loaded GPX file information
+- **Minimal visual chrome** to focus on functionality
 
 ### Menu Bar Structure
 ```
@@ -174,48 +165,56 @@ File
 └── Quit           ⌘Q
 ```
 
+### Placeholder Content
+- Centered "Map goes here" text in large, light gray font
+- Below that, status information about loaded GPX file:
+  - File name
+  - Number of track points
+  - Basic track info (if loaded)
+- Clean, readable typography
+
 ### Color Scheme
 - **Primary**: System blue (#007AFF)
-- **Background**: Map tiles (OpenStreetMap default)
-- **Track color**: Bright red (#FF3B30) for visibility
-- **Controls**: Semi-transparent white backgrounds
+- **Background**: Light gray (#F5F5F5)
+- **Placeholder text**: Medium gray (#8E8E93)
+- **Status text**: Dark gray (#1C1C1E)
 - **Menu bar**: Standard macOS appearance
 
 ### Typography
 - **System font** (SF Pro on macOS)
+- **Placeholder text**: 24pt light weight
+- **Status text**: 16pt regular weight
 - **Menu text**: Standard macOS menu styling
-- **Button text**: 14pt medium weight
-- **No text overlays** on map (keeping it clean)
 
-## 🎯 Success Metrics for MVP
+## 🎯 Success Metrics for Phase 1
 
 ### Functional Success
 - [ ] App launches without errors
 - [ ] Menu bar displays with File menu
-- [ ] File > Open GPX opens file picker and loads tracks
+- [ ] File > Open GPX opens file picker
 - [ ] File > Quit closes the application
-- [ ] Map displays and is interactive (pan/zoom)
-- [ ] GPX file can be selected and loaded via menu
-- [ ] Track displays correctly on map
-- [ ] Map fits to track bounds automatically
+- [ ] GPX file can be selected via file picker
+- [ ] Valid GPX files parse successfully
+- [ ] Invalid files show appropriate error messages
 - [ ] Menu keyboard shortcuts work (⌘O, ⌘Q)
-- [ ] Floating zoom controls work (+/- buttons)
+- [ ] Loaded file information displays in placeholder area
+- [ ] App maintains loaded file state during session
 
 ### User Experience Success
-- [ ] Intuitive without instructions
-- [ ] Responsive interaction (smooth pan/zoom)
-- [ ] Clean, distraction-free interface
-- [ ] Works reliably with common GPX files
+- [ ] Intuitive menu-driven workflow
+- [ ] Clear feedback on file loading status
+- [ ] Clean, professional interface
 - [ ] Follows macOS conventions
+- [ ] Ready for Phase 2 map integration
 
 ## 📋 Implementation Notes
 
 ### Critical Decisions
+- **Placeholder-first approach** — establish UI framework before map complexity
 - **Single track only** — simplifies state management
 - **No persistence** — tracks loaded per session only
-- **OpenStreetMap only** — reduces complexity
-- **No track editing** — view-only functionality
-- **Minimal menu bar** — only essential File menu options
+- **Minimal dependencies** — only essential packages for Phase 1
+- **Menu-driven workflow** — primary interaction through File menu
 
 ### Technical Constraints
 - macOS desktop only (no mobile optimization)
@@ -223,10 +222,16 @@ File
 - Standard GPX format only (no proprietary formats)
 - English language only (no internationalization)
 
+### Phase 2 Preparation
+- GPX data models designed for map integration
+- UI layout reserves space for map component
+- Service architecture ready for map state management
+- Clean separation between file handling and future map logic
+
 ### Menu Bar Implementation
 - Use Flutter's native menu bar support for macOS
 - Standard File menu with Open and Quit actions
 - Menu keyboard shortcuts follow macOS conventions (⌘O, ⌘Q only)
-- File > Open GPX triggers same functionality as before
+- File > Open GPX triggers file picker and parsing workflow
 
-This MVP plan prioritizes getting a working, useful mapping application with minimal complexity while maintaining a clear path for future enhancement. 
+This Phase 1 plan establishes the foundational application structure and file handling capabilities, creating a solid base for Phase 2's map integration while validating the core architecture and user workflow. 
