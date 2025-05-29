@@ -186,3 +186,23 @@ flutter build macos
 - Focus on v002 map integration for next development cycle
 - Maintain clean, minimal interface throughout development
 - All v001 success metrics have been achieved 
+
+# MapDesk Menu Naming Rules
+
+## Critical Menu Item Names
+- **NEVER** modify the standard menu item names:
+  - Keep "Open" as "Open" (not "Open GPX..." or similar)
+  - Keep "Quit" as "Quit" (not "Quit MapDesk" or similar)
+  - These follow macOS conventions and must not be changed
+
+## Menu Structure Reference
+```
+MapDesk (Application Menu)
+├── Quit                    ⌘Q
+
+File
+├── Open                    ⌘O
+
+Window
+├── MapDesk                 (no shortcut)
+``` 
