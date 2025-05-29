@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
 import '../models/gpx_track.dart';
 import '../services/gpx_service.dart';
-import '../widgets/placeholder_map.dart';
+import '../services/map_service.dart';
+import '../widgets/map_view.dart';
 
-/// Main home screen for MapDesk Phase 1
+/// Main home screen for MapDesk Phase 2
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -14,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  GpxTrack? _loadedTrack;
   String? _errorMessage;
   bool _isLoading = false;
 
@@ -25,14 +26,19 @@ class _HomeScreenState extends State<HomeScreen> {
         PlatformMenu(
           label: 'MapDesk',
           menus: [
-            PlatformMenuItem(
-              label: 'Quit',
-              onSelected: () => _quitApp(),
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyQ,
-                meta: true,
+            if (Theme.of(context).platform == TargetPlatform.macOS)
+              PlatformMenuItemGroup(
+                members: <PlatformMenuItem>[
+                  PlatformMenuItem(
+                    label: 'Quit',
+                    onSelected: () => _quitApp(),
+                    shortcut: const SingleActivator(
+                      LogicalKeyboardKey.keyQ,
+                      meta: true,
+                    ),
+                  ),
+                ],
               ),
-            ),
           ],
         ),
         PlatformMenu(
@@ -59,9 +65,49 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
       child: Scaffold(
-        body: PlaceholderMap(
-          loadedTrack: _loadedTrack,
-          errorMessage: _errorMessage,
+        body: Focus(
+          autofocus: true,
+          onKeyEvent: (node, event) {
+            if (event is KeyDownEvent) {
+              final bool isMetaPressed = HardwareKeyboard.instance.isMetaPressed;
+              if (event.logicalKey == LogicalKeyboardKey.keyQ && 
+                  isMetaPressed) {
+                _quitApp();
+                return KeyEventResult.handled;
+              } else if (event.logicalKey == LogicalKeyboardKey.keyO && 
+                        isMetaPressed) {
+                _openGpxFile();
+                return KeyEventResult.handled;
+              }
+            }
+            return KeyEventResult.ignored;
+          },
+          child: Stack(
+            children: [
+              const MapView(),
+              if (_errorMessage != null)
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              if (_isLoading)
+                const Center(
+                  child: CircularProgressIndicator(),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -86,8 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
         final file = result.files.first;
         if (file.path != null) {
           final track = await GpxService.parseGpxFile(file.path!);
+          context.read<MapService>().setTrack(track);
           setState(() {
-            _loadedTrack = track;
             _errorMessage = null;
           });
         } else {
@@ -99,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
-        _loadedTrack = null;
+        context.read<MapService>().clearTrack();
       });
     } finally {
       setState(() {
@@ -109,9 +155,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _bringToFront() {
-    // On macOS, this will bring the window to the front
-    // Flutter handles this automatically when the menu item is selected
-    // but we can also programmatically request focus
     if (mounted) {
       FocusScope.of(context).requestFocus();
     }

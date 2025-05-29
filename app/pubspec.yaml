@@ -39,6 +39,11 @@ dependencies:
   file_picker: ^6.1.1           # File selection
   xml: ^6.3.0                   # GPX parsing
 
+  # Phase 2 dependencies
+  flutter_map: ^6.0.1           # OpenStreetMap integration
+  latlong2: ^0.9.1              # Coordinate handling
+  provider: ^6.1.1              # State management
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
