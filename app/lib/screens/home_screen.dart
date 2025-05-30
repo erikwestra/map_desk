@@ -98,7 +98,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Consumer<ViewService>(
         builder: (context, viewService, _) {
           return Scaffold(
-            body: _buildCurrentView(context, viewService.currentView),
+            body: SizedBox.expand(
+              child: _buildCurrentView(context, viewService.currentView),
+            ),
           );
         },
       ),

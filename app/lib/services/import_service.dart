@@ -1,4 +1,4 @@
-// Handles track import workflow, split mode, and segment creation functionality.
+// Service class managing track import workflow, segment creation, and state management for the import view
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -24,6 +24,10 @@ class ImportService extends ChangeNotifier {
   String _statusMessage = '';
   ImportState _state = ImportState.noFile;
   int _currentSegmentNumber = 1;
+  SimpleGpxTrack? _currentTrack;
+  String _status = 'Ready to import track';
+  String? _errorMessage;
+  bool _isProcessing = false;
 
   ImportService();
 
@@ -58,6 +62,10 @@ class ImportService extends ChangeNotifier {
   String get statusMessage => _statusMessage;
   ImportState get state => _state;
   int get currentSegmentNumber => _currentSegmentNumber;
+  SimpleGpxTrack? get currentTrack => _currentTrack;
+  String get status => _status;
+  String? get errorMessage => _errorMessage;
+  bool get isProcessing => _isProcessing;
 
   void _updateStatusMessage() {
     switch (_state) {
@@ -98,17 +106,21 @@ class ImportService extends ChangeNotifier {
     });
   }
 
-  void setTrack(SimpleGpxTrack simpleTrack) {
+  void setTrack(SimpleGpxTrack track) {
     _track = SplittableGpxTrack(
-      name: simpleTrack.name,
-      points: simpleTrack.points,
-      description: simpleTrack.description,
+      name: track.name,
+      points: track.points,
+      description: track.description,
     );
     _state = ImportState.fileLoaded;
     _importOptions = SegmentImportOptions.defaults();
     _currentSegmentNumber = 1;
     _updateStatusMessage();
     _scheduleZoomToTrackBounds();
+    _currentTrack = track;
+    _status = 'Click on the start or end of the track to start splitting';
+    _errorMessage = null;
+    _isProcessing = false;
     notifyListeners();
   }
 
@@ -118,6 +130,10 @@ class ImportService extends ChangeNotifier {
     _importOptions = SegmentImportOptions.defaults();
     _currentSegmentNumber = 1;
     _updateStatusMessage();
+    _currentTrack = null;
+    _status = 'Ready to import track';
+    _errorMessage = null;
+    _isProcessing = false;
     notifyListeners();
   }
 
@@ -322,6 +338,22 @@ class ImportService extends ChangeNotifier {
 
   void resetMapController() {
     _mapController.move(const LatLng(0, 0), 2.0);
+    notifyListeners();
+  }
+
+  void setProcessing(bool isProcessing) {
+    _isProcessing = isProcessing;
+    if (isProcessing) {
+      _status = 'Processing track...';
+      _errorMessage = null;
+    }
+    notifyListeners();
+  }
+
+  void setError(String message) {
+    _errorMessage = message;
+    _status = 'Error processing track';
+    _isProcessing = false;
     notifyListeners();
   }
 
