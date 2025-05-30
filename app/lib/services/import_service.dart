@@ -7,6 +7,13 @@ import '../models/splittable_gpx_track.dart';
 import '../models/segment.dart';
 import '../models/track_import_options.dart';
 
+enum ImportState {
+  noFile,
+  fileLoaded,
+  endpointSelected,
+  segmentSelected,
+}
+
 class ImportService extends ChangeNotifier {
   SplittableGpxTrack? _importedTrack;
   bool _isSplitMode = false;
@@ -16,6 +23,7 @@ class ImportService extends ChangeNotifier {
   TrackImportOptions _importOptions = TrackImportOptions.defaults();
   bool _isForwardDirection = true;
   String _statusMessage = '';
+  ImportState _importState = ImportState.noFile;
 
   ImportService();
 
@@ -34,6 +42,24 @@ class ImportService extends ChangeNotifier {
       .where((p) => !_importedTrack!.selectedPoints.contains(p))
       .toList();
   String get statusMessage => _statusMessage;
+  ImportState get importState => _importState;
+
+  void _updateStatusMessage() {
+    switch (_importState) {
+      case ImportState.noFile:
+        _statusMessage = '';
+        break;
+      case ImportState.fileLoaded:
+        _statusMessage = 'Click on one end of the track to start splitting';
+        break;
+      case ImportState.endpointSelected:
+        _statusMessage = 'Click on the other end of the segment';
+        break;
+      case ImportState.segmentSelected:
+        _statusMessage = 'Segment Selected';
+        break;
+    }
+  }
 
   void setMapReady(bool ready) {
     _isMapReady = ready;
@@ -58,7 +84,8 @@ class ImportService extends ChangeNotifier {
       description: track.description,
     );
     _isSplitMode = false;
-    _statusMessage = 'Click on one end of the track to start splitting';
+    _importState = ImportState.fileLoaded;
+    _updateStatusMessage();
     _scheduleZoomToTrackBounds();
     notifyListeners();
   }
@@ -67,7 +94,8 @@ class ImportService extends ChangeNotifier {
     _importedTrack = null;
     _isSplitMode = false;
     _importOptions = TrackImportOptions.defaults();
-    _statusMessage = '';
+    _importState = ImportState.noFile;
+    _updateStatusMessage();
     notifyListeners();
   }
 
@@ -92,14 +120,16 @@ class ImportService extends ChangeNotifier {
   void selectPoint(int index) {
     if (_importedTrack == null) return;
     _importedTrack!.selectPoint(index);
-    _statusMessage = 'Click on the other end of the track to create a segment';
+    _importState = ImportState.endpointSelected;
+    _updateStatusMessage();
     notifyListeners();
   }
 
   void clearSelection() {
     if (_importedTrack == null) return;
     _importedTrack!.clearSelection();
-    _statusMessage = 'Click on one end of the track to start splitting';
+    _importState = ImportState.fileLoaded;
+    _updateStatusMessage();
     notifyListeners();
   }
 
@@ -110,16 +140,22 @@ class ImportService extends ChangeNotifier {
 
   void addSegment(Segment segment) {
     _segments.add(segment);
+    _importState = ImportState.segmentSelected;
+    _updateStatusMessage();
     notifyListeners();
   }
 
   void removeSegment(Segment segment) {
     _segments.remove(segment);
+    _importState = ImportState.fileLoaded;
+    _updateStatusMessage();
     notifyListeners();
   }
 
   void clearSegments() {
     _segments.clear();
+    _importState = ImportState.fileLoaded;
+    _updateStatusMessage();
     notifyListeners();
   }
 
