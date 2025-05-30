@@ -59,24 +59,33 @@ class ImportTrackTopPanel extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              track?.name ?? 'No file selected',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-          ),
           if (track != null)
-            TextButton(
+            IconButton(
+              icon: const Icon(Icons.close),
               onPressed: () {
                 importService.clearTrack();
               },
-              child: const Text('Close'),
+              tooltip: 'Close',
             ),
-          if (track == null)
-            TextButton(
-              onPressed: () => _importGpxFile(context),
-              child: const Text('Open...'),
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  track?.name ?? 'No file selected',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (track == null)
+                  TextButton(
+                    onPressed: () => _importGpxFile(context),
+                    child: const Text('Open...'),
+                  ),
+              ],
             ),
+          ),
+          Text(
+            'Status',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ],
       ),
     );
