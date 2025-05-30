@@ -34,14 +34,12 @@ class Segment {
   final String name;
   final List<SegmentPoint> points;
   final DateTime createdAt;
-  final String? description;
 
   const Segment({
     required this.id,
     required this.name,
     required this.points,
     required this.createdAt,
-    this.description,
   });
 
   /// Create a new segment from a list of points
@@ -50,14 +48,12 @@ class Segment {
     required List<SegmentPoint> allPoints,
     required int startIndex,
     required int endIndex,
-    String? description,
   }) {
     return Segment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       points: allPoints.sublist(startIndex, endIndex + 1),
       createdAt: DateTime.now(),
-      description: description,
     );
   }
 
@@ -68,7 +64,6 @@ class Segment {
       'name': name,
       'points': points.map((p) => p.toJson()).toList(),
       'created_at': createdAt.millisecondsSinceEpoch,
-      'description': description,
     };
   }
 
@@ -79,7 +74,6 @@ class Segment {
       name: json['name'] as String,
       points: (json['points'] as List).map((p) => SegmentPoint.fromJson(p)).toList(),
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['created_at'] as int),
-      description: json['description'] as String?,
     );
   }
 
@@ -119,7 +113,6 @@ class Segment {
       'name': name,
       'points': points.map((p) => [p.latitude, p.longitude]).toList(),
       'createdAt': createdAt.toIso8601String(),
-      'description': description,
     };
   }
 
@@ -135,7 +128,6 @@ class Segment {
       ))
           .toList(),
       createdAt: DateTime.parse(map['createdAt'] as String),
-      description: map['description'] as String?,
     );
   }
 

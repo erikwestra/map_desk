@@ -26,12 +26,10 @@ class SegmentSplitter extends StatefulWidget {
 
 class _SegmentSplitterState extends State<SegmentSplitter> {
   final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
 
   @override
   void dispose() {
     _nameController.dispose();
-    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -51,15 +49,6 @@ class _SegmentSplitterState extends State<SegmentSplitter> {
                 labelText: 'Segment Name',
                 hintText: 'Enter a name for this segment',
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description (Optional)',
-                hintText: 'Enter a description for this segment',
-              ),
-              maxLines: 3,
             ),
           ],
         ),
@@ -81,9 +70,6 @@ class _SegmentSplitterState extends State<SegmentSplitter> {
                   allPoints: points,
                   startIndex: widget.startIndex!,
                   endIndex: widget.endIndex!,
-                  description: _descriptionController.text.isEmpty
-                      ? null
-                      : _descriptionController.text,
                 );
                 widget.onSegmentCreated(segment);
                 Navigator.pop(context);

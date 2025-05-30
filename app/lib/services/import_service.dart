@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/gpx_track.dart';
 import '../models/segment.dart';
+import '../models/track_import_options.dart';
 
 class ImportService extends ChangeNotifier {
   GpxTrack? _importedTrack;
@@ -11,6 +12,7 @@ class ImportService extends ChangeNotifier {
   final List<Segment> _segments = [];
   final MapController _mapController = MapController();
   bool _isMapReady = false;
+  TrackImportOptions _importOptions = TrackImportOptions.defaults();
 
   ImportService();
 
@@ -20,6 +22,7 @@ class ImportService extends ChangeNotifier {
   List<Segment> get segments => List.unmodifiable(_segments);
   MapController get mapController => _mapController;
   List<LatLng> get trackPoints => _importedTrack?.points.map((p) => p.toLatLng()).toList() ?? [];
+  TrackImportOptions get importOptions => _importOptions;
 
   void setMapReady(bool ready) {
     _isMapReady = ready;
@@ -47,6 +50,12 @@ class ImportService extends ChangeNotifier {
   void clearTrack() {
     _importedTrack = null;
     _isSplitMode = false;
+    _importOptions = TrackImportOptions.defaults();
+    notifyListeners();
+  }
+
+  void setImportOptions(TrackImportOptions options) {
+    _importOptions = options;
     notifyListeners();
   }
 

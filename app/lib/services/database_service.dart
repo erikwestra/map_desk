@@ -11,7 +11,7 @@ import 'package:latlong2/latlong.dart';
 /// Service for handling database operations
 class DatabaseService {
   static const String _databaseName = 'segments.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2; // Incremented for v008 migration
   
   static Database? _database;
   
@@ -70,7 +70,36 @@ class DatabaseService {
   /// Handle database upgrades
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     print('DatabaseService: Upgrading database from version $oldVersion to $newVersion');
-    // Future migrations will be added here
+    
+    if (oldVersion < 2) {
+      // v008: Remove description field
+      print('DatabaseService: Running v008 migration (removing description field)');
+      
+      // Create temporary table without description
+      await db.execute('''
+        CREATE TABLE segments_new (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          points TEXT NOT NULL,
+          created_at INTEGER NOT NULL
+        )
+      ''');
+      
+      // Copy data from old table to new table
+      await db.execute('''
+        INSERT INTO segments_new (id, name, points, created_at)
+        SELECT id, name, points, created_at FROM segments
+      ''');
+      
+      // Drop old table
+      await db.execute('DROP TABLE segments');
+      
+      // Rename new table to original name
+      await db.execute('ALTER TABLE segments_new RENAME TO segments');
+      
+      print('DatabaseService: v008 migration completed successfully');
+    }
+    
     print('DatabaseService: Database upgrade completed');
   }
 

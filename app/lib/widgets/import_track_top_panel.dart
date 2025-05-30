@@ -4,6 +4,8 @@ import 'package:file_selector/file_selector.dart';
 import 'package:provider/provider.dart';
 import '../services/import_service.dart';
 import '../services/gpx_service.dart';
+import '../widgets/import_track_options_dialog.dart';
+import '../models/track_import_options.dart';
 
 class ImportTrackTopPanel extends StatelessWidget {
   const ImportTrackTopPanel({super.key});
@@ -15,10 +17,27 @@ class ImportTrackTopPanel extends StatelessWidget {
     );
     final file = await openFile(acceptedTypeGroups: [typeGroup]);
 
-    if (file != null) {
+    if (file != null && context.mounted) {
+      final importService = context.read<ImportService>();
+      
+      // Show import options dialog
+      final options = await showDialog<TrackImportOptions>(
+        context: context,
+        builder: (context) => ImportTrackOptionsDialog(
+          initialOptions: importService.importOptions,
+        ),
+      );
+
+      // If dialog was cancelled, return
+      if (options == null || !context.mounted) return;
+
+      // Update import options
+      importService.setImportOptions(options);
+
+      // Parse and import the track
       final track = await GpxService.parseGpxFile(file.path);
       if (context.mounted) {
-        context.read<ImportService>().setTrack(track);
+        importService.setTrack(track);
       }
     }
   }

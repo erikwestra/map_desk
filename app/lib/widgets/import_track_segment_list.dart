@@ -51,13 +51,7 @@ class _SegmentListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(segment.name),
-      subtitle: segment.description != null
-          ? Text(
-              segment.description!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            )
-          : null,
+      subtitle: Text(segment.info),
       trailing: IconButton(
         icon: const Icon(Icons.delete_outline),
         onPressed: () {
