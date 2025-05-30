@@ -260,6 +260,20 @@ class ImportService extends ChangeNotifier {
     );
     
     addSegment(newSegment);
+
+    // Remove the saved segment from the track
+    final endIndex = _track!.endPointIndex!;
+    _track!.removePointsUpTo(endIndex);
+    
+    // Clear the selection
+    _track!.clearSelection();
+    
+    // Set state to endpointSelected and select the first point
+    _state = ImportState.endpointSelected;
+    _track!.selectStartPoint(0);
+    
+    _updateStatusMessage();
+    notifyListeners();
   }
 
   LatLngBounds? calculateTrackEndpointsBounds() {

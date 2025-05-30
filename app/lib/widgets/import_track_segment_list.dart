@@ -35,7 +35,14 @@ class ImportTrackSegmentList extends StatelessWidget {
               itemCount: segments.length,
               itemBuilder: (context, index) {
                 final segment = segments[index];
-                return _SegmentListItem(segment: segment);
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SegmentListItem(segment: segment),
+                    if (index < segments.length - 1)
+                      const Divider(height: 1),
+                  ],
+                );
               },
             ),
     );
@@ -51,25 +58,7 @@ class _SegmentListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(segment.name),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(segment.info),
-          const SizedBox(height: 4),
-          Text(
-            'Direction: ${segment.direction == 'oneWay' ? 'One Way' : 'Bidirectional'}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-        ],
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete_outline),
-        onPressed: () {
-          context.read<ImportService>().removeSegment(segment);
-        },
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
     );
   }
 } 
