@@ -1,18 +1,20 @@
 # MapDesk v009 Implementation Plan
 
 ## Overview
-Version 009 focuses on implementing a new track splitting visualization system that allows users to interactively select portions of a track by clicking on points. This version simplifies the track splitting process by focusing solely on visualization, without actual segment creation.
+Version 009 focuses on enhancing the track import workflow with an improved track splitting visualization system that allows users to interactively select portions of a track by clicking on points. This version simplifies the track splitting process by focusing solely on visualization, without actual segment creation.
+
+> **Important Note**: This implementation ONLY affects the "Import Track" view. The main map view (`app/lib/widgets/map_view.dart`) should not be modified in any way. All track splitting and point selection functionality is scoped to the import workflow.
 
 ## Core Features
-1. Track visualization with direction-based initial point selection
+1. Enhanced track visualization in import view with direction-based initial point selection
 2. Interactive point selection with visual feedback
 3. Dynamic track coloring based on selection
 
 ## Implementation Details
 
-### Track Visualization
+### Import Track Visualization
 
-#### Track Display (`app/lib/widgets/track_display.dart`)
+#### Import Map View (`app/lib/widgets/import_map_view.dart`)
 - Display entire track in red by default
 - Set map bounds to track bounds on import
 - Implement point selection visualization:
@@ -47,7 +49,7 @@ class Track {
 
 ### Service Layer Updates
 
-#### Track Service (`app/lib/services/track_service.dart`)
+#### Import Service (`app/lib/services/import_service.dart`)
 - Add methods for point selection
 - Implement point finding logic with tolerance
 - Handle direction-based selection
@@ -55,13 +57,13 @@ class Track {
 
 ### UI Components
 
-#### Map View (`app/lib/widgets/map_view.dart`)
+#### Import Map View (`app/lib/widgets/import_map_view.dart`)
 - Update to handle point selection
 - Implement click detection with tolerance
 - Manage track coloring
 - Handle direction-based initial selection
 
-#### Track Controls (`app/lib/widgets/track_controls.dart`)
+#### Segment Splitter (`app/lib/widgets/segment_splitter.dart`)
 - Add selection state display
 - Show current selection information
 - Provide clear selection option
@@ -92,11 +94,10 @@ app/
 │   ├── models/
 │   │   └── track.dart              # Updated track model
 │   ├── services/
-│   │   └── track_service.dart      # Updated track service
+│   │   └── import_service.dart     # Updated import service
 │   └── widgets/
-│       ├── map_view.dart           # Updated map view
-│       ├── track_display.dart      # New track display widget
-│       └── track_controls.dart     # Updated track controls
+│       ├── import_map_view.dart    # Updated import map view
+│       └── segment_splitter.dart   # Updated segment splitter
 └── plan/
     └── v009-implementation-plan.md # This implementation plan
 ```
