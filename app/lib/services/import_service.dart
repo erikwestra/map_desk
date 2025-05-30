@@ -23,6 +23,7 @@ class ImportService extends ChangeNotifier {
   SegmentImportOptions _importOptions = SegmentImportOptions.defaults();
   String _statusMessage = '';
   ImportState _state = ImportState.noFile;
+  int _currentSegmentNumber = 1;
 
   ImportService();
 
@@ -41,6 +42,7 @@ class ImportService extends ChangeNotifier {
       .toList();
   String get statusMessage => _statusMessage;
   ImportState get state => _state;
+  int get currentSegmentNumber => _currentSegmentNumber;
 
   void _updateStatusMessage() {
     switch (_state) {
@@ -51,7 +53,10 @@ class ImportService extends ChangeNotifier {
         _statusMessage = 'Click on one end of the track to start splitting';
         break;
       case ImportState.endpointSelected:
-        _statusMessage = 'Click on the other end of the segment';
+        final baseName = _importOptions.segmentName.isEmpty 
+          ? 'Segment'
+          : _importOptions.segmentName;
+        _statusMessage = 'Click on endpoint to create segment $baseName $_currentSegmentNumber';
         break;
       case ImportState.segmentSelected:
         _statusMessage = 'Segment Selected';
@@ -83,6 +88,7 @@ class ImportService extends ChangeNotifier {
     );
     _state = ImportState.fileLoaded;
     _importOptions = SegmentImportOptions.defaults();
+    _currentSegmentNumber = 1;
     _updateStatusMessage();
     _scheduleZoomToTrackBounds();
     notifyListeners();
@@ -92,12 +98,22 @@ class ImportService extends ChangeNotifier {
     _track = null;
     _state = ImportState.noFile;
     _importOptions = SegmentImportOptions.defaults();
+    _currentSegmentNumber = 1;
     _updateStatusMessage();
     notifyListeners();
   }
 
   void setImportOptions(SegmentImportOptions options) {
+    // Only reset the segment number if the base name (without number) has changed
+    final currentBaseName = _importOptions.segmentName.replaceAll(RegExp(r'\s+\d+$'), '');
+    final newBaseName = options.segmentName.replaceAll(RegExp(r'\s+\d+$'), '');
+    
+    if (currentBaseName != newBaseName) {
+      _currentSegmentNumber = 1;
+    }
+    
     _importOptions = options;
+    _updateStatusMessage();
     notifyListeners();
   }
 
@@ -178,6 +194,7 @@ class ImportService extends ChangeNotifier {
   void clearSegments() {
     _segments.clear();
     _state = ImportState.fileLoaded;
+    _currentSegmentNumber = 1;
     _updateStatusMessage();
     notifyListeners();
   }
