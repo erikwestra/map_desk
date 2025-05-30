@@ -20,20 +20,6 @@ class ImportTrackTopPanel extends StatelessWidget {
     if (file != null && context.mounted) {
       final importService = context.read<ImportService>();
       
-      // Show import options dialog
-      final options = await showDialog<TrackImportOptions>(
-        context: context,
-        builder: (context) => ImportTrackOptionsDialog(
-          initialOptions: importService.importOptions,
-        ),
-      );
-
-      // If dialog was cancelled, return
-      if (options == null || !context.mounted) return;
-
-      // Update import options
-      importService.setImportOptions(options);
-
       // Parse and import the track
       final track = await GpxService.parseGpxFile(file.path);
       if (context.mounted) {
@@ -83,7 +69,7 @@ class ImportTrackTopPanel extends StatelessWidget {
             ),
           ),
           Text(
-            'Status',
+            importService.statusMessage,
             style: Theme.of(context).textTheme.titleMedium,
           ),
         ],

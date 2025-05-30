@@ -15,6 +15,7 @@ class ImportService extends ChangeNotifier {
   bool _isMapReady = false;
   TrackImportOptions _importOptions = TrackImportOptions.defaults();
   bool _isForwardDirection = true;
+  String _statusMessage = '';
 
   ImportService();
 
@@ -32,6 +33,7 @@ class ImportService extends ChangeNotifier {
     _importedTrack!.points.map((p) => p.toLatLng()).toList()
       .where((p) => !_importedTrack!.selectedPoints.contains(p))
       .toList();
+  String get statusMessage => _statusMessage;
 
   void setMapReady(bool ready) {
     _isMapReady = ready;
@@ -56,7 +58,7 @@ class ImportService extends ChangeNotifier {
       description: track.description,
     );
     _isSplitMode = false;
-    _setInitialSelection();
+    _statusMessage = 'Click on one end of the track to start splitting';
     _scheduleZoomToTrackBounds();
     notifyListeners();
   }
@@ -65,6 +67,7 @@ class ImportService extends ChangeNotifier {
     _importedTrack = null;
     _isSplitMode = false;
     _importOptions = TrackImportOptions.defaults();
+    _statusMessage = '';
     notifyListeners();
   }
 
@@ -89,12 +92,14 @@ class ImportService extends ChangeNotifier {
   void selectPoint(int index) {
     if (_importedTrack == null) return;
     _importedTrack!.selectPoint(index);
+    _statusMessage = 'Click on the other end of the track to create a segment';
     notifyListeners();
   }
 
   void clearSelection() {
     if (_importedTrack == null) return;
     _importedTrack!.clearSelection();
+    _statusMessage = 'Click on one end of the track to start splitting';
     notifyListeners();
   }
 
