@@ -12,6 +12,11 @@ import '../services/database_service.dart';
 import '../widgets/segment_splitter.dart';
 import '../models/segment.dart';
 import '../widgets/map_controls.dart';
+import '../widgets/segment_library_view.dart';
+import '../widgets/route_builder_view.dart';
+import '../widgets/import_track_view.dart';
+import '../services/import_service.dart';
+import '../services/view_service.dart';
 
 /// Main home screen for MapDesk Phase 2
 class HomeScreen extends StatefulWidget {
@@ -22,40 +27,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _isLoading = false;
-  String? _errorMessage;
-  String? _successMessage;
-  GpxTrack? _importedTrack;
-  int? _splitStartIndex;
-  int? _splitEndIndex;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final mapService = context.watch<MapService>();
-
     return PlatformMenuBar(
       menus: [
         PlatformMenu(
           label: 'MapDesk',
           menus: [
-            if (Theme.of(context).platform == TargetPlatform.macOS)
-              PlatformMenuItemGroup(
-                members: <PlatformMenuItem>[
-                  PlatformMenuItem(
-                    label: 'Quit',
-                    onSelected: () => _quitApp(),
-                    shortcut: const SingleActivator(
-                      LogicalKeyboardKey.keyQ,
-                      meta: true,
-                    ),
-                  ),
-                ],
-              ),
+            PlatformMenuItem(
+              label: 'Quit',
+              shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
+              onSelected: () => _quitApp(context),
+            ),
           ],
         ),
         PlatformMenu(
@@ -63,24 +46,41 @@ class _HomeScreenState extends State<HomeScreen> {
           menus: [
             PlatformMenuItem(
               label: 'Open',
-              onSelected: () => _openGpxFile(),
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyO,
-                meta: true,
-              ),
+              shortcut: const SingleActivator(LogicalKeyboardKey.keyO, meta: true),
+              onSelected: () => _openGpxFile(context),
             ),
           ],
         ),
         PlatformMenu(
-          label: 'Segments',
+          label: 'Mode',
           menus: [
             PlatformMenuItem(
+              label: 'Map View',
+              shortcut: const SingleActivator(LogicalKeyboardKey.digit1, meta: true),
+              onSelected: () {
+                context.read<ViewService>().setView(ViewState.mapView);
+              },
+            ),
+            PlatformMenuItem(
               label: 'Import Track',
-              onSelected: () => _openImportWindow(),
-              shortcut: const SingleActivator(
-                LogicalKeyboardKey.keyI,
-                meta: true,
-              ),
+              shortcut: const SingleActivator(LogicalKeyboardKey.digit2, meta: true),
+              onSelected: () {
+                context.read<ViewService>().setView(ViewState.importTrack);
+              },
+            ),
+            PlatformMenuItem(
+              label: 'Segment Library',
+              shortcut: const SingleActivator(LogicalKeyboardKey.digit3, meta: true),
+              onSelected: () {
+                context.read<ViewService>().setView(ViewState.segmentLibrary);
+              },
+            ),
+            PlatformMenuItem(
+              label: 'Route Builder',
+              shortcut: const SingleActivator(LogicalKeyboardKey.digit4, meta: true),
+              onSelected: () {
+                context.read<ViewService>().setView(ViewState.routeBuilder);
+              },
             ),
           ],
         ),
@@ -89,50 +89,47 @@ class _HomeScreenState extends State<HomeScreen> {
           menus: [
             PlatformMenuItem(
               label: 'MapDesk',
-              onSelected: () => _bringToFront(),
+              onSelected: () => _bringToFront(context),
             ),
           ],
         ),
       ],
-      child: Scaffold(
-        body: Stack(
-          children: [
-            const MapView(),
-            if (_errorMessage != null)
-              Positioned(
-                top: 16,
-                left: 16,
-                right: 16,
-                child: Card(
-                  color: Colors.red.shade100,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ),
-              ),
-            if (_isLoading)
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
-          ],
-        ),
+      child: Consumer<ViewService>(
+        builder: (context, viewService, _) {
+          return Scaffold(
+            body: _buildCurrentView(context, viewService.currentView),
+          );
+        },
       ),
     );
   }
 
-  Future<void> _openGpxFile() async {
-    if (_isLoading) return;
+  Widget _buildCurrentView(BuildContext context, ViewState view) {
+    switch (view) {
+      case ViewState.mapView:
+        return const MapView();
+      case ViewState.importTrack:
+        return const ImportTrackView();
+      case ViewState.segmentLibrary:
+        // TODO: Implement segment library view
+        return const Center(child: Text('Segment Library'));
+      case ViewState.routeBuilder:
+        // TODO: Implement route builder view
+        return const Center(child: Text('Route Builder'));
+    }
+  }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  Future<void> _openGpxFile(BuildContext context) async {
+    bool isLoading = false;
+    String? errorMessage;
+    String? successMessage;
 
     try {
+      if (isLoading) return;
+
+      isLoading = true;
+      errorMessage = null;
+
       final typeGroup = XTypeGroup(
         label: 'GPX',
         extensions: ['gpx'],
@@ -142,33 +139,33 @@ class _HomeScreenState extends State<HomeScreen> {
       if (file != null) {
         final track = await GpxService.parseGpxFile(file.path);
         context.read<MapService>().setTrack(track);
-        setState(() {
-          _errorMessage = null;
-        });
+        successMessage = 'GPX file loaded successfully';
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        context.read<MapService>().clearTrack();
-      });
+      errorMessage = e.toString();
+      context.read<MapService>().clearTrack();
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      isLoading = false;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(successMessage ?? errorMessage ?? '')),
+      );
     }
   }
 
-  void _openImportWindow() {
+  void _openImportWindow(BuildContext context) {
     Navigator.pushNamed(context, '/import');
   }
 
-  void _bringToFront() {
+  void _bringToFront(BuildContext context) {
     if (mounted) {
       FocusScope.of(context).requestFocus();
     }
   }
 
-  void _quitApp() {
+  void _quitApp(BuildContext context) {
     SystemNavigator.pop();
   }
 } 

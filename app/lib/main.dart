@@ -1,27 +1,19 @@
+// Main entry point for MapDesk that sets up the app's providers and navigation structure.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+import 'package:flutter/services.dart';
+import 'package:file_selector/file_selector.dart';
 import 'screens/home_screen.dart';
 import 'screens/import_screen.dart';
-import 'services/database_service.dart';
 import 'services/map_service.dart';
+import 'services/import_service.dart';
+import 'services/view_service.dart';
+import 'services/database_service.dart';
+import 'services/gpx_service.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize services
-  final databaseService = DatabaseService();
-  
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => MapService()),
-        Provider.value(value: databaseService),
-      ],
-      child: const MapDeskApp(),
-    ),
-  );
+  runApp(const MapDeskApp());
 }
 
 class MapDeskApp extends StatelessWidget {
@@ -29,19 +21,26 @@ class MapDeskApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'MapDesk',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const HomeScreen(),
-      routes: {
-        '/import': (context) => ImportScreen(
-          databaseService: context.read<DatabaseService>(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MapService()),
+        ChangeNotifierProvider(create: (_) => ImportService()),
+        ChangeNotifierProvider(create: (_) => ViewService()),
+        Provider(create: (_) => DatabaseService()),
+        Provider(create: (_) => GpxService()),
+      ],
+      child: MaterialApp(
+        title: 'MapDesk',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
         ),
-      },
-      debugShowCheckedModeBanner: false,
+        debugShowCheckedModeBanner: false,
+        home: const HomeScreen(),
+        routes: {
+          '/import': (context) => const ImportScreen(),
+        },
+      ),
     );
   }
 }
