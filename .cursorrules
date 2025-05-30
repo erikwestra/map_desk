@@ -226,3 +226,62 @@ Window
 2. Clean and rebuild the project
 3. Only modify project configuration as a last resort
 4. Document any necessary configuration changes
+
+## Database Migration Rules
+
+### Critical Database Rules
+1. **ALWAYS create a migration** when modifying database schema:
+   - Increment `_databaseVersion` in `DatabaseService`
+   - Add migration logic in `_onUpgrade` method
+   - Test migration with existing data
+   - Document schema changes in version plan
+
+2. **Migration Requirements**:
+   - Create new table with updated schema
+   - Copy data from old table to new table
+   - Drop old table
+   - Rename new table to original name
+   - Handle data type conversions if needed
+   - Preserve existing data integrity
+
+3. **Migration Testing**:
+   - Test with existing database
+   - Verify data preservation
+   - Check foreign key constraints
+   - Validate indexes and constraints
+   - Test rollback scenarios
+
+4. **Version Control**:
+   - Document schema changes in version plan
+   - Include migration steps in documentation
+   - Tag database version in commit message
+   - Review migration with team before merging
+
+5. **Error Handling**:
+   - Log migration steps
+   - Handle migration failures gracefully
+   - Provide rollback mechanism
+   - Include error recovery steps
+
+### Migration Example
+```dart
+// Increment version
+static const int _databaseVersion = 2;
+
+// Add migration
+Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  if (oldVersion < 2) {
+    // Create new table
+    await db.execute('CREATE TABLE table_new (...)');
+    
+    // Copy data
+    await db.execute('INSERT INTO table_new SELECT ... FROM table');
+    
+    // Drop old table
+    await db.execute('DROP TABLE table');
+    
+    // Rename new table
+    await db.execute('ALTER TABLE table_new RENAME TO table');
+  }
+}
+```
