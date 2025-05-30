@@ -33,7 +33,8 @@ class _ImportMapViewState extends State<ImportMapView> {
     final trackPoints = importService.trackPoints;
     final selectedPoints = importService.selectedPoints;
     final unselectedPoints = importService.unselectedPoints;
-    final selectedPointIndex = importService.selectedPointIndex;
+    final startPointIndex = importService.startPointIndex;
+    final endPointIndex = importService.endPointIndex;
 
     return Stack(
       children: [
@@ -116,13 +117,24 @@ class _ImportMapViewState extends State<ImportMapView> {
                     ),
                   ],
                 ),
-              // Selected point marker
-              if (selectedPointIndex != null)
+              // Start point marker
+              if (startPointIndex != null)
                 CircleLayer(
                   circles: [
                     CircleMarker(
-                      point: trackPoints[selectedPointIndex],
+                      point: trackPoints[startPointIndex],
                       color: const Color(0xFF007AFF),
+                      radius: 8.0,
+                    ),
+                  ],
+                ),
+              // End point marker
+              if (endPointIndex != null)
+                CircleLayer(
+                  circles: [
+                    CircleMarker(
+                      point: trackPoints[endPointIndex],
+                      color: const Color(0xFF34C759),
                       radius: 8.0,
                     ),
                   ],

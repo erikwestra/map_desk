@@ -3,7 +3,8 @@ import 'simple_gpx_track.dart';
 
 /// A GPX track that supports splitting and point selection functionality
 class SplittableGpxTrack extends SimpleGpxTrack {
-  int? _selectedPointIndex;
+  int? _startPointIndex;
+  int? _endPointIndex;
   List<LatLng> _selectedPoints = [];
 
   SplittableGpxTrack({
@@ -12,43 +13,48 @@ class SplittableGpxTrack extends SimpleGpxTrack {
     super.description,
   });
 
-  /// Get the currently selected point index
-  int? get selectedPointIndex => _selectedPointIndex;
+  /// Get the currently selected start point index
+  int? get startPointIndex => _startPointIndex;
 
-  /// Get the list of selected points
+  /// Get the currently selected end point index
+  int? get endPointIndex => _endPointIndex;
+
+  /// Get the list of selected points between start and end
   List<LatLng> get selectedPoints => List.unmodifiable(_selectedPoints);
 
-  /// Select a point by index
-  void selectPoint(int index) {
+  /// Select a point as the start point
+  void selectStartPoint(int index) {
     if (index < 0 || index >= points.length) return;
-    _selectedPointIndex = index;
+    _startPointIndex = index;
+    _updateSelectedPoints();
+  }
+
+  /// Select a point as the end point
+  void selectEndPoint(int index) {
+    if (index < 0 || index >= points.length) return;
+    _endPointIndex = index;
     _updateSelectedPoints();
   }
 
   /// Clear the current selection
   void clearSelection() {
-    _selectedPointIndex = null;
+    _startPointIndex = null;
+    _endPointIndex = null;
     _selectedPoints = [];
   }
 
-  /// Get points before the selected index
-  List<LatLng> getPointsBeforeIndex(int index) {
-    if (index < 0 || index >= points.length) return [];
-    return points.sublist(0, index + 1).map((p) => p.toLatLng()).toList();
-  }
-
-  /// Get points after the selected index
-  List<LatLng> getPointsAfterIndex(int index) {
-    if (index < 0 || index >= points.length) return [];
-    return points.sublist(index).map((p) => p.toLatLng()).toList();
+  /// Get points between start and end indices
+  List<LatLng> getPointsBetweenIndices(int startIndex, int endIndex) {
+    if (startIndex < 0 || endIndex >= points.length || startIndex > endIndex) return [];
+    return points.sublist(startIndex, endIndex + 1).map((p) => p.toLatLng()).toList();
   }
 
   /// Update the selected points based on the current selection
   void _updateSelectedPoints() {
-    if (_selectedPointIndex == null) {
+    if (_startPointIndex == null || _endPointIndex == null) {
       _selectedPoints = [];
       return;
     }
-    _selectedPoints = getPointsBeforeIndex(_selectedPointIndex!);
+    _selectedPoints = getPointsBetweenIndices(_startPointIndex!, _endPointIndex!);
   }
 } 

@@ -35,7 +35,8 @@ class ImportService extends ChangeNotifier {
   List<LatLng> get trackPoints => _importedTrack?.points.map((p) => p.toLatLng()).toList() ?? [];
   TrackImportOptions get importOptions => _importOptions;
   bool get isForwardDirection => _isForwardDirection;
-  int? get selectedPointIndex => _importedTrack?.selectedPointIndex;
+  int? get startPointIndex => _importedTrack?.startPointIndex;
+  int? get endPointIndex => _importedTrack?.endPointIndex;
   List<LatLng> get selectedPoints => _importedTrack?.selectedPoints ?? [];
   List<LatLng> get unselectedPoints => _importedTrack == null ? [] : 
     _importedTrack!.points.map((p) => p.toLatLng()).toList()
@@ -111,16 +112,26 @@ class ImportService extends ChangeNotifier {
   void _setInitialSelection() {
     if (_importedTrack == null || !_importedTrack!.hasPoints) return;
     if (_isForwardDirection) {
-      _importedTrack!.selectPoint(0);
+      _importedTrack!.selectStartPoint(0);
     } else {
-      _importedTrack!.selectPoint(_importedTrack!.points.length - 1);
+      _importedTrack!.selectStartPoint(_importedTrack!.points.length - 1);
     }
   }
 
   void selectPoint(int index) {
     if (_importedTrack == null) return;
-    _importedTrack!.selectPoint(index);
-    _importState = ImportState.endpointSelected;
+    
+    // If we don't have a start point, select it
+    if (_importedTrack!.startPointIndex == null) {
+      _importedTrack!.selectStartPoint(index);
+      _importState = ImportState.endpointSelected;
+    }
+    // If we have a start point but no end point, select it
+    else if (_importedTrack!.endPointIndex == null) {
+      _importedTrack!.selectEndPoint(index);
+      _importState = ImportState.segmentSelected;
+    }
+    
     _updateStatusMessage();
     notifyListeners();
   }
