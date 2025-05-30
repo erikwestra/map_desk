@@ -56,12 +56,13 @@ class _ImportMapViewState extends State<ImportMapView> {
   @override
   Widget build(BuildContext context) {
     final importService = context.watch<ImportService>();
+    final track = importService.track;
     final trackPoints = importService.trackPoints;
     final selectedPoints = importService.selectedPoints;
     final unselectedPoints = importService.unselectedPoints;
     final startPointIndex = importService.startPointIndex;
     final endPointIndex = importService.endPointIndex;
-    final importState = importService.importState;
+    final importState = importService.state;
 
     return Stack(
       children: [

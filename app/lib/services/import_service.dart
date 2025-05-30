@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 import '../models/simple_gpx_track.dart';
 import '../models/splittable_gpx_track.dart';
 import '../models/segment.dart';
-import '../models/track_import_options.dart';
+import '../models/segment_import_options.dart';
 
 enum ImportState {
   noFile,
@@ -15,36 +15,34 @@ enum ImportState {
 }
 
 class ImportService extends ChangeNotifier {
-  SplittableGpxTrack? _importedTrack;
+  SplittableGpxTrack? _track;
   final List<Segment> _segments = [];
   final MapController _mapController = MapController();
   bool _isMapReady = false;
-  TrackImportOptions _importOptions = TrackImportOptions.defaults();
-  bool _isForwardDirection = true;
+  SegmentImportOptions _importOptions = SegmentImportOptions.defaults();
   String _statusMessage = '';
-  ImportState _importState = ImportState.noFile;
+  ImportState _state = ImportState.noFile;
 
   ImportService();
 
-  SplittableGpxTrack? get importedTrack => _importedTrack;
-  bool get isTrackLoaded => _importedTrack != null;
+  SplittableGpxTrack? get track => _track;
+  bool get isTrackLoaded => _track != null;
   List<Segment> get segments => List.unmodifiable(_segments);
   MapController get mapController => _mapController;
-  List<LatLng> get trackPoints => _importedTrack?.points.map((p) => p.toLatLng()).toList() ?? [];
-  TrackImportOptions get importOptions => _importOptions;
-  bool get isForwardDirection => _isForwardDirection;
-  int? get startPointIndex => _importedTrack?.startPointIndex;
-  int? get endPointIndex => _importedTrack?.endPointIndex;
-  List<LatLng> get selectedPoints => _importedTrack?.selectedPoints ?? [];
-  List<LatLng> get unselectedPoints => _importedTrack == null ? [] : 
-    _importedTrack!.points.map((p) => p.toLatLng()).toList()
-      .where((p) => !_importedTrack!.selectedPoints.contains(p))
+  List<LatLng> get trackPoints => _track?.points.map((p) => p.toLatLng()).toList() ?? [];
+  SegmentImportOptions get importOptions => _importOptions;
+  int? get startPointIndex => _track?.startPointIndex;
+  int? get endPointIndex => _track?.endPointIndex;
+  List<LatLng> get selectedPoints => _track?.selectedPoints ?? [];
+  List<LatLng> get unselectedPoints => _track == null ? [] : 
+    _track!.points.map((p) => p.toLatLng()).toList()
+      .where((p) => !_track!.selectedPoints.contains(p))
       .toList();
   String get statusMessage => _statusMessage;
-  ImportState get importState => _importState;
+  ImportState get state => _state;
 
   void _updateStatusMessage() {
-    switch (_importState) {
+    switch (_state) {
       case ImportState.noFile:
         _statusMessage = '';
         break;
@@ -76,53 +74,41 @@ class ImportService extends ChangeNotifier {
     });
   }
 
-  void setTrack(SimpleGpxTrack track) {
-    _importedTrack = SplittableGpxTrack(
-      name: track.name,
-      points: track.points,
-      description: track.description,
+  void setTrack(SimpleGpxTrack simpleTrack) {
+    _track = SplittableGpxTrack(
+      name: simpleTrack.name,
+      points: simpleTrack.points,
+      description: simpleTrack.description,
     );
-    _importState = ImportState.fileLoaded;
+    _state = ImportState.fileLoaded;
+    _importOptions = SegmentImportOptions.defaults();
     _updateStatusMessage();
     _scheduleZoomToTrackBounds();
     notifyListeners();
   }
 
   void clearTrack() {
-    _importedTrack = null;
-    _importOptions = TrackImportOptions.defaults();
-    _importState = ImportState.noFile;
+    _track = null;
+    _state = ImportState.noFile;
+    _importOptions = SegmentImportOptions.defaults();
     _updateStatusMessage();
     notifyListeners();
   }
 
-  void setImportOptions(TrackImportOptions options) {
+  void setImportOptions(SegmentImportOptions options) {
     _importOptions = options;
-    _isForwardDirection = options.trackDirection == TrackDirection.forward;
-    if (_importedTrack != null) {
-      _setInitialSelection();
-    }
     notifyListeners();
   }
 
-  void _setInitialSelection() {
-    if (_importedTrack == null || !_importedTrack!.hasPoints) return;
-    if (_isForwardDirection) {
-      _importedTrack!.selectStartPoint(0);
-    } else {
-      _importedTrack!.selectStartPoint(_importedTrack!.points.length - 1);
-    }
-  }
-
   void selectPoint(int index) {
-    if (_importedTrack == null) return;
+    if (_track == null) return;
     
-    switch (_importState) {
+    switch (_state) {
       case ImportState.fileLoaded:
         // In fileLoaded state, we can only select first or last point as start point
-        if (index == 0 || index == _importedTrack!.points.length - 1) {
-          _importedTrack!.selectStartPoint(index);
-          _importState = ImportState.endpointSelected;
+        if (index == 0 || index == _track!.points.length - 1) {
+          _track!.selectStartPoint(index);
+          _state = ImportState.endpointSelected;
           _updateStatusMessage();
           notifyListeners();
         }
@@ -130,9 +116,9 @@ class ImportService extends ChangeNotifier {
         
       case ImportState.endpointSelected:
         // If we have a start point but no end point, select it
-        if (_importedTrack!.startPointIndex != null) {
-          _importedTrack!.selectEndPoint(index);
-          _importState = ImportState.segmentSelected;
+        if (_track!.startPointIndex != null) {
+          _track!.selectEndPoint(index);
+          _state = ImportState.segmentSelected;
           _updateStatusMessage();
           notifyListeners();
         }
@@ -140,8 +126,8 @@ class ImportService extends ChangeNotifier {
         
       case ImportState.segmentSelected:
         // In segmentSelected state, we can select a new end point
-        if (_importedTrack!.startPointIndex != null) {
-          _importedTrack!.selectEndPoint(index);
+        if (_track!.startPointIndex != null) {
+          _track!.selectEndPoint(index);
           _updateStatusMessage();
           notifyListeners();
         }
@@ -154,38 +140,38 @@ class ImportService extends ChangeNotifier {
   }
 
   void clearSelection() {
-    if (_importedTrack == null) return;
-    _importedTrack!.clearSelection();
-    _importState = ImportState.fileLoaded;
+    if (_track == null) return;
+    _track!.clearSelection();
+    _state = ImportState.fileLoaded;
     _updateStatusMessage();
     notifyListeners();
   }
 
   void addSegment(Segment segment) {
     _segments.add(segment);
-    _importState = ImportState.segmentSelected;
+    _state = ImportState.segmentSelected;
     _updateStatusMessage();
     notifyListeners();
   }
 
   void removeSegment(Segment segment) {
     _segments.remove(segment);
-    _importState = ImportState.fileLoaded;
+    _state = ImportState.fileLoaded;
     _updateStatusMessage();
     notifyListeners();
   }
 
   void clearSegments() {
     _segments.clear();
-    _importState = ImportState.fileLoaded;
+    _state = ImportState.fileLoaded;
     _updateStatusMessage();
     notifyListeners();
   }
 
   void zoomToTrackBounds() {
-    if (!_isMapReady || _importedTrack == null || _importedTrack!.points.isEmpty) return;
+    if (!_isMapReady || _track == null || _track!.points.isEmpty) return;
     try {
-      final points = _importedTrack!.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+      final points = _track!.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
       final bounds = LatLngBounds.fromPoints(points);
       _mapController.fitBounds(bounds, options: const FitBoundsOptions(padding: EdgeInsets.all(50)));
     } catch (e) {

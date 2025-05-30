@@ -31,7 +31,7 @@ class ImportTrackTopPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final importService = context.watch<ImportService>();
-    final track = importService.importedTrack;
+    final track = importService.track;
 
     return Container(
       padding: const EdgeInsets.all(16),
