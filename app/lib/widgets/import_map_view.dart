@@ -19,7 +19,7 @@ class ImportMapView extends StatefulWidget {
 }
 
 class _ImportMapViewState extends State<ImportMapView> {
-  static const double _clickTolerance = 10.0;
+  static const double _clickTolerance = 50.0; // Increased from 10.0 to 50.0 meters
 
   void _handleMapTap(LatLng point, List<LatLng> trackPoints, bool startOrEndOnly) {
     if (widget.onPointSelected == null) return;
