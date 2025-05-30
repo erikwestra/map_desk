@@ -83,6 +83,7 @@ Window
 2. **CocoaPods Path**: Export PATH="/opt/homebrew/lib/ruby/gems/3.4.0/bin:$PATH" before running
 3. **Target Platform**: macOS desktop only
 4. **Hot Reload**: Use `r` for quick iterations during development
+5. **File Documentation**: Every new source file must have a one-line comment at the top describing its primary purpose
 
 ### Common Commands
 ```bash
