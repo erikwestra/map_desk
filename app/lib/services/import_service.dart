@@ -6,7 +6,7 @@ import '../models/simple_gpx_track.dart';
 import '../models/splittable_gpx_track.dart';
 import '../models/segment.dart';
 import '../models/segment_import_options.dart';
-import '../widgets/import_segment_options_dialog.dart';
+import '../widgets/import_options_dialog.dart';
 
 enum ImportState {
   noFile,
@@ -151,19 +151,6 @@ class ImportService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> showSegmentOptionsDialog(BuildContext context) async {
-    final options = await showDialog<SegmentImportOptions>(
-      context: context,
-      builder: (context) => ImportSegmentOptionsDialog(
-        initialOptions: _importOptions,
-      ),
-    );
-
-    if (options != null && context.mounted) {
-      setImportOptions(options);
-    }
-  }
-
   void selectPoint(int index) {
     if (_track == null) return;
     
@@ -200,6 +187,22 @@ class ImportService extends ChangeNotifier {
       case ImportState.noFile:
         // Do nothing in noFile state
         break;
+    }
+  }
+
+  Future<void> showSegmentOptionsDialog(BuildContext context) async {
+    // Only show dialog if no segment name has been set
+    if (_importOptions.segmentName.isEmpty) {
+      final options = await showDialog<SegmentImportOptions>(
+        context: context,
+        builder: (context) => ImportOptionsDialog(
+          initialOptions: _importOptions,
+        ),
+      );
+
+      if (options != null && context.mounted) {
+        setImportOptions(options);
+      }
     }
   }
 

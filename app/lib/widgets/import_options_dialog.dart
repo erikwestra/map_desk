@@ -1,20 +1,20 @@
-// ImportSegmentOptionsDialog widget for configuring segment creation options
+// Dialog for configuring import options
 import 'package:flutter/material.dart';
 import '../models/segment_import_options.dart';
 
-class ImportSegmentOptionsDialog extends StatefulWidget {
+class ImportOptionsDialog extends StatefulWidget {
   final SegmentImportOptions initialOptions;
 
-  const ImportSegmentOptionsDialog({
+  const ImportOptionsDialog({
     super.key,
     required this.initialOptions,
   });
 
   @override
-  State<ImportSegmentOptionsDialog> createState() => _ImportSegmentOptionsDialogState();
+  State<ImportOptionsDialog> createState() => _ImportOptionsDialogState();
 }
 
-class _ImportSegmentOptionsDialogState extends State<ImportSegmentOptionsDialog> {
+class _ImportOptionsDialogState extends State<ImportOptionsDialog> {
   late final TextEditingController _nameController;
   late SegmentDirection _selectedDirection;
 
@@ -34,7 +34,7 @@ class _ImportSegmentOptionsDialogState extends State<ImportSegmentOptionsDialog>
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Segment Options'),
+      title: const Text('Import Options'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,13 +42,13 @@ class _ImportSegmentOptionsDialogState extends State<ImportSegmentOptionsDialog>
           TextField(
             controller: _nameController,
             decoration: const InputDecoration(
-              labelText: 'Segment Name',
+              labelText: 'New Segment Name',
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 24),
           const Text(
-            'Segment Direction',
+            'New Segment Direction',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -98,7 +98,7 @@ class _ImportSegmentOptionsDialogState extends State<ImportSegmentOptionsDialog>
               direction: _selectedDirection,
             ));
           },
-          child: const Text('Create'),
+          child: const Text('Save'),
         ),
       ],
     );

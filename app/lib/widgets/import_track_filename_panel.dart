@@ -55,7 +55,9 @@ class ImportTrackFilenamePanel extends StatelessWidget {
           Expanded(
             child: Text(
               filename,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
