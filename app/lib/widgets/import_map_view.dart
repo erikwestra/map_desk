@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
 import '../services/import_service.dart';
 import 'map_controls.dart';
 
@@ -19,11 +20,14 @@ class ImportMapView extends StatefulWidget {
 }
 
 class _ImportMapViewState extends State<ImportMapView> {
-  static const double _clickTolerance = 50.0; // Increased from 10.0 to 50.0 meters
+  static const double _clickTolerance = 20.0; // 20 pixels
   ImportState? _previousState;
 
   void _handleMapTap(LatLng point, List<LatLng> trackPoints, bool startOrEndOnly) {
     if (widget.onPointSelected == null) return;
+
+    final importService = context.read<ImportService>();
+    final mapController = importService.mapController;
 
     // Find the closest point within tolerance
     double minDistance = double.infinity;
@@ -31,10 +35,14 @@ class _ImportMapViewState extends State<ImportMapView> {
     
     for (int i = 0; i < trackPoints.length; i++) {
       final trackPoint = trackPoints[i];
-      final distance = Distance().distance(
-        point,
-        trackPoint,
-      );
+      // Convert points to screen coordinates
+      final pointScreen = mapController.latLngToScreenPoint(point);
+      final trackPointScreen = mapController.latLngToScreenPoint(trackPoint);
+      
+      // Calculate pixel distance
+      final dx = pointScreen.x - trackPointScreen.x;
+      final dy = pointScreen.y - trackPointScreen.y;
+      final distance = math.sqrt(dx * dx + dy * dy);
       
       if (distance < minDistance) {
         minDistance = distance;
@@ -139,25 +147,29 @@ class _ImportMapViewState extends State<ImportMapView> {
                     ),
                   ],
                 ),
-              // Start point marker
+              // Start point marker with improved visibility
               if (startPointIndex != null)
                 CircleLayer(
                   circles: [
                     CircleMarker(
                       point: trackPoints[startPointIndex],
-                      color: const Color(0xFF007AFF),
+                      color: const Color(0xFF007AFF).withOpacity(0.8),
                       radius: 8.0,
+                      borderColor: Colors.white,
+                      borderStrokeWidth: 2.0,
                     ),
                   ],
                 ),
-              // End point marker
+              // End point marker with improved visibility
               if (endPointIndex != null)
                 CircleLayer(
                   circles: [
                     CircleMarker(
                       point: trackPoints[endPointIndex],
-                      color: const Color(0xFF34C759),
+                      color: const Color(0xFF34C759).withOpacity(0.8),
                       radius: 8.0,
+                      borderColor: Colors.white,
+                      borderStrokeWidth: 2.0,
                     ),
                   ],
                 ),

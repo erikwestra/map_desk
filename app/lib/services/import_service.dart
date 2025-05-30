@@ -217,12 +217,44 @@ class ImportService extends ChangeNotifier {
     notifyListeners();
   }
 
+  LatLngBounds? calculateTrackEndpointsBounds() {
+    if (_track == null || _track!.points.isEmpty) return null;
+    
+    // Get first and last points
+    final firstPoint = _track!.points.first.toLatLng();
+    final lastPoint = _track!.points.last.toLatLng();
+    
+    // Create bounds rectangle
+    final bounds = LatLngBounds.fromPoints([firstPoint, lastPoint]);
+    
+    // Calculate the center point
+    final center = LatLng(
+      (bounds.north + bounds.south) / 2,
+      (bounds.east + bounds.west) / 2,
+    );
+    
+    // Calculate the size of the bounds
+    final latSpan = bounds.north - bounds.south;
+    final lngSpan = bounds.east - bounds.west;
+    
+    // Expand by 10%
+    final expandedLatSpan = latSpan * 1.1;
+    final expandedLngSpan = lngSpan * 1.1;
+    
+    // Create new expanded bounds
+    return LatLngBounds(
+      LatLng(center.latitude - expandedLatSpan / 2, center.longitude - expandedLngSpan / 2),
+      LatLng(center.latitude + expandedLatSpan / 2, center.longitude + expandedLngSpan / 2),
+    );
+  }
+
   void zoomToTrackBounds() {
     if (!_isMapReady || _track == null || _track!.points.isEmpty) return;
     try {
-      final points = _track!.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
-      final bounds = LatLngBounds.fromPoints(points);
-      _mapController.fitBounds(bounds, options: const FitBoundsOptions(padding: EdgeInsets.all(50)));
+      final bounds = calculateTrackEndpointsBounds();
+      if (bounds != null) {
+        _mapController.fitBounds(bounds, options: const FitBoundsOptions(padding: EdgeInsets.all(50)));
+      }
     } catch (e) {
       // If the map controller isn't ready yet, schedule another attempt
       _scheduleZoomToTrackBounds();
