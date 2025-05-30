@@ -56,17 +56,17 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Mode',
           menus: [
             PlatformMenuItem(
-              label: 'Map View',
+              label: 'Import Track',
               shortcut: const SingleActivator(LogicalKeyboardKey.digit1, meta: true),
               onSelected: () {
-                context.read<ViewService>().setView(ViewState.mapView);
+                context.read<ViewService>().setView(ViewState.importTrack);
               },
             ),
             PlatformMenuItem(
-              label: 'Import Track',
+              label: 'Map View',
               shortcut: const SingleActivator(LogicalKeyboardKey.digit2, meta: true),
               onSelected: () {
-                context.read<ViewService>().setView(ViewState.importTrack);
+                context.read<ViewService>().setView(ViewState.mapView);
               },
             ),
             PlatformMenuItem(

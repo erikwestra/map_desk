@@ -9,7 +9,7 @@ enum ViewState {
 }
 
 class ViewService extends ChangeNotifier {
-  ViewState _currentView = ViewState.mapView;
+  ViewState _currentView = ViewState.importTrack;
 
   ViewState get currentView => _currentView;
 
