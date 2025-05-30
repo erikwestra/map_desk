@@ -5,18 +5,13 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../services/import_service.dart';
 import 'map_controls.dart';
-import 'segment_splitter.dart';
 
 class ImportMapView extends StatefulWidget {
   final void Function(int)? onPointSelected;
-  final int? splitStartIndex;
-  final int? splitEndIndex;
 
   const ImportMapView({
     super.key,
     this.onPointSelected,
-    this.splitStartIndex,
-    this.splitEndIndex,
   });
 
   @override
@@ -61,7 +56,6 @@ class _ImportMapViewState extends State<ImportMapView> {
   @override
   Widget build(BuildContext context) {
     final importService = context.watch<ImportService>();
-    final isSplitMode = importService.isTrackLoaded && importService.isSplitMode;
     final trackPoints = importService.trackPoints;
     final selectedPoints = importService.selectedPoints;
     final unselectedPoints = importService.unselectedPoints;

@@ -16,7 +16,6 @@ enum ImportState {
 
 class ImportService extends ChangeNotifier {
   SplittableGpxTrack? _importedTrack;
-  bool _isSplitMode = false;
   final List<Segment> _segments = [];
   final MapController _mapController = MapController();
   bool _isMapReady = false;
@@ -29,7 +28,6 @@ class ImportService extends ChangeNotifier {
 
   SplittableGpxTrack? get importedTrack => _importedTrack;
   bool get isTrackLoaded => _importedTrack != null;
-  bool get isSplitMode => _isSplitMode;
   List<Segment> get segments => List.unmodifiable(_segments);
   MapController get mapController => _mapController;
   List<LatLng> get trackPoints => _importedTrack?.points.map((p) => p.toLatLng()).toList() ?? [];
@@ -84,7 +82,6 @@ class ImportService extends ChangeNotifier {
       points: track.points,
       description: track.description,
     );
-    _isSplitMode = false;
     _importState = ImportState.fileLoaded;
     _updateStatusMessage();
     _scheduleZoomToTrackBounds();
@@ -93,7 +90,6 @@ class ImportService extends ChangeNotifier {
 
   void clearTrack() {
     _importedTrack = null;
-    _isSplitMode = false;
     _importOptions = TrackImportOptions.defaults();
     _importState = ImportState.noFile;
     _updateStatusMessage();
@@ -121,19 +117,40 @@ class ImportService extends ChangeNotifier {
   void selectPoint(int index) {
     if (_importedTrack == null) return;
     
-    // If we don't have a start point, select it
-    if (_importedTrack!.startPointIndex == null) {
-      _importedTrack!.selectStartPoint(index);
-      _importState = ImportState.endpointSelected;
+    switch (_importState) {
+      case ImportState.fileLoaded:
+        // In fileLoaded state, we can only select first or last point as start point
+        if (index == 0 || index == _importedTrack!.points.length - 1) {
+          _importedTrack!.selectStartPoint(index);
+          _importState = ImportState.endpointSelected;
+          _updateStatusMessage();
+          notifyListeners();
+        }
+        break;
+        
+      case ImportState.endpointSelected:
+        // If we have a start point but no end point, select it
+        if (_importedTrack!.startPointIndex != null) {
+          _importedTrack!.selectEndPoint(index);
+          _importState = ImportState.segmentSelected;
+          _updateStatusMessage();
+          notifyListeners();
+        }
+        break;
+        
+      case ImportState.segmentSelected:
+        // In segmentSelected state, we can select a new end point
+        if (_importedTrack!.startPointIndex != null) {
+          _importedTrack!.selectEndPoint(index);
+          _updateStatusMessage();
+          notifyListeners();
+        }
+        break;
+        
+      case ImportState.noFile:
+        // Do nothing in noFile state
+        break;
     }
-    // If we have a start point but no end point, select it
-    else if (_importedTrack!.endPointIndex == null) {
-      _importedTrack!.selectEndPoint(index);
-      _importState = ImportState.segmentSelected;
-    }
-    
-    _updateStatusMessage();
-    notifyListeners();
   }
 
   void clearSelection() {
@@ -141,11 +158,6 @@ class ImportService extends ChangeNotifier {
     _importedTrack!.clearSelection();
     _importState = ImportState.fileLoaded;
     _updateStatusMessage();
-    notifyListeners();
-  }
-
-  void toggleSplitMode() {
-    _isSplitMode = !_isSplitMode;
     notifyListeners();
   }
 

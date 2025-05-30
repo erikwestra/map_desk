@@ -6,7 +6,6 @@ import '../services/import_service.dart';
 import '../models/simple_gpx_track.dart';
 import '../models/segment.dart';
 import '../widgets/import_map_view.dart';
-import '../widgets/segment_splitter.dart';
 
 class ImportScreen extends StatefulWidget {
   const ImportScreen({super.key});
@@ -18,8 +17,6 @@ class ImportScreen extends StatefulWidget {
 class _ImportScreenState extends State<ImportScreen> {
   bool _isLoading = false;
   String? _errorMessage;
-  int? _splitStartIndex;
-  int? _splitEndIndex;
 
   @override
   void initState() {
@@ -36,8 +33,6 @@ class _ImportScreenState extends State<ImportScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      _splitStartIndex = null;
-      _splitEndIndex = null;
     });
 
     try {
@@ -63,31 +58,7 @@ class _ImportScreenState extends State<ImportScreen> {
   }
 
   void _handlePointSelected(int index) {
-    setState(() {
-      if (_splitStartIndex == null) {
-        _splitStartIndex = index;
-      } else if (_splitEndIndex == null) {
-        _splitEndIndex = index;
-      } else {
-        _splitStartIndex = index;
-        _splitEndIndex = null;
-      }
-    });
-  }
-
-  void _handleCancel() {
-    setState(() {
-      _splitStartIndex = null;
-      _splitEndIndex = null;
-    });
-  }
-
-  void _handleSegmentCreated(Segment segment) {
-    context.read<ImportService>().addSegment(segment);
-    setState(() {
-      _splitStartIndex = null;
-      _splitEndIndex = null;
-    });
+    context.read<ImportService>().selectPoint(index);
   }
 
   void _handleDone() {
@@ -99,7 +70,6 @@ class _ImportScreenState extends State<ImportScreen> {
   @override
   Widget build(BuildContext context) {
     final importService = context.watch<ImportService>();
-    final isSplitMode = importService.isTrackLoaded && importService.isSplitMode;
 
     if (_isLoading) {
       return const Center(
@@ -137,38 +107,14 @@ class _ImportScreenState extends State<ImportScreen> {
       appBar: AppBar(
         title: const Text('Import Track'),
         actions: [
-          if (importService.isTrackLoaded)
-            TextButton(
-              onPressed: () {
-                importService.toggleSplitMode();
-              },
-              child: Text(
-                importService.isSplitMode ? 'Exit Split Mode' : 'Enter Split Mode',
-              ),
-            ),
           TextButton(
             onPressed: _handleDone,
             child: const Text('Done'),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          ImportMapView(
-            onPointSelected: isSplitMode ? _handlePointSelected : null,
-            splitStartIndex: _splitStartIndex,
-            splitEndIndex: _splitEndIndex,
-          ),
-          if (isSplitMode)
-            SegmentSplitter(
-              track: importService.importedTrack!,
-              onSegmentCreated: _handleSegmentCreated,
-              onCancel: _handleCancel,
-              startIndex: _splitStartIndex,
-              endIndex: _splitEndIndex,
-              onPointSelected: _handlePointSelected,
-            ),
-        ],
+      body: ImportMapView(
+        onPointSelected: _handlePointSelected,
       ),
     );
   }
