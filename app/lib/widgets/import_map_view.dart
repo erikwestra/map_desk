@@ -20,6 +20,7 @@ class ImportMapView extends StatefulWidget {
 
 class _ImportMapViewState extends State<ImportMapView> {
   static const double _clickTolerance = 50.0; // Increased from 10.0 to 50.0 meters
+  ImportState? _previousState;
 
   void _handleMapTap(LatLng point, List<LatLng> trackPoints, bool startOrEndOnly) {
     if (widget.onPointSelected == null) return;
@@ -63,6 +64,14 @@ class _ImportMapViewState extends State<ImportMapView> {
     final startPointIndex = importService.startPointIndex;
     final endPointIndex = importService.endPointIndex;
     final importState = importService.state;
+
+    // Show segment options dialog when entering endpointSelected state
+    if (importState == ImportState.endpointSelected && _previousState == ImportState.fileLoaded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        importService.showSegmentOptionsDialog(context);
+      });
+    }
+    _previousState = importState;
 
     return Stack(
       children: [

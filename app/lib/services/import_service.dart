@@ -6,6 +6,7 @@ import '../models/simple_gpx_track.dart';
 import '../models/splittable_gpx_track.dart';
 import '../models/segment.dart';
 import '../models/segment_import_options.dart';
+import '../widgets/import_segment_options_dialog.dart';
 
 enum ImportState {
   noFile,
@@ -98,6 +99,19 @@ class ImportService extends ChangeNotifier {
   void setImportOptions(SegmentImportOptions options) {
     _importOptions = options;
     notifyListeners();
+  }
+
+  Future<void> showSegmentOptionsDialog(BuildContext context) async {
+    final options = await showDialog<SegmentImportOptions>(
+      context: context,
+      builder: (context) => ImportSegmentOptionsDialog(
+        initialOptions: _importOptions,
+      ),
+    );
+
+    if (options != null && context.mounted) {
+      setImportOptions(options);
+    }
   }
 
   void selectPoint(int index) {
