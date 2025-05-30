@@ -51,7 +51,19 @@ class _SegmentListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(segment.name),
-      subtitle: Text(segment.info),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(segment.info),
+          const SizedBox(height: 4),
+          Text(
+            'Direction: ${segment.direction == 'oneWay' ? 'One Way' : 'Bidirectional'}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            ),
+          ),
+        ],
+      ),
       trailing: IconButton(
         icon: const Icon(Icons.delete_outline),
         onPressed: () {

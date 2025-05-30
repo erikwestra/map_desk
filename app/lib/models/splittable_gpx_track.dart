@@ -57,4 +57,14 @@ class SplittableGpxTrack extends SimpleGpxTrack {
     }
     _selectedPoints = getPointsBetweenIndices(_startPointIndex!, _endPointIndex!);
   }
+
+  void removePointsUpTo(int endIndex) {
+    if (endIndex < 0 || endIndex >= points.length) return;
+    
+    // Remove all points up to and including the end index
+    points.removeRange(0, endIndex + 1);
+    
+    // Reset selection
+    clearSelection();
+  }
 } 

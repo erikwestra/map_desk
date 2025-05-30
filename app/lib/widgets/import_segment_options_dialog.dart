@@ -46,18 +46,26 @@ class _ImportSegmentOptionsDialogState extends State<ImportSegmentOptionsDialog>
               border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text('Direction'),
+          const SizedBox(height: 24),
+          const Text(
+            'Segment Direction',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
           SegmentedButton<SegmentDirection>(
             segments: const [
               ButtonSegment<SegmentDirection>(
                 value: SegmentDirection.oneWay,
                 label: Text('One Way'),
+                icon: Icon(Icons.arrow_forward),
               ),
               ButtonSegment<SegmentDirection>(
                 value: SegmentDirection.bidirectional,
                 label: Text('Bidirectional'),
+                icon: Icon(Icons.compare_arrows),
               ),
             ],
             selected: {_selectedDirection},
@@ -66,6 +74,15 @@ class _ImportSegmentOptionsDialogState extends State<ImportSegmentOptionsDialog>
                 _selectedDirection = selected.first;
               });
             },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _selectedDirection == SegmentDirection.oneWay
+                ? 'Segment can only be traversed in one direction'
+                : 'Segment can be traversed in both directions',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            ),
           ),
         ],
       ),

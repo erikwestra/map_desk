@@ -11,7 +11,7 @@ import 'package:latlong2/latlong.dart';
 /// Service for handling database operations
 class DatabaseService {
   static const String _databaseName = 'segments.db';
-  static const int _databaseVersion = 2; // Incremented for v008 migration
+  static const int _databaseVersion = 3; // Incremented for v011 migration
   
   static Database? _database;
   
@@ -61,7 +61,8 @@ class DatabaseService {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         points TEXT NOT NULL,
-        created_at INTEGER NOT NULL
+        created_at INTEGER NOT NULL,
+        direction TEXT NOT NULL DEFAULT 'bidirectional'
       )
     ''');
     print('DatabaseService: Database tables created successfully');
@@ -100,6 +101,36 @@ class DatabaseService {
       print('DatabaseService: v008 migration completed successfully');
     }
     
+    if (oldVersion < 3) {
+      // v011: Add direction field
+      print('DatabaseService: Running v011 migration (adding direction field)');
+      
+      // Create temporary table with direction field
+      await db.execute('''
+        CREATE TABLE segments_new (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          points TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          direction TEXT NOT NULL DEFAULT 'bidirectional'
+        )
+      ''');
+      
+      // Copy data from old table to new table
+      await db.execute('''
+        INSERT INTO segments_new (id, name, points, created_at, direction)
+        SELECT id, name, points, created_at, 'bidirectional' FROM segments
+      ''');
+      
+      // Drop old table
+      await db.execute('DROP TABLE segments');
+      
+      // Rename new table to original name
+      await db.execute('ALTER TABLE segments_new RENAME TO segments');
+      
+      print('DatabaseService: v011 migration completed successfully');
+    }
+    
     print('DatabaseService: Database upgrade completed');
   }
 
@@ -118,6 +149,7 @@ class DatabaseService {
           'elevation': p.elevation,
         }).toList()),
         'created_at': segment.createdAt.millisecondsSinceEpoch,
+        'direction': segment.direction,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -142,6 +174,7 @@ class DatabaseService {
           elevation: p['elevation'] as double?,
         )).toList(),
         createdAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['created_at'] as int),
+        direction: maps[i]['direction'] as String,
       );
     });
   }
@@ -172,6 +205,7 @@ class DatabaseService {
         elevation: p['elevation'] as double?,
       )).toList(),
       createdAt: DateTime.fromMillisecondsSinceEpoch(maps[0]['created_at'] as int),
+      direction: maps[0]['direction'] as String,
     );
   }
 

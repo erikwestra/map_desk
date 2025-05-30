@@ -20,8 +20,8 @@ class _ImportTrackViewState extends State<ImportTrackView> {
     context.read<ImportService>().selectPoint(index);
   }
 
-  void _handleSegmentCreated(Segment segment) {
-    context.read<ImportService>().addSegment(segment);
+  void _handleSegmentCreated() {
+    context.read<ImportService>().createSegment();
   }
 
   @override

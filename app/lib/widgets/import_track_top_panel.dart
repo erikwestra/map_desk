@@ -31,7 +31,8 @@ class ImportTrackTopPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final importService = context.watch<ImportService>();
-    final track = importService.track;
+    final state = importService.state;
+    final statusMessage = importService.statusMessage;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -45,7 +46,7 @@ class ImportTrackTopPanel extends StatelessWidget {
       ),
       child: Row(
         children: [
-          if (track != null)
+          if (importService.track != null)
             IconButton(
               icon: const Icon(Icons.close),
               onPressed: () {
@@ -57,10 +58,10 @@ class ImportTrackTopPanel extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  track?.name ?? 'No file selected',
+                  importService.track?.name ?? 'No file selected',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                if (track == null)
+                if (importService.track == null)
                   TextButton(
                     onPressed: () => _importGpxFile(context),
                     child: const Text('Open...'),
@@ -68,10 +69,35 @@ class ImportTrackTopPanel extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            importService.statusMessage,
-            style: Theme.of(context).textTheme.titleMedium,
+          Expanded(
+            child: Text(
+              statusMessage,
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.right,
+            ),
           ),
+          if (state == ImportState.segmentSelected) ...[
+            const SizedBox(width: 10),
+            TextButton(
+              onPressed: () {
+                importService.deleteCurrentSelection();
+              },
+              child: const Text('Delete'),
+            ),
+            TextButton(
+              onPressed: () {
+                importService.createSegment();
+              },
+              child: const Text('Save'),
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: 'Segment Options',
+              onPressed: () {
+                importService.showSegmentOptionsDialog(context);
+              },
+            ),
+          ],
         ],
       ),
     );

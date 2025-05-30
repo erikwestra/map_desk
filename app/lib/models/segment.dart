@@ -34,12 +34,14 @@ class Segment {
   final String name;
   final List<SegmentPoint> points;
   final DateTime createdAt;
+  final String direction;
 
   const Segment({
     required this.id,
     required this.name,
     required this.points,
     required this.createdAt,
+    this.direction = 'bidirectional',
   });
 
   /// Create a new segment from a list of points
@@ -48,12 +50,14 @@ class Segment {
     required List<SegmentPoint> allPoints,
     required int startIndex,
     required int endIndex,
+    String direction = 'bidirectional',
   }) {
     return Segment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       points: allPoints.sublist(startIndex, endIndex + 1),
       createdAt: DateTime.now(),
+      direction: direction,
     );
   }
 
@@ -64,6 +68,7 @@ class Segment {
       'name': name,
       'points': points.map((p) => p.toJson()).toList(),
       'created_at': createdAt.millisecondsSinceEpoch,
+      'direction': direction,
     };
   }
 
@@ -74,6 +79,7 @@ class Segment {
       name: json['name'] as String,
       points: (json['points'] as List).map((p) => SegmentPoint.fromJson(p)).toList(),
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['created_at'] as int),
+      direction: json['direction'] as String? ?? 'bidirectional',
     );
   }
 

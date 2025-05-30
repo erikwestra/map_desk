@@ -77,7 +77,7 @@ class ImportService extends ChangeNotifier {
         final baseName = _importOptions.segmentName.isEmpty 
           ? 'Segment'
           : _importOptions.segmentName;
-        _statusMessage = 'Creating segment $baseName $_currentSegmentNumber';
+        _statusMessage = '$baseName $_currentSegmentNumber';
         break;
     }
   }
@@ -195,9 +195,30 @@ class ImportService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void deleteCurrentSelection() {
+    if (_track == null || _track!.startPointIndex == null || _track!.endPointIndex == null) return;
+    
+    // Get the end index of the segment to be deleted
+    final endIndex = _track!.endPointIndex!;
+    
+    // Remove all points up to and including the end point
+    _track!.removePointsUpTo(endIndex);
+    
+    // Clear the selection
+    _track!.clearSelection();
+    
+    // Set state to endpointSelected and select the first point
+    _state = ImportState.endpointSelected;
+    _track!.selectStartPoint(0);
+    
+    _updateStatusMessage();
+    notifyListeners();
+  }
+
   void addSegment(Segment segment) {
     _segments.add(segment);
     _state = ImportState.segmentSelected;
+    _currentSegmentNumber++;
     _updateStatusMessage();
     notifyListeners();
   }
@@ -215,6 +236,30 @@ class ImportService extends ChangeNotifier {
     _currentSegmentNumber = 1;
     _updateStatusMessage();
     notifyListeners();
+  }
+
+  void createSegment() {
+    if (_track == null || _track!.startPointIndex == null || _track!.endPointIndex == null) {
+      return;
+    }
+
+    final points = _track!.points.map((p) => SegmentPoint(
+      latitude: p.latitude,
+      longitude: p.longitude,
+      elevation: p.elevation,
+    )).toList();
+    
+    final newSegment = Segment.fromPoints(
+      name: _importOptions.segmentName.isEmpty 
+        ? 'Segment $_currentSegmentNumber'
+        : '${_importOptions.segmentName} $_currentSegmentNumber',
+      allPoints: points,
+      startIndex: _track!.startPointIndex!,
+      endIndex: _track!.endPointIndex!,
+      direction: _importOptions.direction == SegmentDirection.oneWay ? 'oneWay' : 'bidirectional',
+    );
+    
+    addSegment(newSegment);
   }
 
   LatLngBounds? calculateTrackEndpointsBounds() {
