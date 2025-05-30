@@ -61,8 +61,9 @@ class SplittableGpxTrack extends SimpleGpxTrack {
   void removePointsUpTo(int endIndex) {
     if (endIndex < 0 || endIndex >= points.length) return;
     
-    // Remove all points up to and including the end index
-    points.removeRange(0, endIndex + 1);
+    // Remove all points up to but not including the end index
+    // This keeps the end point as the start of the remaining track
+    points.removeRange(0, endIndex);
     
     // Reset selection
     clearSelection();
