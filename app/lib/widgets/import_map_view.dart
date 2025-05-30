@@ -24,11 +24,16 @@ class ImportMapView extends StatefulWidget {
 }
 
 class _ImportMapViewState extends State<ImportMapView> {
+  static const double _clickTolerance = 10.0;
+
   @override
   Widget build(BuildContext context) {
     final importService = context.watch<ImportService>();
     final isSplitMode = importService.isTrackLoaded && importService.isSplitMode;
     final trackPoints = importService.trackPoints;
+    final selectedPoints = importService.selectedPoints;
+    final unselectedPoints = importService.unselectedPoints;
+    final selectedPointIndex = importService.selectedPointIndex;
 
     return Stack(
       children: [
@@ -47,6 +52,40 @@ class _ImportMapViewState extends State<ImportMapView> {
             onMapReady: () {
               importService.setMapReady(true);
             },
+            onTap: (tapPosition, point) {
+              if (!isSplitMode || widget.onPointSelected == null) return;
+              
+              print('Tap at: ${point.latitude}, ${point.longitude}');
+              
+              // Find the closest point within tolerance
+              double minDistance = double.infinity;
+              int? closestIndex;
+              
+              for (int i = 0; i < trackPoints.length; i++) {
+                final trackPoint = trackPoints[i];
+                final distance = Distance().distance(
+                  point,
+                  trackPoint,
+                );
+                
+                print('Point $i: ${trackPoint.latitude}, ${trackPoint.longitude} - Distance: $distance meters');
+                
+                if (distance < minDistance) {
+                  minDistance = distance;
+                  closestIndex = i;
+                }
+              }
+              
+              print('Closest point: $closestIndex at $minDistance meters');
+              
+              // Check if the closest point is within tolerance
+              if (closestIndex != null && minDistance <= _clickTolerance) {
+                print('Selecting point $closestIndex');
+                widget.onPointSelected!(closestIndex);
+              } else {
+                print('No point within tolerance');
+              }
+            },
           ),
           children: [
             TileLayer(
@@ -55,54 +94,38 @@ class _ImportMapViewState extends State<ImportMapView> {
               maxZoom: 19,
             ),
             if (importService.isTrackLoaded) ...[
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: trackPoints,
-                    color: const Color(0xFFFF3B30),
-                    strokeWidth: 3.0,
-                  ),
-                ],
-              ),
-              // Start and end markers
-              CircleLayer(
-                circles: [
-                  CircleMarker(
-                    point: trackPoints.first,
-                    color: Colors.green,
-                    radius: 8.0,
-                  ),
-                  CircleMarker(
-                    point: trackPoints.last,
-                    color: Colors.red,
-                    radius: 8.0,
-                  ),
-                ],
-              ),
-              if (isSplitMode && widget.onPointSelected != null)
-                MarkerLayer(
-                  markers: trackPoints.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final point = entry.value;
-                    final isSelected = index == widget.splitStartIndex || index == widget.splitEndIndex;
-                    return Marker(
-                      point: point,
-                      width: 24,
-                      height: 24,
-                      child: GestureDetector(
-                        onTap: () => widget.onPointSelected!(index),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.blue : Colors.red,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          width: 16,
-                          height: 16,
-                        ),
-                      ),
-                    );
-                  }).toList(),
+              // Unselected portion of the track (red)
+              if (unselectedPoints.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: unselectedPoints,
+                      color: const Color(0xFFFF3B30),
+                      strokeWidth: 3.0,
+                    ),
+                  ],
+                ),
+              // Selected portion of the track (blue)
+              if (selectedPoints.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: selectedPoints,
+                      color: const Color(0xFF007AFF),
+                      strokeWidth: 3.0,
+                    ),
+                  ],
+                ),
+              // Selected point marker
+              if (selectedPointIndex != null)
+                CircleLayer(
+                  circles: [
+                    CircleMarker(
+                      point: trackPoints[selectedPointIndex],
+                      color: const Color(0xFF007AFF),
+                      radius: 8.0,
+                    ),
+                  ],
                 ),
             ],
           ],

@@ -2,27 +2,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../models/gpx_track.dart';
+import '../models/simple_gpx_track.dart';
+import '../models/splittable_gpx_track.dart';
 import '../models/segment.dart';
 import '../models/track_import_options.dart';
 
 class ImportService extends ChangeNotifier {
-  GpxTrack? _importedTrack;
+  SplittableGpxTrack? _importedTrack;
   bool _isSplitMode = false;
   final List<Segment> _segments = [];
   final MapController _mapController = MapController();
   bool _isMapReady = false;
   TrackImportOptions _importOptions = TrackImportOptions.defaults();
+  bool _isForwardDirection = true;
 
   ImportService();
 
-  GpxTrack? get importedTrack => _importedTrack;
+  SplittableGpxTrack? get importedTrack => _importedTrack;
   bool get isTrackLoaded => _importedTrack != null;
   bool get isSplitMode => _isSplitMode;
   List<Segment> get segments => List.unmodifiable(_segments);
   MapController get mapController => _mapController;
   List<LatLng> get trackPoints => _importedTrack?.points.map((p) => p.toLatLng()).toList() ?? [];
   TrackImportOptions get importOptions => _importOptions;
+  bool get isForwardDirection => _isForwardDirection;
+  int? get selectedPointIndex => _importedTrack?.selectedPointIndex;
+  List<LatLng> get selectedPoints => _importedTrack?.selectedPoints ?? [];
+  List<LatLng> get unselectedPoints => _importedTrack == null ? [] : 
+    _importedTrack!.points.map((p) => p.toLatLng()).toList()
+      .where((p) => !_importedTrack!.selectedPoints.contains(p))
+      .toList();
 
   void setMapReady(bool ready) {
     _isMapReady = ready;
@@ -40,9 +49,14 @@ class ImportService extends ChangeNotifier {
     });
   }
 
-  void setTrack(GpxTrack track) {
-    _importedTrack = track;
+  void setTrack(SimpleGpxTrack track) {
+    _importedTrack = SplittableGpxTrack(
+      name: track.name,
+      points: track.points,
+      description: track.description,
+    );
     _isSplitMode = false;
+    _setInitialSelection();
     _scheduleZoomToTrackBounds();
     notifyListeners();
   }
@@ -56,6 +70,31 @@ class ImportService extends ChangeNotifier {
 
   void setImportOptions(TrackImportOptions options) {
     _importOptions = options;
+    _isForwardDirection = options.trackDirection == TrackDirection.forward;
+    if (_importedTrack != null) {
+      _setInitialSelection();
+    }
+    notifyListeners();
+  }
+
+  void _setInitialSelection() {
+    if (_importedTrack == null || !_importedTrack!.hasPoints) return;
+    if (_isForwardDirection) {
+      _importedTrack!.selectPoint(0);
+    } else {
+      _importedTrack!.selectPoint(_importedTrack!.points.length - 1);
+    }
+  }
+
+  void selectPoint(int index) {
+    if (_importedTrack == null) return;
+    _importedTrack!.selectPoint(index);
+    notifyListeners();
+  }
+
+  void clearSelection() {
+    if (_importedTrack == null) return;
+    _importedTrack!.clearSelection();
     notifyListeners();
   }
 

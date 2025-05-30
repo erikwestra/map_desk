@@ -3,7 +3,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:provider/provider.dart';
 import '../services/gpx_service.dart';
 import '../services/import_service.dart';
-import '../models/gpx_track.dart';
+import '../models/simple_gpx_track.dart';
 import '../models/segment.dart';
 import '../widgets/import_map_view.dart';
 import '../widgets/segment_splitter.dart';

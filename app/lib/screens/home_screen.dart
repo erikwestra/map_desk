@@ -4,7 +4,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
-import '../models/gpx_track.dart';
+import '../models/simple_gpx_track.dart';
 import '../services/gpx_service.dart';
 import '../services/map_service.dart';
 import '../widgets/map_view.dart';
@@ -15,6 +15,7 @@ import '../widgets/map_controls.dart';
 import '../widgets/segment_library_view.dart';
 import '../widgets/route_builder_view.dart';
 import '../widgets/import_track_view.dart';
+import '../screens/import_screen.dart';
 import '../services/import_service.dart';
 import '../services/view_service.dart';
 

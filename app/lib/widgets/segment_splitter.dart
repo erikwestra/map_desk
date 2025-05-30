@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
+import '../models/splittable_gpx_track.dart';
 import '../models/segment.dart';
-import '../models/gpx_track.dart';
 
 class SegmentSplitter extends StatefulWidget {
-  final GpxTrack track;
-  final Function(Segment) onSegmentCreated;
-  final VoidCallback onCancel;
+  final SplittableGpxTrack track;
+  final void Function(int)? onPointSelected;
+  final void Function(Segment)? onSegmentCreated;
+  final VoidCallback? onCancel;
   final int? startIndex;
   final int? endIndex;
-  final void Function(int) onPointSelected;
 
   const SegmentSplitter({
     super.key,
     required this.track,
-    required this.onSegmentCreated,
-    required this.onCancel,
-    required this.startIndex,
-    required this.endIndex,
-    required this.onPointSelected,
+    this.onPointSelected,
+    this.onSegmentCreated,
+    this.onCancel,
+    this.startIndex,
+    this.endIndex,
   });
 
   @override
@@ -71,9 +71,9 @@ class _SegmentSplitterState extends State<SegmentSplitter> {
                   startIndex: widget.startIndex!,
                   endIndex: widget.endIndex!,
                 );
-                widget.onSegmentCreated(segment);
+                widget.onSegmentCreated?.call(segment);
                 Navigator.pop(context);
-                widget.onCancel();
+                widget.onCancel?.call();
               }
             },
             child: const Text('Save'),

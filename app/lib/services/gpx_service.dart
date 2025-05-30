@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:xml/xml.dart';
-import '../models/gpx_track.dart';
+import '../models/simple_gpx_track.dart';
 
 /// Service for parsing GPX files
 class GpxService {
-  /// Parse a GPX file and return a GpxTrack
-  static Future<GpxTrack> parseGpxFile(String filePath) async {
+  /// Parse a GPX file and return a SimpleGpxTrack
+  static Future<SimpleGpxTrack> parseGpxFile(String filePath) async {
     try {
       final file = File(filePath);
       final contents = await file.readAsString();
@@ -16,7 +16,7 @@ class GpxService {
   }
 
   /// Parse GPX content from a string
-  static GpxTrack parseGpxString(String gpxContent, String fileName) {
+  static SimpleGpxTrack parseGpxString(String gpxContent, String fileName) {
     try {
       final document = XmlDocument.parse(gpxContent);
       final gpxElement = document.findElements('gpx').first;
@@ -31,7 +31,7 @@ class GpxService {
         throw GpxParseException('No track points found in GPX file');
       }
       
-      return GpxTrack(
+      return SimpleGpxTrack(
         name: trackName,
         points: points,
         description: _extractDescription(gpxElement),

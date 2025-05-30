@@ -5,7 +5,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/segment.dart';
-import '../models/gpx_track.dart';
+import '../models/simple_gpx_track.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Service for handling database operations

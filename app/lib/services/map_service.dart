@@ -2,16 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../models/gpx_track.dart';
+import '../models/simple_gpx_track.dart';
 
 class MapService extends ChangeNotifier {
-  GpxTrack? _currentTrack;
+  SimpleGpxTrack? _currentTrack;
   final MapController _mapController = MapController();
   bool _isMapReady = false;
 
   MapService();
 
-  GpxTrack? get currentTrack => _currentTrack;
+  SimpleGpxTrack? get currentTrack => _currentTrack;
   bool get isTrackLoaded => _currentTrack != null;
   MapController get mapController => _mapController;
   List<LatLng> get trackPoints => _currentTrack?.points.map((p) => p.toLatLng()).toList() ?? [];
@@ -32,7 +32,7 @@ class MapService extends ChangeNotifier {
     });
   }
 
-  void setTrack(GpxTrack track) {
+  void setTrack(SimpleGpxTrack track) {
     _currentTrack = track;
     _scheduleZoomToTrackBounds();
     notifyListeners();
