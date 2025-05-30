@@ -285,3 +285,9 @@ Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
   }
 }
 ```
+
+## Implementation Plan Rules
+- **NEVER** include testing requirements in implementation plans
+- **NEVER** include timeline estimates in implementation plans
+- Focus on implementation steps, UI changes, and success criteria
+- Keep plans concise and focused on what needs to be built
