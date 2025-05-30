@@ -85,7 +85,7 @@ class ImportService extends ChangeNotifier {
         final baseName = _importOptions.segmentName.isEmpty 
           ? 'Segment'
           : _importOptions.segmentName;
-        _statusMessage = '$baseName $_currentSegmentNumber';
+        _statusMessage = 'New segment: $baseName $_currentSegmentNumber';
         break;
     }
   }

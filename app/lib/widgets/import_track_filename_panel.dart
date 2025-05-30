@@ -66,7 +66,7 @@ class ImportTrackFilenamePanel extends StatelessWidget {
             )
           else ...[
             IconButton(
-              icon: const Icon(Icons.info_outline),
+              icon: const Icon(Icons.settings),
               onPressed: onInfo,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),

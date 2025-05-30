@@ -35,12 +35,15 @@ class ImportTrackStatusBar extends StatelessWidget {
         children: [
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  status,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: Text(
+                    status,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ),
                 if (errorMessage != null)
                   Text(
