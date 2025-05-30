@@ -205,4 +205,23 @@ File
 
 Window
 ├── MapDesk                 (no shortcut)
-``` 
+```
+
+## Flutter UI Rules
+- Always set `debugShowCheckedModeBanner: false` in every `MaterialApp` to hide the debug banner in all builds.
+- Always use the `file_selector` package for file selection in Flutter projects (do not use `file_picker` or other packages for this purpose).
+
+## Flutter Project Configuration Best Practices
+
+### Xcode Project Configuration
+- **NEVER** modify the `project.pbxproj` file manually unless absolutely necessary
+- If build issues occur, restore the original `project.pbxproj` from git repository
+- The default Flutter-generated configuration handles engine paths correctly
+- Modifying engine paths can break the build process
+- When in doubt, use `git checkout` to restore original configuration
+
+### Troubleshooting Steps
+1. First try restoring original configuration files
+2. Clean and rebuild the project
+3. Only modify project configuration as a last resort
+4. Document any necessary configuration changes
