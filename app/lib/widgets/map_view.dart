@@ -7,7 +7,16 @@ import 'map_controls.dart';
 import 'segment_splitter.dart';
 
 class MapView extends StatefulWidget {
-  const MapView({super.key});
+  final void Function(int)? onPointSelected;
+  final int? splitStartIndex;
+  final int? splitEndIndex;
+
+  const MapView({
+    super.key,
+    this.onPointSelected,
+    this.splitStartIndex,
+    this.splitEndIndex,
+  });
 
   @override
   State<MapView> createState() => _MapViewState();
@@ -102,18 +111,18 @@ class _MapViewState extends State<MapView> {
                   ),
                 ],
               ),
-              if (isSplitMode)
+              if (isSplitMode && widget.onPointSelected != null)
                 MarkerLayer(
                   markers: trackPoints.asMap().entries.map((entry) {
                     final index = entry.key;
                     final point = entry.value;
-                    final isSelected = index == _splitStartIndex || index == _splitEndIndex;
+                    final isSelected = index == widget.splitStartIndex || index == widget.splitEndIndex;
                     return Marker(
                       point: point,
                       width: 24,
                       height: 24,
                       child: GestureDetector(
-                        onTap: () => _handlePointSelect(index),
+                        onTap: () => widget.onPointSelected!(index),
                         child: Container(
                           decoration: BoxDecoration(
                             color: isSelected ? Colors.blue : Colors.red,

@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   
   # Phase 1 dependencies
-  file_picker: ^6.1.1           # File selection
+  file_selector: ^1.0.3         # Native file picker
   xml: ^6.3.0                   # GPX parsing
 
   # Phase 2 dependencies
@@ -46,7 +46,7 @@ dependencies:
 
   # Phase 3 dependencies
   sqflite: ^2.3.2              # SQLite database
-  path_provider: ^2.1.1        # For getting app support directory
+  path_provider: ^2.1.2        # For getting app support directory
   path: ^1.8.3                 # For path manipulation
   shared_preferences: ^2.2.2
 

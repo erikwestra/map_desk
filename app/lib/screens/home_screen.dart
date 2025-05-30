@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart';
 import '../models/gpx_track.dart';
 import '../services/gpx_service.dart';
 import '../services/map_service.dart';
 import '../widgets/map_view.dart';
 import '../services/database_service.dart';
+import '../widgets/segment_splitter.dart';
+import '../models/segment.dart';
+import '../widgets/map_controls.dart';
 
 /// Main home screen for MapDesk Phase 2
 class HomeScreen extends StatefulWidget {
@@ -17,8 +22,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String? _errorMessage;
   bool _isLoading = false;
+  String? _errorMessage;
+  String? _successMessage;
+  GpxTrack? _importedTrack;
+  int? _splitStartIndex;
+  int? _splitEndIndex;
 
   @override
   void initState() {
@@ -63,6 +72,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         PlatformMenu(
+          label: 'Segments',
+          menus: [
+            PlatformMenuItem(
+              label: 'Import Track',
+              onSelected: () => _openImportWindow(),
+              shortcut: const SingleActivator(
+                LogicalKeyboardKey.keyI,
+                meta: true,
+              ),
+            ),
+          ],
+        ),
+        PlatformMenu(
           label: 'Window',
           menus: [
             PlatformMenuItem(
@@ -76,46 +98,19 @@ class _HomeScreenState extends State<HomeScreen> {
         body: Stack(
           children: [
             const MapView(),
-            if (mapService.isTrackLoaded)
+            if (_errorMessage != null)
               Positioned(
                 top: 16,
                 left: 16,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Split Mode',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(width: 8),
-                        Switch(
-                          value: mapService.isSplitMode,
-                          onChanged: (value) {
-                            mapService.toggleSplitMode();
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            if (_errorMessage != null)
-              Positioned(
-                bottom: 16,
-                left: 16,
                 right: 16,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.white),
+                child: Card(
+                  color: Colors.red.shade100,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
                 ),
               ),
@@ -138,25 +133,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['gpx'],
-        allowMultiple: false,
+      final typeGroup = XTypeGroup(
+        label: 'GPX',
+        extensions: ['gpx'],
       );
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
 
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        if (file.path != null) {
-          final track = await GpxService.parseGpxFile(file.path!);
-          context.read<MapService>().setTrack(track);
-          setState(() {
-            _errorMessage = null;
-          });
-        } else {
-          setState(() {
-            _errorMessage = 'Could not access the selected file';
-          });
-        }
+      if (file != null) {
+        final track = await GpxService.parseGpxFile(file.path);
+        context.read<MapService>().setTrack(track);
+        setState(() {
+          _errorMessage = null;
+        });
       }
     } catch (e) {
       setState(() {
@@ -168,6 +156,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  void _openImportWindow() {
+    Navigator.pushNamed(context, '/import');
   }
 
   void _bringToFront() {

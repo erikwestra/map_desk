@@ -1,3 +1,5 @@
+import 'package:latlong2/latlong.dart';
+
 /// GPX Track data model for MapDesk Phase 1
 class GpxTrack {
   final String name;
@@ -36,6 +38,8 @@ class GpxPoint {
     this.elevation,
     this.time,
   });
+
+  LatLng toLatLng() => LatLng(latitude, longitude);
 
   @override
   String toString() {
