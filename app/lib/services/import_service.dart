@@ -59,7 +59,10 @@ class ImportService extends ChangeNotifier {
         _statusMessage = 'Click on endpoint to create segment $baseName $_currentSegmentNumber';
         break;
       case ImportState.segmentSelected:
-        _statusMessage = 'Segment Selected';
+        final baseName = _importOptions.segmentName.isEmpty 
+          ? 'Segment'
+          : _importOptions.segmentName;
+        _statusMessage = 'Creating segment $baseName $_currentSegmentNumber';
         break;
     }
   }
