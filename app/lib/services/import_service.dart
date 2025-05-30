@@ -36,10 +36,25 @@ class ImportService extends ChangeNotifier {
   int? get startPointIndex => _track?.startPointIndex;
   int? get endPointIndex => _track?.endPointIndex;
   List<LatLng> get selectedPoints => _track?.selectedPoints ?? [];
-  List<LatLng> get unselectedPoints => _track == null ? [] : 
-    _track!.points.map((p) => p.toLatLng()).toList()
-      .where((p) => !_track!.selectedPoints.contains(p))
-      .toList();
+  List<LatLng> get unselectedPoints {
+    if (_track == null) return [];
+    
+    final allPoints = _track!.points.map((p) => p.toLatLng()).toList();
+    final selected = _track!.selectedPoints;
+    
+    // If we have a start point but no end point, include all points after the start
+    if (_track!.startPointIndex != null && _track!.endPointIndex == null) {
+      return allPoints.sublist(_track!.startPointIndex!);
+    }
+    
+    // If we have both start and end points, include all points after the end
+    if (_track!.startPointIndex != null && _track!.endPointIndex != null) {
+      return allPoints.sublist(_track!.endPointIndex!);
+    }
+    
+    // Otherwise return all points that aren't in the selected set
+    return allPoints.where((p) => !selected.contains(p)).toList();
+  }
   String get statusMessage => _statusMessage;
   ImportState get state => _state;
   int get currentSegmentNumber => _currentSegmentNumber;
