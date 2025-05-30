@@ -111,17 +111,11 @@ class _SegmentSplitterState extends State<SegmentSplitter> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: widget.onCancel,
-                    child: const Text('Cancel'),
-                  ),
-                  if (widget.startIndex != null && widget.endIndex != null) ...[
-                    const SizedBox(width: 8),
+                  if (widget.startIndex != null && widget.endIndex != null)
                     ElevatedButton(
                       onPressed: _showSegmentDialog,
                       child: const Text('Save Segment'),
                     ),
-                  ],
                 ],
               ),
             ],

@@ -48,12 +48,6 @@ class _ImportTrackViewState extends State<ImportTrackView> {
     });
   }
 
-  void _handleDone() {
-    // Reset the map controller before switching views
-    context.read<ImportService>().resetMapController();
-    context.read<ViewService>().setView(ViewState.mapView);
-  }
-
   @override
   Widget build(BuildContext context) {
     final importService = context.watch<ImportService>();
@@ -82,27 +76,6 @@ class _ImportTrackViewState extends State<ImportTrackView> {
                         endIndex: _splitEndIndex,
                         onPointSelected: _handlePointSelected,
                       ),
-                    Positioned(
-                      top: 16,
-                      right: 16,
-                      child: Row(
-                        children: [
-                          if (importService.isTrackLoaded)
-                            TextButton(
-                              onPressed: () {
-                                importService.toggleSplitMode();
-                              },
-                              child: Text(
-                                importService.isSplitMode ? 'Exit Split Mode' : 'Enter Split Mode',
-                              ),
-                            ),
-                          TextButton(
-                            onPressed: _handleDone,
-                            child: const Text('Done'),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
