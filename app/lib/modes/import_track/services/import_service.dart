@@ -169,6 +169,7 @@ class ImportService extends ChangeNotifier {
     _currentTrack = track;
     _status = 'Click on the start or end of the track to start splitting';
     _isProcessing = false;
+    _selectedItemId = 'file_${track.name}';
     notifyListeners();
   }
 

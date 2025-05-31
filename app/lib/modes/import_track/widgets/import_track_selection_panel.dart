@@ -1,6 +1,8 @@
 // Panel widget for selecting tracks and segments in the import track mode
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/selectable_item.dart';
+import '../services/import_service.dart';
 
 class ImportTrackSelectionPanel extends StatelessWidget {
   final List<SelectableItem> items;
@@ -20,6 +22,9 @@ class ImportTrackSelectionPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final importService = context.watch<ImportService>();
+    final hasTrack = importService.currentTrack != null;
+
     return Container(
       width: 250,
       decoration: BoxDecoration(
@@ -31,6 +36,21 @@ class ImportTrackSelectionPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // File controls at the top - only show when no track is loaded
+          if (!hasTrack)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onOpenFile,
+                      child: const Text('Open'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Item list
           Expanded(
             child: ListView.builder(
@@ -51,20 +71,6 @@ class ImportTrackSelectionPanel extends StatelessWidget {
                     : null,
                 );
               },
-            ),
-          ),
-          // File controls at the bottom
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onOpenFile,
-                    child: const Text('Open'),
-                  ),
-                ),
-              ],
             ),
           ),
         ],
