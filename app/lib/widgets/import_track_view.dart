@@ -19,48 +19,49 @@ class ImportTrackView extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: ImportMapView(
-                      onPointSelected: (index) => importService.selectPoint(index),
-                    ),
-                  ),
+                  // Left sidebar
                   Container(
-                    width: 1,
-                    color: Theme.of(context).dividerColor,
-                  ),
-                  SizedBox(
                     width: 300,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      border: Border(
+                        right: BorderSide(
+                          color: Theme.of(context).dividerColor,
+                          width: 1,
+                        ),
+                      ),
+                    ),
                     child: Column(
                       children: [
-                        Container(
-                          height: 48,
-                          child: importService.currentTrack != null
-                              ? ImportTrackFilenamePanel(
-                                  filename: importService.currentTrack!.name,
-                                  onClose: () => importService.clearTrack(),
-                                  onInfo: () => importService.showSegmentOptionsDialog(context),
-                                )
-                              : ImportTrackFilenamePanel(
-                                  filename: 'No file selected',
-                                  onClose: () {},
-                                  onInfo: () {},
-                                  showOpenButton: true,
-                                ),
+                        // Filename panel at the top
+                        ImportTrackFilenamePanel(
+                          filename: importService.currentTrack?.name ?? 'No file selected',
+                          onClose: () => importService.clearTrack(),
+                          onInfo: () => importService.showSegmentOptionsDialog(context),
+                          showOpenButton: importService.currentTrack == null,
                         ),
-                        Expanded(
-                          child: importService.track != null
-                              ? const ImportTrackSegmentList()
-                              : const Center(
-                                  child: Text('No track loaded'),
-                                ),
+                        // Divider
+                        Container(
+                          height: 1,
+                          color: Theme.of(context).dividerColor,
+                        ),
+                        // Segment list below
+                        const Expanded(
+                          child: ImportTrackSegmentList(),
                         ),
                       ],
+                    ),
+                  ),
+                  // Main map area
+                  Expanded(
+                    child: ImportMapView(
+                      onPointSelected: (index) => importService.selectPoint(index),
                     ),
                   ),
                 ],
               ),
             ),
+            // Status bar at the bottom
             ImportTrackStatusBar(
               status: importService.statusMessage,
               errorMessage: importService.errorMessage,
