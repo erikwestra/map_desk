@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'simple_gpx_track.dart';
 import 'package:latlong2/latlong.dart';
 
 class SegmentPoint {

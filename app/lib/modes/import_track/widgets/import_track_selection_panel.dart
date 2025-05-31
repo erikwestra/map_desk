@@ -1,18 +1,18 @@
-// Widget for the unified selection panel showing file and segments
+// Panel widget for selecting tracks and segments in the import track mode
 import 'package:flutter/material.dart';
 import '../models/selectable_item.dart';
 
-class SelectionPanel extends StatelessWidget {
+class ImportTrackSelectionPanel extends StatelessWidget {
   final List<SelectableItem> items;
   final String? selectedId;
   final Function(SelectableItem) onItemSelected;
   final VoidCallback onOpenFile;
   final VoidCallback onCloseFile;
 
-  const SelectionPanel({
+  const ImportTrackSelectionPanel({
     super.key,
     required this.items,
-    this.selectedId,
+    required this.selectedId,
     required this.onItemSelected,
     required this.onOpenFile,
     required this.onCloseFile,
@@ -21,19 +21,17 @@ class SelectionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 300,
+      width: 250,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
         border: Border(
           right: BorderSide(
             color: Theme.of(context).dividerColor,
-            width: 1,
           ),
         ),
       ),
       child: Column(
         children: [
-          // List of items
+          // Item list
           Expanded(
             child: ListView.builder(
               itemCount: items.length,
@@ -43,28 +41,29 @@ class SelectionPanel extends StatelessWidget {
                 
                 return ListTile(
                   selected: isSelected,
-                  title: Text(item.title),
+                  title: Text(item.name),
                   onTap: () => onItemSelected(item),
+                  trailing: item.type == SelectableItemType.file
+                    ? IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: onCloseFile,
+                      )
+                    : null,
                 );
               },
             ),
           ),
-          // Open/Close button at bottom
+          // File controls at the bottom
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                if (items.isNotEmpty)
-                  TextButton(
-                    onPressed: onCloseFile,
-                    child: const Text('Close'),
-                  )
-                else
-                  TextButton(
+                Expanded(
+                  child: ElevatedButton(
                     onPressed: onOpenFile,
-                    child: const Text('Open...'),
+                    child: const Text('Open'),
                   ),
+                ),
               ],
             ),
           ),

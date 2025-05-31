@@ -4,7 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../services/map_service.dart';
-import 'map_controls.dart';
+import '../../../../shared/widgets/map_controls.dart';
 
 class MapView extends StatefulWidget {
   const MapView({super.key});

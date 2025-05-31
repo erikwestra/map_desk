@@ -1,8 +1,8 @@
-// Manages map state, track visualization, and navigation functionality.
+// Service for managing map state and track visualization
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../models/simple_gpx_track.dart';
+import '../../../core/models/simple_gpx_track.dart';
 
 class MapService extends ChangeNotifier {
   SimpleGpxTrack? _currentTrack;

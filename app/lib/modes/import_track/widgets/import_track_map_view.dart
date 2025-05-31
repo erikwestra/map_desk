@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
 import '../services/import_service.dart';
-import 'map_controls.dart';
+import '../../../shared/widgets/map_controls.dart';
 
 class ImportTrackMapView extends StatefulWidget {
   final Function(int) onPointSelected;

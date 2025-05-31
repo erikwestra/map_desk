@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:file_selector/file_selector.dart';
-import '../models/simple_gpx_track.dart';
-import '../models/splittable_gpx_track.dart';
-import '../models/segment.dart';
+import '../../../core/models/simple_gpx_track.dart';
+import '../../../core/models/splittable_gpx_track.dart';
+import '../../../core/models/segment.dart';
 import '../models/segment_import_options.dart';
 import '../models/selectable_item.dart';
-import '../widgets/import_options_dialog.dart';
-import '../services/gpx_service.dart';
+import '../widgets/import_track_options_dialog.dart';
+import '../../../core/services/gpx_service.dart';
 
 enum ImportState {
   noFile,
@@ -87,7 +87,7 @@ class ImportService extends ChangeNotifier {
       items.add(SelectableItem.file(
         'file_${_currentTrack!.name}',
         _currentTrack!.name,
-        _currentTrack,
+        _currentTrack!,
       ));
     }
     
@@ -175,6 +175,7 @@ class ImportService extends ChangeNotifier {
     _status = 'Ready to import track';
     _errorMessage = null;
     _isProcessing = false;
+    _selectedItemId = null;
     notifyListeners();
   }
 
@@ -236,7 +237,7 @@ class ImportService extends ChangeNotifier {
     if (_importOptions.segmentName.isEmpty) {
       final options = await showDialog<SegmentImportOptions>(
         context: context,
-        builder: (context) => ImportOptionsDialog(
+        builder: (context) => ImportTrackOptionsDialog(
           initialOptions: _importOptions,
         ),
       );

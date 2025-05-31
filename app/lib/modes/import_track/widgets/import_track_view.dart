@@ -2,12 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/import_service.dart';
-import '../widgets/selection_panel.dart';
+import '../models/selectable_item.dart';
+import '../../../core/models/segment.dart';
+import '../widgets/import_track_selection_panel.dart';
 import '../widgets/import_track_status_bar.dart';
 import '../widgets/import_track_map_view.dart';
 import '../widgets/import_segment_map_view.dart';
-import '../models/selectable_item.dart';
-import '../models/segment.dart';
 
 class ImportTrackView extends StatelessWidget {
   const ImportTrackView({super.key});
@@ -22,7 +22,7 @@ class ImportTrackView extends StatelessWidget {
               child: Row(
                 children: [
                   // Selection panel
-                  SelectionPanel(
+                  ImportTrackSelectionPanel(
                     items: importService.getSelectableItems(),
                     selectedId: importService.selectedItemId,
                     onItemSelected: (item) {
