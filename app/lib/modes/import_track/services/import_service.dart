@@ -136,6 +136,11 @@ class ImportService extends ChangeNotifier {
           }
         }
       }
+      // Update status message for track view
+      _updateStatusMessage();
+    } else if (id.startsWith('segment_')) {
+      // Clear status message when viewing a segment
+      _statusMessage = '';
     }
     
     notifyListeners();
