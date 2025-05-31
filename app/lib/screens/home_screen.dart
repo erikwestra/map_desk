@@ -9,7 +9,6 @@ import '../services/gpx_service.dart';
 import '../services/map_service.dart';
 import '../widgets/map_view.dart';
 import '../services/database_service.dart';
-import '../widgets/segment_splitter.dart';
 import '../models/segment.dart';
 import '../widgets/map_controls.dart';
 import '../widgets/segment_library_view.dart';

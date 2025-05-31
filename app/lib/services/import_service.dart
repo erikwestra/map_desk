@@ -11,7 +11,7 @@ import '../widgets/import_options_dialog.dart';
 enum ImportState {
   noFile,
   fileLoaded,
-  endpointSelected,
+  startPointSelected,
   segmentSelected,
 }
 
@@ -75,7 +75,7 @@ class ImportService extends ChangeNotifier {
       case ImportState.fileLoaded:
         _statusMessage = 'Click on one end of the track to start splitting';
         break;
-      case ImportState.endpointSelected:
+      case ImportState.startPointSelected:
         final baseName = _importOptions.segmentName.isEmpty 
           ? 'Segment'
           : _importOptions.segmentName;
@@ -159,13 +159,13 @@ class ImportService extends ChangeNotifier {
         // In fileLoaded state, we can only select first or last point as start point
         if (index == 0 || index == _track!.points.length - 1) {
           _track!.selectStartPoint(index);
-          _state = ImportState.endpointSelected;
+          _state = ImportState.startPointSelected;
           _updateStatusMessage();
           notifyListeners();
         }
         break;
         
-      case ImportState.endpointSelected:
+      case ImportState.startPointSelected:
         // If we have a start point but no end point, select it
         if (_track!.startPointIndex != null) {
           _track!.selectEndPoint(index);
@@ -226,9 +226,28 @@ class ImportService extends ChangeNotifier {
     // Clear the selection
     _track!.clearSelection();
     
-    // Set state to endpointSelected and select the first point
-    _state = ImportState.endpointSelected;
+    // Set state to startPointSelected and select the first point
+    _state = ImportState.startPointSelected;
     _track!.selectStartPoint(0);
+    
+    _updateStatusMessage();
+    notifyListeners();
+  }
+
+  void cancelCurrentSelection() {
+    if (_track == null || _track!.startPointIndex == null) return;
+    
+    // Remember the start point index
+    final startIndex = _track!.startPointIndex!;
+    
+    // Clear the selection
+    _track!.clearSelection();
+    
+    // Reselect the start point
+    _track!.selectStartPoint(startIndex);
+    
+    // Set state to startPointSelected
+    _state = ImportState.startPointSelected;
     
     _updateStatusMessage();
     notifyListeners();
@@ -287,8 +306,8 @@ class ImportService extends ChangeNotifier {
     // Clear the selection
     _track!.clearSelection();
     
-    // Set state to endpointSelected and select the first point
-    _state = ImportState.endpointSelected;
+    // Set state to startPointSelected and select the first point
+    _state = ImportState.startPointSelected;
     _track!.selectStartPoint(0);
     
     _updateStatusMessage();

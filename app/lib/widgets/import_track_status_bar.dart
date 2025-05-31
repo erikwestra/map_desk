@@ -32,6 +32,7 @@ class ImportTrackStatusBar extends StatelessWidget {
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Expanded(
             child: Column(
@@ -56,6 +57,11 @@ class ImportTrackStatusBar extends StatelessWidget {
             ),
           ),
           if (showSegmentButtons) ...[
+            TextButton(
+              onPressed: () => importService.cancelCurrentSelection(),
+              child: const Text('Cancel'),
+            ),
+            const SizedBox(width: 8),
             TextButton(
               onPressed: () => importService.deleteCurrentSelection(),
               child: const Text('Delete'),

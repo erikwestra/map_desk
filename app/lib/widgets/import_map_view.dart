@@ -73,8 +73,8 @@ class _ImportMapViewState extends State<ImportMapView> {
     final endPointIndex = importService.endPointIndex;
     final importState = importService.state;
 
-    // Show segment options dialog when entering endpointSelected state
-    if (importState == ImportState.endpointSelected && _previousState == ImportState.fileLoaded) {
+    // Show segment options dialog when entering startPointSelected state
+    if (importState == ImportState.startPointSelected && _previousState == ImportState.fileLoaded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         importService.showSegmentOptionsDialog(context);
       });
@@ -110,7 +110,7 @@ class _ImportMapViewState extends State<ImportMapView> {
                   _handleMapTap(point, trackPoints, true);
                   break;
                 
-                case ImportState.endpointSelected:
+                case ImportState.startPointSelected:
                 case ImportState.segmentSelected:
                   // Select a point within the track for segment creation
                   _handleMapTap(point, trackPoints, false);
