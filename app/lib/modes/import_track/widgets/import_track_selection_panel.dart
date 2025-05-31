@@ -24,13 +24,14 @@ class ImportTrackSelectionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final importService = context.watch<ImportService>();
     final hasTrack = importService.currentTrack != null;
+    final theme = Theme.of(context);
 
     return Container(
       width: 250,
       decoration: BoxDecoration(
         border: Border(
           right: BorderSide(
-            color: Theme.of(context).dividerColor,
+            color: theme.dividerColor,
           ),
         ),
       ),
@@ -59,16 +60,30 @@ class ImportTrackSelectionPanel extends StatelessWidget {
                 final item = items[index];
                 final isSelected = item.id == selectedId;
                 
-                return ListTile(
-                  selected: isSelected,
-                  title: Text(item.name),
-                  onTap: () => onItemSelected(item),
-                  trailing: item.type == SelectableItemType.file
-                    ? IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: onCloseFile,
-                      )
-                    : null,
+                return Container(
+                  decoration: BoxDecoration(
+                    color: isSelected 
+                      ? theme.colorScheme.primaryContainer.withOpacity(0.3)
+                      : null,
+                  ),
+                  child: ListTile(
+                    selected: isSelected,
+                    selectedTileColor: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    title: Text(
+                      item.name,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? theme.colorScheme.primary : null,
+                      ),
+                    ),
+                    onTap: () => onItemSelected(item),
+                    trailing: item.type == SelectableItemType.file
+                      ? IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: onCloseFile,
+                        )
+                      : null,
+                  ),
                 );
               },
             ),
