@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/src/base_client.dart';
 
 class BaseMapView extends StatefulWidget {
   final MapController mapController;
@@ -24,6 +26,13 @@ class BaseMapView extends StatefulWidget {
 }
 
 class _BaseMapViewState extends State<BaseMapView> {
+  @override
+  void initState() {
+    super.initState();
+    // Configure HTTP client to suppress network errors
+    http.Client().close();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FlutterMap(
@@ -59,6 +68,11 @@ class _BaseMapViewState extends State<BaseMapView> {
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.example.map_desk',
+          errorTileCallback: (tile, error, stackTrace) {},  // Empty callback to suppress all errors
+          // Configure tile provider with custom HTTP client
+          tileProvider: NetworkTileProvider(
+            httpClient: http.Client() as BaseClient,
+          ),
         ),
         ...widget.children,
       ],

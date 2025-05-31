@@ -141,6 +141,27 @@ class ImportService extends ChangeNotifier {
     } else if (id.startsWith('segment_')) {
       // Clear status message when viewing a segment
       _statusMessage = '';
+      
+      // Find the selected segment
+      final segment = _segments.firstWhere(
+        (s) => 'segment_${s.name}' == id,
+        orElse: () => throw Exception('Selected segment not found'),
+      );
+      
+      // Get the segment points
+      final points = segment.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+      
+      // Calculate bounds of the segment
+      final bounds = LatLngBounds.fromPoints(points);
+      
+      // Fit the map to the segment bounds with padding
+      _mapController.fitBounds(
+        bounds,
+        options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
+      );
+      
+      // Store the zoom level after fitting bounds
+      _lastZoomLevel = _mapController.zoom;
     }
     
     notifyListeners();
@@ -155,16 +176,10 @@ class ImportService extends ChangeNotifier {
         _statusMessage = 'Click on one end of the track to start splitting';
         break;
       case ImportState.startPointSelected:
-        final baseName = _importOptions.segmentName.isEmpty 
-          ? 'Segment'
-          : _importOptions.segmentName;
-        _statusMessage = 'Click on endpoint to create segment $baseName $_currentSegmentNumber';
+        _statusMessage = 'Click to select segment';
         break;
       case ImportState.segmentSelected:
-        final baseName = _importOptions.segmentName.isEmpty 
-          ? 'Segment'
-          : _importOptions.segmentName;
-        _statusMessage = 'New segment: $baseName $_currentSegmentNumber';
+        _statusMessage = 'Segment selected';
         break;
     }
   }
@@ -400,9 +415,29 @@ class ImportService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void createSegment(BuildContext context) {
+  void createSegment(BuildContext context) async {
     if (_track == null || _track!.startPointIndex == null || _track!.endPointIndex == null) {
       return;
+    }
+
+    // If no segment name has been set, show the options dialog first
+    if (_importOptions.segmentName.isEmpty) {
+      // Calculate next segment number based on existing segments
+      final nextNumber = await _calculateNextSegmentNumber();
+      
+      // Create new options with calculated next number
+      final options = await showDialog<SegmentImportOptions>(
+        context: context,
+        builder: (context) => ImportTrackOptionsDialog(
+          initialOptions: _importOptions.copyWith(nextSegmentNumber: nextNumber),
+        ),
+      );
+
+      if (options == null || !context.mounted) {
+        return; // User cancelled the dialog
+      }
+      
+      setImportOptions(options);
     }
 
     final points = _track!.points.map((p) => SegmentPoint(

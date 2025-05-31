@@ -72,14 +72,6 @@ class _ImportTrackMapViewState extends State<ImportTrackMapView> {
     final endPointIndex = importService.endPointIndex;
     final importState = importService.state;
 
-    // Show segment options dialog when entering startPointSelected state
-    if (importState == ImportState.startPointSelected && _previousState == ImportState.fileLoaded) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        importService.showSegmentOptionsDialog(context);
-      });
-    }
-    _previousState = importState;
-
     return Stack(
       children: [
         BaseMapView(
