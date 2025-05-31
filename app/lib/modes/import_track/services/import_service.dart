@@ -23,6 +23,8 @@ class ImportService extends ChangeNotifier {
   final List<Segment> _segments = [];
   final MapController _mapController = MapController();
   bool _isMapReady = false;
+  bool _hasZoomedToBounds = false;
+  double _lastZoomLevel = 2.0;  // Default zoom level
   SegmentImportOptions _importOptions = SegmentImportOptions.defaults();
   String _statusMessage = '';
   ImportState _state = ImportState.noFile;
@@ -69,6 +71,7 @@ class ImportService extends ChangeNotifier {
   String get status => _status;
   bool get isProcessing => _isProcessing;
   String? get selectedItemId => _selectedItemId;
+  double get lastZoomLevel => _lastZoomLevel;  // Add getter for zoom level
   SelectableItem? get selectedItem {
     if (_selectedItemId == null) return null;
     return getSelectableItems().firstWhere(
@@ -113,6 +116,28 @@ class ImportService extends ChangeNotifier {
 
   void selectItem(String id) {
     _selectedItemId = id;
+    
+    // If selecting the track and we have a track loaded
+    if (id.startsWith('file_') && _track != null) {
+      if (!_hasZoomedToBounds) {
+        // First time viewing the track, zoom to bounds
+        _scheduleZoomToTrackBounds();
+      } else {
+        // Already zoomed before, pan to current start point or track center
+        if (_track!.startPointIndex != null) {
+          // If we have a start point, pan to it
+          final point = _track!.points[_track!.startPointIndex!].toLatLng();
+          _mapController.move(point, _lastZoomLevel);
+        } else {
+          // Otherwise pan to track center
+          final bounds = calculateTrackEndpointsBounds();
+          if (bounds != null) {
+            _mapController.move(bounds.center, _lastZoomLevel);
+          }
+        }
+      }
+    }
+    
     notifyListeners();
   }
 
@@ -141,7 +166,7 @@ class ImportService extends ChangeNotifier {
 
   void setMapReady(bool ready) {
     _isMapReady = ready;
-    if (ready && isTrackLoaded) {
+    if (ready && isTrackLoaded && !_hasZoomedToBounds) {
       _scheduleZoomToTrackBounds();
     }
   }
@@ -165,11 +190,13 @@ class ImportService extends ChangeNotifier {
     _importOptions = SegmentImportOptions.defaults();
     _currentSegmentNumber = 1;
     _updateStatusMessage();
-    _scheduleZoomToTrackBounds();
     _currentTrack = track;
     _status = 'Click on the start or end of the track to start splitting';
     _isProcessing = false;
     _selectedItemId = 'file_${track.name}';
+    _hasZoomedToBounds = false;  // Reset the flag when loading a new track
+    // Only zoom to bounds when initially loading the file
+    _scheduleZoomToTrackBounds();
     notifyListeners();
   }
 
@@ -183,6 +210,7 @@ class ImportService extends ChangeNotifier {
     _status = 'Ready to import track';
     _isProcessing = false;
     _selectedItemId = null;
+    _hasZoomedToBounds = false;  // Reset the flag when clearing the track
     notifyListeners();
   }
 
@@ -203,6 +231,8 @@ class ImportService extends ChangeNotifier {
           _track!.selectStartPoint(index);
           _state = ImportState.startPointSelected;
           _updateStatusMessage();
+          // Pan to the selected point at current zoom
+          _panToPoint(index);
           notifyListeners();
         }
         break;
@@ -213,6 +243,8 @@ class ImportService extends ChangeNotifier {
           _track!.selectEndPoint(index);
           _state = ImportState.segmentSelected;
           _updateStatusMessage();
+          // Pan to the selected point at current zoom
+          _panToPoint(index);
           notifyListeners();
         }
         break;
@@ -222,6 +254,8 @@ class ImportService extends ChangeNotifier {
         if (_track!.startPointIndex != null) {
           _track!.selectEndPoint(index);
           _updateStatusMessage();
+          // Pan to the selected point at current zoom
+          _panToPoint(index);
           notifyListeners();
         }
         break;
@@ -230,6 +264,13 @@ class ImportService extends ChangeNotifier {
         // Do nothing in noFile state
         break;
     }
+  }
+
+  void _panToPoint(int index) {
+    if (!_isMapReady || _track == null || index >= _track!.points.length) return;
+    
+    final point = _track!.points[index].toLatLng();
+    _mapController.move(point, _lastZoomLevel);  // Use stored zoom level
   }
 
   Future<void> showSegmentOptionsDialog(BuildContext context) async {
@@ -437,6 +478,8 @@ class ImportService extends ChangeNotifier {
       final bounds = calculateTrackEndpointsBounds();
       if (bounds != null) {
         _mapController.fitBounds(bounds, options: const FitBoundsOptions(padding: EdgeInsets.all(50)));
+        _hasZoomedToBounds = true;
+        _lastZoomLevel = _mapController.zoom;  // Store the zoom level after fitting bounds
       }
     } catch (e) {
       // If the map controller isn't ready yet, schedule another attempt
@@ -446,6 +489,7 @@ class ImportService extends ChangeNotifier {
 
   void resetMapController() {
     _mapController.move(const LatLng(0, 0), 2.0);
+    _lastZoomLevel = 2.0;  // Reset stored zoom level
     notifyListeners();
   }
 

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'dart:math' as math;
 import '../services/import_service.dart';
 import '../../../shared/widgets/map_controls.dart';
+import '../../../shared/widgets/base_map_view.dart';
 
 class ImportTrackMapView extends StatefulWidget {
   final Function(int) onPointSelected;
@@ -81,46 +82,37 @@ class _ImportTrackMapViewState extends State<ImportTrackMapView> {
 
     return Stack(
       children: [
-        FlutterMap(
+        BaseMapView(
           mapController: importService.mapController,
-          options: MapOptions(
-            initialCenter: const LatLng(0, 0),
-            initialZoom: 2,
-            interactionOptions: const InteractionOptions(
-              enableScrollWheel: true,
-              enableMultiFingerGestureRace: true,
-              flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom | InteractiveFlag.scrollWheelZoom,
-            ),
-            maxZoom: 18.0,
-            minZoom: 2.0,
-            onMapReady: () {
-              importService.setMapReady(true);
-            },
-            onTap: (tapPosition, point) {
-              // Handle tap based on import state
-              switch (importState) {
-                case ImportState.noFile:
-                  // Do nothing when no file is loaded
-                  return;
-                
-                case ImportState.fileLoaded:
-                  // Select an endpoint of the track
-                  _handleMapTap(point, trackPoints, true);
-                  break;
-                
-                case ImportState.startPointSelected:
-                case ImportState.segmentSelected:
-                  // Select a point within the track for segment creation
-                  _handleMapTap(point, trackPoints, false);
-                  break;
-              }
-            },
-          ),
+          initialZoom: importService.lastZoomLevel,
+          onMapReady: () {
+            importService.setMapReady(true);
+            // If we have a track and a start point, pan to it
+            if (importService.track != null && importService.startPointIndex != null) {
+              final point = importService.track!.points[importService.startPointIndex!].toLatLng();
+              importService.mapController.move(point, importService.lastZoomLevel);
+            }
+          },
+          onTap: (point) {
+            // Handle tap based on import state
+            switch (importState) {
+              case ImportState.noFile:
+                // Do nothing when no file is loaded
+                return;
+              
+              case ImportState.fileLoaded:
+                // Select an endpoint of the track
+                _handleMapTap(point, trackPoints, true);
+                break;
+              
+              case ImportState.startPointSelected:
+              case ImportState.segmentSelected:
+                // Select a point within the track for segment creation
+                _handleMapTap(point, trackPoints, false);
+                break;
+            }
+          },
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.map_desk',
-            ),
             if (importService.isTrackLoaded) ...[
               // Unselected portion of the track (red)
               if (unselectedPoints.isNotEmpty)

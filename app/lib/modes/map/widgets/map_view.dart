@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../services/map_service.dart';
 import '../../../../shared/widgets/map_controls.dart';
+import '../../../../shared/widgets/base_map_view.dart';
 
 class MapView extends StatefulWidget {
   const MapView({super.key});
@@ -21,28 +22,13 @@ class _MapViewState extends State<MapView> {
 
     return Stack(
       children: [
-        FlutterMap(
+        BaseMapView(
           mapController: mapService.mapController,
-          options: MapOptions(
-            initialCenter: const LatLng(0, 0),
-            initialZoom: 2,
-            interactionOptions: const InteractionOptions(
-              enableScrollWheel: true,
-              enableMultiFingerGestureRace: true,
-              flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom | InteractiveFlag.scrollWheelZoom,
-            ),
-            maxZoom: 18.0,
-            minZoom: 2.0,
-            onMapReady: () {
-              mapService.setMapReady(true);
-            },
-          ),
+          initialZoom: 2.0,
+          onMapReady: () {
+            mapService.setMapReady(true);
+          },
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.mapdesk.app',
-              maxZoom: 19,
-            ),
             if (mapService.isTrackLoaded) ...[
               PolylineLayer(
                 polylines: [

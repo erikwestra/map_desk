@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/models/segment.dart';
 import '../../../shared/widgets/map_controls.dart';
+import '../../../shared/widgets/base_map_view.dart';
 
 class ImportSegmentMapView extends StatelessWidget {
   final Segment segment;
@@ -21,25 +22,20 @@ class ImportSegmentMapView extends StatelessWidget {
 
     return Stack(
       children: [
-        FlutterMap(
+        BaseMapView(
           mapController: mapController,
-          options: MapOptions(
-            onMapReady: () {
-              // Zoom to segment bounds when map is ready
-              if (points.isNotEmpty) {
-                final bounds = LatLngBounds.fromPoints(points);
-                mapController.fitBounds(
-                  bounds,
-                  options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
-                );
-              }
-            },
-          ),
+          initialZoom: 2.0,
+          onMapReady: () {
+            // Zoom to segment bounds when map is ready
+            if (points.isNotEmpty) {
+              final bounds = LatLngBounds.fromPoints(points);
+              mapController.fitBounds(
+                bounds,
+                options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
+              );
+            }
+          },
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.map_desk',
-            ),
             PolylineLayer(
               polylines: [
                 Polyline(
