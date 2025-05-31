@@ -11,7 +11,7 @@ import 'package:latlong2/latlong.dart';
 /// Service for handling database operations
 class DatabaseService {
   static const String _databaseName = 'segments.db';
-  static const int _databaseVersion = 3; // Incremented for v011 migration
+  static const int _databaseVersion = 4; // Incremented for v013 migration
   
   static Database? _database;
   
@@ -129,6 +129,56 @@ class DatabaseService {
       await db.execute('ALTER TABLE segments_new RENAME TO segments');
       
       print('DatabaseService: v011 migration completed successfully');
+    }
+
+    if (oldVersion < 4) {
+      // v013: Enforce unique segment names
+      print('DatabaseService: Running v013 migration (enforcing unique segment names)');
+      
+      // Create temporary table with unique name constraint
+      await db.execute('''
+        CREATE TABLE segments_new (
+          id TEXT PRIMARY KEY,
+          name TEXT UNIQUE NOT NULL,
+          points TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          direction TEXT NOT NULL DEFAULT 'bidirectional'
+        )
+      ''');
+      
+      // Copy data from old table to new table, handling duplicates
+      final List<Map<String, dynamic>> existingSegments = await db.query('segments', orderBy: 'created_at ASC');
+      final Set<String> usedNames = {};
+      
+      for (final segment in existingSegments) {
+        String name = segment['name'] as String;
+        int counter = 1;
+        String originalName = name;
+        
+        // If name is already used, append a number
+        while (usedNames.contains(name)) {
+          name = '$originalName $counter';
+          counter++;
+        }
+        
+        usedNames.add(name);
+        
+        await db.insert('segments_new', {
+          'id': segment['id'],
+          'name': name,
+          'points': segment['points'],
+          'created_at': segment['created_at'],
+          'direction': segment['direction'],
+        });
+      }
+      
+      // Drop old table
+      await db.execute('DROP TABLE segments');
+      
+      // Rename new table to original name
+      await db.execute('ALTER TABLE segments_new RENAME TO segments');
+      
+      print('DatabaseService: v013 migration completed successfully');
     }
     
     print('DatabaseService: Database upgrade completed');

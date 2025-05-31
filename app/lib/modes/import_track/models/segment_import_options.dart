@@ -7,10 +7,12 @@ enum SegmentDirection {
 class SegmentImportOptions {
   final String segmentName;
   final SegmentDirection direction;
+  final int nextSegmentNumber;
   
   const SegmentImportOptions({
     required this.segmentName,
     required this.direction,
+    required this.nextSegmentNumber,
   });
 
   // Create a default instance
@@ -18,6 +20,7 @@ class SegmentImportOptions {
     return const SegmentImportOptions(
       segmentName: '',
       direction: SegmentDirection.oneWay,
+      nextSegmentNumber: 1,
     );
   }
 
@@ -25,10 +28,12 @@ class SegmentImportOptions {
   SegmentImportOptions copyWith({
     String? segmentName,
     SegmentDirection? direction,
+    int? nextSegmentNumber,
   }) {
     return SegmentImportOptions(
       segmentName: segmentName ?? this.segmentName,
       direction: direction ?? this.direction,
+      nextSegmentNumber: nextSegmentNumber ?? this.nextSegmentNumber,
     );
   }
 } 

@@ -180,15 +180,8 @@ class ImportService extends ChangeNotifier {
   }
 
   void setImportOptions(SegmentImportOptions options) {
-    // Only reset the segment number if the base name (without number) has changed
-    final currentBaseName = _importOptions.segmentName.replaceAll(RegExp(r'\s+\d+$'), '');
-    final newBaseName = options.segmentName.replaceAll(RegExp(r'\s+\d+$'), '');
-    
-    if (currentBaseName != newBaseName) {
-      _currentSegmentNumber = 1;
-    }
-    
     _importOptions = options;
+    _currentSegmentNumber = options.nextSegmentNumber;
     _updateStatusMessage();
     notifyListeners();
   }
@@ -329,10 +322,19 @@ class ImportService extends ChangeNotifier {
       elevation: p.elevation,
     )).toList();
     
+    final segmentName = _importOptions.segmentName.isEmpty 
+      ? 'Segment $_currentSegmentNumber'
+      : '${_importOptions.segmentName} $_currentSegmentNumber';
+    
+    // Check if segment name already exists
+    if (_segments.any((s) => s.name == segmentName)) {
+      _errorMessage = 'A segment with this name already exists. Please choose a different name.';
+      notifyListeners();
+      return;
+    }
+    
     final newSegment = Segment.fromPoints(
-      name: _importOptions.segmentName.isEmpty 
-        ? 'Segment $_currentSegmentNumber'
-        : '${_importOptions.segmentName} $_currentSegmentNumber',
+      name: segmentName,
       allPoints: points,
       startIndex: _track!.startPointIndex!,
       endIndex: _track!.endPointIndex!,

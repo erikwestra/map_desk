@@ -16,18 +16,21 @@ class ImportTrackOptionsDialog extends StatefulWidget {
 
 class _ImportTrackOptionsDialogState extends State<ImportTrackOptionsDialog> {
   late final TextEditingController _nameController;
+  late final TextEditingController _numberController;
   late SegmentDirection _selectedDirection;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialOptions.segmentName);
+    _numberController = TextEditingController(text: widget.initialOptions.nextSegmentNumber.toString());
     _selectedDirection = widget.initialOptions.direction;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _numberController.dispose();
     super.dispose();
   }
 
@@ -44,6 +47,15 @@ class _ImportTrackOptionsDialogState extends State<ImportTrackOptionsDialog> {
               labelText: 'Segment Name',
               hintText: 'Enter a name for the segment',
             ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _numberController,
+            decoration: const InputDecoration(
+              labelText: 'Next Segment Number',
+              hintText: 'Enter the next segment number',
+            ),
+            keyboardType: TextInputType.number,
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<SegmentDirection>(
@@ -74,9 +86,21 @@ class _ImportTrackOptionsDialogState extends State<ImportTrackOptionsDialog> {
         ),
         TextButton(
           onPressed: () {
+            // Validate segment number
+            final number = int.tryParse(_numberController.text);
+            if (number == null || number < 1) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please enter a valid segment number (1 or greater)'),
+                ),
+              );
+              return;
+            }
+
             Navigator.of(context).pop(SegmentImportOptions(
               segmentName: _nameController.text,
               direction: _selectedDirection,
+              nextSegmentNumber: number,
             ));
           },
           child: const Text('OK'),
