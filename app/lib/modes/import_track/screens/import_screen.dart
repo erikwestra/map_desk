@@ -17,7 +17,6 @@ class ImportScreen extends StatefulWidget {
 
 class _ImportScreenState extends State<ImportScreen> {
   bool _isLoading = false;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -28,33 +27,46 @@ class _ImportScreenState extends State<ImportScreen> {
     });
   }
 
-  Future<void> _importGpxFile() async {
-    if (_isLoading) return;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Main import track view
+          const ImportTrackView(),
+          
+          // Loading overlay
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
+  Future<void> _importGpxFile() async {
+    final importService = context.read<ImportService>();
+    
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
-      final typeGroup = XTypeGroup(
-        label: 'GPX',
-        extensions: ['gpx'],
-      );
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
-
-      if (file != null) {
-        final track = await GpxService.parseGpxFile(file.path);
-        context.read<ImportService>().setTrack(track);
-      }
+      await importService.importGpxFile(context);
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (mounted) {
+        importService.setError('Failed to import GPX file: ${e.toString()}');
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -66,55 +78,5 @@ class _ImportScreenState extends State<ImportScreen> {
     // Reset the map controller before closing
     context.read<ImportService>().resetMapController();
     Navigator.of(context).pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final importService = context.watch<ImportService>();
-
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _importGpxFile,
-              child: const Text('Try Again'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (!importService.isTrackLoaded) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Import Track'),
-        actions: [
-          TextButton(
-            onPressed: _handleDone,
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-      body: const ImportTrackView(),
-    );
   }
 } 

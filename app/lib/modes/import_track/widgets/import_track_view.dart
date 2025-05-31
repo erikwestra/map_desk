@@ -28,7 +28,7 @@ class ImportTrackView extends StatelessWidget {
                     onItemSelected: (item) {
                       importService.selectItem(item.id);
                     },
-                    onOpenFile: () => importService.importGpxFile(),
+                    onOpenFile: () => importService.importGpxFile(context),
                     onCloseFile: () {
                       importService.clearTrack();
                     },
@@ -43,7 +43,6 @@ class ImportTrackView extends StatelessWidget {
             // Status bar at the bottom
             ImportTrackStatusBar(
               status: importService.statusMessage,
-              errorMessage: importService.errorMessage,
               isProcessing: importService.isProcessing,
             ),
           ],

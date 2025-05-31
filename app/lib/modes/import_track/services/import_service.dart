@@ -29,7 +29,6 @@ class ImportService extends ChangeNotifier {
   int _currentSegmentNumber = 1;
   SimpleGpxTrack? _currentTrack;
   String _status = 'Ready to import track';
-  String? _errorMessage;
   bool _isProcessing = false;
   String? _selectedItemId;
 
@@ -68,7 +67,6 @@ class ImportService extends ChangeNotifier {
   int get currentSegmentNumber => _currentSegmentNumber;
   SimpleGpxTrack? get currentTrack => _currentTrack;
   String get status => _status;
-  String? get errorMessage => _errorMessage;
   bool get isProcessing => _isProcessing;
   String? get selectedItemId => _selectedItemId;
   SelectableItem? get selectedItem {
@@ -76,6 +74,16 @@ class ImportService extends ChangeNotifier {
     return getSelectableItems().firstWhere(
       (item) => item.id == _selectedItemId,
       orElse: () => throw Exception('Selected item not found'),
+    );
+  }
+
+  void _showError(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -160,7 +168,6 @@ class ImportService extends ChangeNotifier {
     _scheduleZoomToTrackBounds();
     _currentTrack = track;
     _status = 'Click on the start or end of the track to start splitting';
-    _errorMessage = null;
     _isProcessing = false;
     notifyListeners();
   }
@@ -173,7 +180,6 @@ class ImportService extends ChangeNotifier {
     _updateStatusMessage();
     _currentTrack = null;
     _status = 'Ready to import track';
-    _errorMessage = null;
     _isProcessing = false;
     _selectedItemId = null;
     notifyListeners();
@@ -228,10 +234,14 @@ class ImportService extends ChangeNotifier {
   Future<void> showSegmentOptionsDialog(BuildContext context) async {
     // Only show dialog if no segment name has been set
     if (_importOptions.segmentName.isEmpty) {
+      // Calculate next segment number based on existing segments
+      final nextNumber = await _calculateNextSegmentNumber();
+      
+      // Create new options with calculated next number
       final options = await showDialog<SegmentImportOptions>(
         context: context,
         builder: (context) => ImportTrackOptionsDialog(
-          initialOptions: _importOptions,
+          initialOptions: _importOptions.copyWith(nextSegmentNumber: nextNumber),
         ),
       );
 
@@ -239,6 +249,38 @@ class ImportService extends ChangeNotifier {
         setImportOptions(options);
       }
     }
+  }
+
+  Future<int> _calculateNextSegmentNumber() async {
+    // Get all existing segments
+    final existingSegments = _segments;
+    
+    // If no segments exist, start with 1
+    if (existingSegments.isEmpty) {
+      return 1;
+    }
+    
+    // Extract numbers from segment names
+    final numbers = <int>[];
+    for (final segment in existingSegments) {
+      final name = segment.name;
+      // Try to extract number from name (e.g., "Segment 1" -> 1)
+      final numberMatch = RegExp(r'\d+$').firstMatch(name);
+      if (numberMatch != null) {
+        final number = int.tryParse(numberMatch.group(0)!);
+        if (number != null) {
+          numbers.add(number);
+        }
+      }
+    }
+    
+    // If no numbers found, start with 1
+    if (numbers.isEmpty) {
+      return 1;
+    }
+    
+    // Return highest number + 1
+    return numbers.reduce((a, b) => a > b ? a : b) + 1;
   }
 
   void clearSelection() {
@@ -311,7 +353,7 @@ class ImportService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void createSegment() {
+  void createSegment(BuildContext context) {
     if (_track == null || _track!.startPointIndex == null || _track!.endPointIndex == null) {
       return;
     }
@@ -328,8 +370,7 @@ class ImportService extends ChangeNotifier {
     
     // Check if segment name already exists
     if (_segments.any((s) => s.name == segmentName)) {
-      _errorMessage = 'A segment with this name already exists. Please choose a different name.';
-      notifyListeners();
+      _showError(context, 'A segment with this name already exists. Please choose a different name.');
       return;
     }
     
@@ -411,19 +452,11 @@ class ImportService extends ChangeNotifier {
     _isProcessing = isProcessing;
     if (isProcessing) {
       _status = 'Processing track...';
-      _errorMessage = null;
     }
     notifyListeners();
   }
 
-  void setError(String message) {
-    _errorMessage = message;
-    _status = 'Error processing track';
-    _isProcessing = false;
-    notifyListeners();
-  }
-
-  Future<void> importGpxFile() async {
+  Future<void> importGpxFile(BuildContext context) async {
     final typeGroup = XTypeGroup(
       label: 'GPX',
       extensions: ['gpx'],
@@ -436,7 +469,7 @@ class ImportService extends ChangeNotifier {
         final track = await GpxService.parseGpxFile(file.path);
         setTrack(track);
       } catch (e) {
-        setError(e.toString());
+        _showError(context, e.toString());
       }
     }
   }

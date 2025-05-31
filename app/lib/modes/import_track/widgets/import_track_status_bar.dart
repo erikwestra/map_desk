@@ -5,13 +5,11 @@ import '../services/import_service.dart';
 
 class ImportTrackStatusBar extends StatelessWidget {
   final String status;
-  final String? errorMessage;
   final bool isProcessing;
 
   const ImportTrackStatusBar({
     super.key,
     required this.status,
-    this.errorMessage,
     this.isProcessing = false,
   });
 
@@ -46,13 +44,6 @@ class ImportTrackStatusBar extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
-                if (errorMessage != null)
-                  Text(
-                    errorMessage!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                  ),
               ],
             ),
           ),
@@ -68,7 +59,7 @@ class ImportTrackStatusBar extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             TextButton(
-              onPressed: () => importService.createSegment(),
+              onPressed: () => importService.createSegment(context),
               child: const Text('Save'),
             ),
           ],
