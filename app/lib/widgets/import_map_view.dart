@@ -121,8 +121,7 @@ class _ImportMapViewState extends State<ImportMapView> {
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.mapdesk.app',
-              maxZoom: 19,
+              userAgentPackageName: 'com.example.app',
             ),
             if (importService.isTrackLoaded) ...[
               // Unselected portion of the track (red)
@@ -147,33 +146,38 @@ class _ImportMapViewState extends State<ImportMapView> {
                     ),
                   ],
                 ),
-              // Start point marker with improved visibility
-              if (startPointIndex != null)
-                CircleLayer(
-                  circles: [
-                    CircleMarker(
-                      point: trackPoints[startPointIndex],
-                      color: const Color(0xFF007AFF).withOpacity(0.8),
-                      radius: 8.0,
-                      borderColor: Colors.white,
-                      borderStrokeWidth: 2.0,
-                    ),
-                  ],
-                ),
-              // End point marker with improved visibility
-              if (endPointIndex != null)
-                CircleLayer(
-                  circles: [
-                    CircleMarker(
-                      point: trackPoints[endPointIndex],
-                      color: const Color(0xFF34C759).withOpacity(0.8),
-                      radius: 8.0,
-                      borderColor: Colors.white,
-                      borderStrokeWidth: 2.0,
-                    ),
-                  ],
-                ),
             ],
+            // Point markers for all track points
+            CircleLayer(
+              circles: trackPoints.map((point) => CircleMarker(
+                point: point,
+                color: Colors.blue.withOpacity(0.5),
+                borderColor: Colors.blue,
+                borderStrokeWidth: 1.0,
+                radius: 3.0,
+              )).toList(),
+            ),
+            // Start and end point markers
+            CircleLayer(
+              circles: [
+                if (startPointIndex != null)
+                  CircleMarker(
+                    point: trackPoints[startPointIndex!],
+                    color: Colors.green.withOpacity(1.0),
+                    borderColor: Colors.green,
+                    borderStrokeWidth: 2.0,
+                    radius: 10.0,
+                  ),
+                if (endPointIndex != null)
+                  CircleMarker(
+                    point: trackPoints[endPointIndex!],
+                    color: Colors.red.withOpacity(1.0),
+                    borderColor: Colors.red,
+                    borderStrokeWidth: 2.0,
+                    radius: 10.0,
+                  ),
+              ],
+            ),
           ],
         ),
         MapControls(mapController: importService.mapController),
