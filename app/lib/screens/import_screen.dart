@@ -5,7 +5,8 @@ import '../services/gpx_service.dart';
 import '../services/import_service.dart';
 import '../models/simple_gpx_track.dart';
 import '../models/segment.dart';
-import '../widgets/import_map_view.dart';
+import '../widgets/import_track_map_view.dart';
+import '../widgets/import_track_view.dart';
 
 class ImportScreen extends StatefulWidget {
   const ImportScreen({super.key});
@@ -113,9 +114,7 @@ class _ImportScreenState extends State<ImportScreen> {
           ),
         ],
       ),
-      body: ImportMapView(
-        onPointSelected: _handlePointSelected,
-      ),
+      body: const ImportTrackView(),
     );
   }
 } 

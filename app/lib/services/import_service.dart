@@ -2,11 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:file_selector/file_selector.dart';
 import '../models/simple_gpx_track.dart';
 import '../models/splittable_gpx_track.dart';
 import '../models/segment.dart';
 import '../models/segment_import_options.dart';
+import '../models/selectable_item.dart';
 import '../widgets/import_options_dialog.dart';
+import '../services/gpx_service.dart';
 
 enum ImportState {
   noFile,
@@ -28,6 +31,7 @@ class ImportService extends ChangeNotifier {
   String _status = 'Ready to import track';
   String? _errorMessage;
   bool _isProcessing = false;
+  String? _selectedItemId;
 
   ImportService();
 
@@ -66,6 +70,43 @@ class ImportService extends ChangeNotifier {
   String get status => _status;
   String? get errorMessage => _errorMessage;
   bool get isProcessing => _isProcessing;
+  String? get selectedItemId => _selectedItemId;
+  SelectableItem? get selectedItem {
+    if (_selectedItemId == null) return null;
+    return getSelectableItems().firstWhere(
+      (item) => item.id == _selectedItemId,
+      orElse: () => throw Exception('Selected item not found'),
+    );
+  }
+
+  List<SelectableItem> getSelectableItems() {
+    final items = <SelectableItem>[];
+    
+    // Add file item if we have a track
+    if (_currentTrack != null) {
+      items.add(SelectableItem.file(
+        'file_${_currentTrack!.name}',
+        _currentTrack!.name,
+        _currentTrack,
+      ));
+    }
+    
+    // Add segment items
+    for (var segment in _segments) {
+      items.add(SelectableItem.segment(
+        'segment_${segment.name}',
+        segment.name,
+        segment,
+      ));
+    }
+    
+    return items;
+  }
+
+  void selectItem(String id) {
+    _selectedItemId = id;
+    notifyListeners();
+  }
 
   void _updateStatusMessage() {
     switch (_state) {
@@ -377,6 +418,24 @@ class ImportService extends ChangeNotifier {
     _status = 'Error processing track';
     _isProcessing = false;
     notifyListeners();
+  }
+
+  Future<void> importGpxFile() async {
+    final typeGroup = XTypeGroup(
+      label: 'GPX',
+      extensions: ['gpx'],
+    );
+    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+
+    if (file != null) {
+      try {
+        setProcessing(true);
+        final track = await GpxService.parseGpxFile(file.path);
+        setTrack(track);
+      } catch (e) {
+        setError(e.toString());
+      }
+    }
   }
 
   @override

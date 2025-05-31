@@ -1,11 +1,13 @@
-// Main view widget for track import workflow, combining filename panel, map preview, segment splitter, and status bar
+// Main view widget for track import workflow, combining selection panel, map preview, and status bar
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/import_service.dart';
-import '../widgets/import_track_filename_panel.dart';
+import '../widgets/selection_panel.dart';
 import '../widgets/import_track_status_bar.dart';
-import '../widgets/import_track_segment_list.dart';
-import '../widgets/import_map_view.dart';
+import '../widgets/import_track_map_view.dart';
+import '../widgets/import_segment_map_view.dart';
+import '../models/selectable_item.dart';
+import '../models/segment.dart';
 
 class ImportTrackView extends StatelessWidget {
   const ImportTrackView({super.key});
@@ -19,44 +21,21 @@ class ImportTrackView extends StatelessWidget {
             Expanded(
               child: Row(
                 children: [
-                  // Left sidebar
-                  Container(
-                    width: 300,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      border: Border(
-                        right: BorderSide(
-                          color: Theme.of(context).dividerColor,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        // Filename panel at the top
-                        ImportTrackFilenamePanel(
-                          filename: importService.currentTrack?.name ?? 'No file selected',
-                          onClose: () => importService.clearTrack(),
-                          onInfo: () => importService.showSegmentOptionsDialog(context),
-                          showOpenButton: importService.currentTrack == null,
-                        ),
-                        // Divider
-                        Container(
-                          height: 1,
-                          color: Theme.of(context).dividerColor,
-                        ),
-                        // Segment list below
-                        const Expanded(
-                          child: ImportTrackSegmentList(),
-                        ),
-                      ],
-                    ),
+                  // Selection panel
+                  SelectionPanel(
+                    items: importService.getSelectableItems(),
+                    selectedId: importService.selectedItemId,
+                    onItemSelected: (item) {
+                      importService.selectItem(item.id);
+                    },
+                    onOpenFile: () => importService.importGpxFile(),
+                    onCloseFile: () {
+                      importService.clearTrack();
+                    },
                   ),
                   // Main map area
                   Expanded(
-                    child: ImportMapView(
-                      onPointSelected: (index) => importService.selectPoint(index),
-                    ),
+                    child: _buildMapView(importService),
                   ),
                 ],
               ),
@@ -71,5 +50,24 @@ class ImportTrackView extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _buildMapView(ImportService importService) {
+    final selectedItem = importService.selectedItem;
+    
+    if (selectedItem == null) {
+      return const Center(child: Text('Select a track or segment'));
+    }
+
+    if (selectedItem.type == SelectableItemType.file) {
+      return ImportTrackMapView(
+        onPointSelected: (index) => importService.selectPoint(index),
+      );
+    } else {
+      return ImportSegmentMapView(
+        segment: selectedItem.data as Segment,
+        mapController: importService.mapController,
+      );
+    }
   }
 } 
