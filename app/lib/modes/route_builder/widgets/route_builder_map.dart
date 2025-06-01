@@ -59,8 +59,38 @@ class _RouteBuilderMapState extends State<RouteBuilderMap> {
                     polylines: [
                       Polyline(
                         points: routeBuilder.previewPoints,
-                        color: Colors.grey.withOpacity(0.7),
+                        color: Theme.of(context).primaryColor,
                         strokeWidth: 3.0,
+                        isDotted: true,
+                      ),
+                    ],
+                  ),
+                // Preview end point marker
+                if (routeBuilder.previewPoints.isNotEmpty)
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: routeBuilder.previewPoints.last,
+                        width: 16,
+                        height: 16,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                spreadRadius: 1,
+                                blurRadius: 1,
+                                offset: const Offset(0, 0),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -77,22 +107,46 @@ class _RouteBuilderMapState extends State<RouteBuilderMap> {
                       ),
                     ],
                   ),
-                // Route point markers
-                MarkerLayer(
-                  markers: routeBuilder.routePoints.map((point) {
-                    return Marker(
-                      point: point,
-                      width: 12,
-                      height: 12,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
-                          shape: BoxShape.circle,
+                // Start and end point markers
+                if (routeBuilder.routePoints.isNotEmpty)
+                  MarkerLayer(
+                    markers: [
+                      // Start point marker (green)
+                      if (routeBuilder.routePoints.isNotEmpty)
+                        Marker(
+                          point: routeBuilder.routePoints.first,
+                          width: 16,
+                          height: 16,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                      // End point marker (red)
+                      if (routeBuilder.routePoints.length > 1)
+                        Marker(
+                          point: routeBuilder.routePoints.last,
+                          width: 16,
+                          height: 16,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
               ],
             ),
             MapControls(mapController: mapService.mapController),
