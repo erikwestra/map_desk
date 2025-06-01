@@ -143,42 +143,17 @@ class RouteBuilderScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              if (routeBuilder.selectedPoint != null) ...[
-                TextButton(
+              if (routeBuilder.selectedPoint != null && routeBuilder.selectedSegment != null)
+                ElevatedButton(
                   onPressed: () {
-                    routeBuilder.undo();
+                    routeBuilder.addSelectedSegmentToRoute();
                   },
-                  child: const Text('Undo'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Add Segment'),
                 ),
-                if (routeBuilder.selectedSegment != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        routeBuilder.addSelectedSegmentToRoute();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Add Segment'),
-                    ),
-                  ),
-                if (routeBuilder.trackSegments.isNotEmpty) ...[
-                  TextButton(
-                    onPressed: () {
-                      routeBuilder.save();
-                    },
-                    child: const Text('Save Track'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      routeBuilder.clear();
-                    },
-                    child: const Text('Clear'),
-                  ),
-                ],
-              ],
             ],
           ),
         );
