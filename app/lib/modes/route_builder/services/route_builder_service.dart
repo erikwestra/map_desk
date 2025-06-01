@@ -70,32 +70,7 @@ class RouteBuilderService extends ChangeNotifier {
   
   /// Finds segments within the search radius of a point
   Future<void> _findNearbySegments(LatLng point) async {
-    final allSegments = await _segmentService.getAllSegments();
-    final Distance distance = Distance();
-    
-    _nearbySegments = allSegments.where((segment) {
-      // For one-way segments: only include if first point is within radius
-      if (segment.direction == 'one-way') {
-        final firstPoint = LatLng(
-          segment.points.first.latitude,
-          segment.points.first.longitude,
-        );
-        return distance.as(LengthUnit.Meter, point, firstPoint) <= _searchRadius;
-      }
-      
-      // For bidirectional segments: include if either first or last point is within radius
-      final firstPoint = LatLng(
-        segment.points.first.latitude,
-        segment.points.first.longitude,
-      );
-      final lastPoint = LatLng(
-        segment.points.last.latitude,
-        segment.points.last.longitude,
-      );
-      
-      return distance.as(LengthUnit.Meter, point, firstPoint) <= _searchRadius ||
-             distance.as(LengthUnit.Meter, point, lastPoint) <= _searchRadius;
-    }).toList();
+    _nearbySegments = await _segmentService.findNearbySegments(point, radiusMeters: _searchRadius);
   }
 
   /// Selects a segment and generates preview points
