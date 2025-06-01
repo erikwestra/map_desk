@@ -17,8 +17,6 @@ class SegmentLibraryList extends StatelessWidget {
     final segments = service.segments;
     final selectedSegment = service.selectedSegment;
 
-    print('Selected segment ID: ${selectedSegment?.id}');
-
     if (segments.isEmpty) {
       return Center(
         child: Text(
@@ -35,8 +33,6 @@ class SegmentLibraryList extends StatelessWidget {
       itemBuilder: (context, index) {
         final segment = segments[index];
         final isSelected = selectedSegment?.id == segment.id;
-        
-        print('Segment ${segment.id}: isSelected = $isSelected');
 
         return ListTile(
           title: Text(
@@ -48,7 +44,6 @@ class SegmentLibraryList extends StatelessWidget {
           ),
           tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
           onTap: () {
-            print('Tapped segment ${segment.id}');
             service.selectSegment(segment);
           },
           trailing: isSelected ? IconButton(

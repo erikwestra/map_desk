@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -35,62 +34,53 @@ class SegmentLibraryMap extends StatelessWidget {
                   ),
                 ],
               ),
+            if (selectedSegment != null)
+              MarkerLayer(
+                markers: [
+                  // Start point marker
+                  Marker(
+                    point: LatLng(
+                      selectedSegment.points.first.latitude,
+                      selectedSegment.points.first.longitude,
+                    ),
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // End point marker
+                  Marker(
+                    point: LatLng(
+                      selectedSegment.points.last.latitude,
+                      selectedSegment.points.last.longitude,
+                    ),
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
         MapControls(mapController: service.mapController),
       ],
     );
-  }
-
-  List<Polyline> _createDirectionArrows(List<LatLng> points, BuildContext context) {
-    if (points.length < 2) return [];
-
-    final arrows = <Polyline>[];
-    final arrowSpacing = 5; // Show arrow every 5 points
-    final arrowSize = 0.0001; // Size of arrow in degrees
-
-    for (var i = 0; i < points.length - 1; i += arrowSpacing) {
-      if (i + 1 >= points.length) break;
-
-      final start = points[i];
-      final end = points[i + 1];
-      
-      // Calculate direction vector
-      final dx = end.longitude - start.longitude;
-      final dy = end.latitude - start.latitude;
-      final length = sqrt(dx * dx + dy * dy);
-      
-      // Normalize and scale
-      final ndx = dx / length * arrowSize;
-      final ndy = dy / length * arrowSize;
-      
-      // Calculate perpendicular vector for arrow wings
-      final pdx = -ndy;
-      final pdy = ndx;
-      
-      // Calculate arrow points
-      final arrowBase = LatLng(
-        start.latitude + dy * 0.5,
-        start.longitude + dx * 0.5,
-      );
-      
-      final arrowLeft = LatLng(
-        arrowBase.latitude + pdy,
-        arrowBase.longitude + pdx,
-      );
-      
-      final arrowRight = LatLng(
-        arrowBase.latitude - pdy,
-        arrowBase.longitude - pdx,
-      );
-      
-      arrows.add(Polyline(
-        points: [arrowLeft, arrowBase, arrowRight],
-        color: Theme.of(context).colorScheme.primary,
-        strokeWidth: 2,
-      ));
-    }
-
-    return arrows;
   }
 } 
