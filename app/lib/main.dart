@@ -9,6 +9,8 @@ import 'core/services/segment_service.dart';
 import 'modes/map/services/map_service.dart';
 import 'modes/import_track/services/import_service.dart';
 import 'modes/segment_library/services/segment_library_service.dart';
+import 'modes/route_builder/models/route_builder_state.dart';
+import 'modes/route_builder/services/route_builder_service.dart';
 import 'screens/home_screen.dart';
 
 void main() {
@@ -44,6 +46,12 @@ class MyApp extends StatelessWidget {
           create: (context) => ImportService(
             context.read<SegmentService>(),
             context.read<SegmentLibraryService>(),
+          ),
+        ),
+        ChangeNotifierProvider(create: (_) => RouteBuilderStateProvider()),
+        ChangeNotifierProvider(
+          create: (context) => RouteBuilderService(
+            context.read<RouteBuilderStateProvider>(),
           ),
         ),
       ],

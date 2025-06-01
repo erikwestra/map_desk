@@ -11,6 +11,7 @@ import '../modes/import_track/widgets/import_track_view.dart';
 import '../modes/segment_library/screens/segment_library_screen.dart';
 import '../modes/segment_library/services/segment_library_service.dart';
 import '../core/services/segment_service.dart';
+import '../modes/route_builder/screens/route_builder_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -121,8 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case AppMode.segmentLibrary:
         return const SegmentLibraryScreen();
       case AppMode.routeBuilder:
-        // TODO: Implement route builder view
-        return const Center(child: Text('Route Builder'));
+        return const RouteBuilderScreen();
     }
   }
 
