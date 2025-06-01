@@ -21,20 +21,35 @@ class _RouteBuilderMapState extends State<RouteBuilderMap> {
   bool _hasInitialized = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Schedule initialization for after the first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_hasInitialized) {
+        _hasInitialized = true;
+        _initializeMapView(
+          context.read<MapService>(),
+          context.read<SegmentService>(),
+        );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Consumer4<RouteBuilderService, MapService, SegmentService, RouteBuilderStateProvider>(
       builder: (context, routeBuilder, mapService, segmentService, stateProvider, child) {
-        // Initialize map view to show all segments if not already done
-        if (!_hasInitialized && routeBuilder.routePoints.isEmpty) {
-          _hasInitialized = true;
-          _initializeMapView(mapService, segmentService);
-        }
-
         return Stack(
           children: [
             BaseMapView(
               mapController: mapService.mapController,
               initialZoom: 2.0,
+              onMapReady: () {
+                if (!_hasInitialized) {
+                  _hasInitialized = true;
+                  _initializeMapView(mapService, segmentService);
+                }
+              },
               onTap: (point) {
                 routeBuilder.handleMapTap(point);
               },
