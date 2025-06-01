@@ -6,6 +6,7 @@ import 'package:map_desk/core/models/segment.dart';
 import 'package:map_desk/modes/segment_library/services/segment_library_service.dart';
 import 'package:map_desk/modes/segment_library/widgets/segment_library_map.dart';
 import 'package:map_desk/modes/segment_library/widgets/segment_library_edit_dialog.dart';
+import 'package:map_desk/modes/segment_library/widgets/segment_direction_indicator.dart';
 
 /// Widget that displays an alphabetical list of segments in the sidebar.
 class SegmentLibraryList extends StatelessWidget {
@@ -46,50 +47,64 @@ class SegmentLibraryList extends StatelessWidget {
           onTap: () {
             service.selectSegment(segment);
           },
-          trailing: isSelected ? IconButton(
-            icon: const Icon(Icons.edit, size: 20),
-            onPressed: () async {
-              final result = await showDialog(
-                context: context,
-                builder: (context) => SegmentLibraryEditDialog(segment: segment),
-              );
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SegmentDirectionIndicator(
+                direction: segment.direction,
+                size: 32,
+              ),
+              SizedBox(
+                width: 40, // Fixed width for the edit button area
+                child: isSelected
+                    ? IconButton(
+                        icon: const Icon(Icons.edit, size: 20),
+                        onPressed: () async {
+                          final result = await showDialog(
+                            context: context,
+                            builder: (context) => SegmentLibraryEditDialog(segment: segment),
+                          );
 
-              if (result == 'delete') {
-                // Show confirmation dialog
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Delete Segment'),
-                    content: const Text('Are you sure you want to delete this segment?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.error,
-                        ),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  ),
-                );
+                          if (result == 'delete') {
+                            // Show confirmation dialog
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Segment'),
+                                content: const Text('Are you sure you want to delete this segment?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Theme.of(context).colorScheme.error,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
 
-                if (confirmed == true) {
-                  await service.deleteSegment(segment);
-                }
-              } else if (result != null) {
-                // Update segment with new values
-                final updatedSegment = segment.copyWith(
-                  name: result['name'] as String,
-                  direction: result['direction'] as String,
-                );
-                await service.updateSegment(updatedSegment);
-              }
-            },
-          ) : null,
+                            if (confirmed == true) {
+                              await service.deleteSegment(segment);
+                            }
+                          } else if (result != null) {
+                            // Update segment with new values
+                            final updatedSegment = segment.copyWith(
+                              name: result['name'] as String,
+                              direction: result['direction'] as String,
+                            );
+                            await service.updateSegment(updatedSegment);
+                          }
+                        },
+                      )
+                    : null,
+              ),
+            ],
+          ),
         );
       },
     );
