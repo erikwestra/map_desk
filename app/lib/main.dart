@@ -8,6 +8,7 @@ import 'core/services/database_service.dart';
 import 'core/services/gpx_service.dart';
 import 'core/services/segment_service.dart';
 import 'core/services/segment_export_service.dart';
+import 'core/services/segment_import_service.dart';
 import 'modes/map/services/map_service.dart';
 import 'modes/import_track/services/import_service.dart';
 import 'modes/segment_library/services/segment_library_service.dart';
@@ -35,6 +36,11 @@ class MyApp extends StatelessWidget {
         Provider(create: (_) => DatabaseService()),
         Provider(create: (_) => GpxService()),
         Provider(create: (_) => SegmentExportService()),
+        Provider(
+          create: (context) => SegmentImportService(
+            context.read<DatabaseService>(),
+          ),
+        ),
         Provider(
           create: (context) => SegmentService(
             context.read<DatabaseService>(),
@@ -204,20 +210,28 @@ class AppMenuBar extends StatelessWidget {
                   ),
                   PlatformMenuItem(
                     label: 'Import Segments',
-                    onSelected: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Not Yet Implemented'),
-                          content: const Text('Import functionality is coming soon.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('OK'),
+                    onSelected: () async {
+                      try {
+                        await context.read<SegmentImportService>().importFromGeoJSON(context);
+                        // Refresh the segment library to show new segments
+                        await context.read<SegmentLibraryService>().refreshSegments();
+                      } catch (e) {
+                        if (context.mounted) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Import Failed'),
+                              content: Text('Failed to import segments: ${e.toString()}'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
+                          );
+                        }
+                      }
                     },
                   ),
                 ],
