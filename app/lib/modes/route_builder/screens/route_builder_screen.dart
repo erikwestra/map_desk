@@ -164,13 +164,20 @@ class RouteBuilderScreen extends StatelessWidget {
                       child: const Text('Add Segment'),
                     ),
                   ),
-                if (routeBuilder.trackSegments.isNotEmpty)
+                if (routeBuilder.trackSegments.isNotEmpty) ...[
                   TextButton(
                     onPressed: () {
                       routeBuilder.save();
                     },
                     child: const Text('Save Track'),
                   ),
+                  TextButton(
+                    onPressed: () {
+                      routeBuilder.clear();
+                    },
+                    child: const Text('Clear'),
+                  ),
+                ],
               ],
             ],
           ),

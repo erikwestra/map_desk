@@ -23,7 +23,7 @@ class RouteBuilderService extends ChangeNotifier {
   SimpleGpxTrack? _currentTrack;
   String _statusMessage = '';
   bool _isProcessing = false;
-  static const double _searchRadius = 10.0; // 10 meters radius
+  static const double _searchRadius = 20.0; // 20 meters radius
   
   RouteBuilderService(this._stateProvider, this._segmentService, this._mapService);
   
@@ -312,6 +312,24 @@ class RouteBuilderService extends ChangeNotifier {
   /// Set processing state
   void setProcessing(bool isProcessing) {
     _isProcessing = isProcessing;
+    notifyListeners();
+  }
+
+  /// Clears the current track and resets the state
+  void clear() {
+    _routePoints.clear();
+    _selectedPoint = null;
+    _nearbySegments.clear();
+    _selectedSegment = null;
+    _previewPoints = [];
+    _trackSegments.clear();
+    _currentTrack = null;
+    _stateProvider.reset();
+    _statusMessage = 'Track cleared';
+    
+    // Zoom out to show all segments
+    _mapService.zoomToTrackBounds();
+    
     notifyListeners();
   }
 } 
