@@ -119,15 +119,17 @@ class RouteBuilderScreen extends StatelessWidget {
   Widget _buildStatusBar(BuildContext context) {
     return Consumer2<RouteBuilderStateProvider, RouteBuilderService>(
       builder: (context, stateProvider, routeBuilder, child) {
-        String statusMessage;
+        String statusMessage = routeBuilder.statusMessage;
         
-        switch (stateProvider.currentState) {
-          case RouteBuilderState.awaitingStartPoint:
-            statusMessage = 'Click on the map to select a starting point';
-            break;
-          case RouteBuilderState.choosingNextSegment:
-            statusMessage = 'Select a segment to continue building the route';
-            break;
+        if (statusMessage.isEmpty) {
+          switch (stateProvider.currentState) {
+            case RouteBuilderState.awaitingStartPoint:
+              statusMessage = 'Click on the map to select a starting point';
+              break;
+            case RouteBuilderState.choosingNextSegment:
+              statusMessage = 'Select a segment to continue building the route';
+              break;
+          }
         }
 
         return Padding(
@@ -162,12 +164,13 @@ class RouteBuilderScreen extends StatelessWidget {
                       child: const Text('Add Segment'),
                     ),
                   ),
-                TextButton(
-                  onPressed: () {
-                    routeBuilder.save();
-                  },
-                  child: const Text('Save'),
-                ),
+                if (routeBuilder.trackSegments.isNotEmpty)
+                  TextButton(
+                    onPressed: () {
+                      routeBuilder.save();
+                    },
+                    child: const Text('Save Track'),
+                  ),
               ],
             ],
           ),

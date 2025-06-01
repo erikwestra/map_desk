@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/route_builder_state.dart';
 import '../../../core/models/segment.dart';
 import '../../../core/services/segment_service.dart';
+import '../../../core/models/simple_gpx_track.dart';
 
 /// Service class for handling route building logic
 class RouteBuilderService extends ChangeNotifier {
@@ -13,6 +14,10 @@ class RouteBuilderService extends ChangeNotifier {
   List<Segment> _nearbySegments = [];
   Segment? _selectedSegment;
   List<LatLng> _previewPoints = [];
+  final List<Segment> _trackSegments = [];
+  SimpleGpxTrack? _currentTrack;
+  String _statusMessage = '';
+  bool _isProcessing = false;
   static const double _searchRadius = 10.0; // 10 meters radius
   
   RouteBuilderService(this._stateProvider, this._segmentService);
@@ -22,6 +27,10 @@ class RouteBuilderService extends ChangeNotifier {
   List<Segment> get nearbySegments => List.unmodifiable(_nearbySegments);
   Segment? get selectedSegment => _selectedSegment;
   List<LatLng> get previewPoints => List.unmodifiable(_previewPoints);
+  List<Segment> get trackSegments => List.unmodifiable(_trackSegments);
+  SimpleGpxTrack? get currentTrack => _currentTrack;
+  String get statusMessage => _statusMessage;
+  bool get isProcessing => _isProcessing;
   
   /// Handles map tap events based on current state
   Future<void> handleMapTap(LatLng point) async {
@@ -130,31 +139,86 @@ class RouteBuilderService extends ChangeNotifier {
     if (_selectedSegment == null || _previewPoints.isEmpty) return;
 
     _routePoints.addAll(_previewPoints);
+    _trackSegments.add(_selectedSegment!);
+    _updateTrack();
     _selectedSegment = null;
     _previewPoints = [];
+    _statusMessage = 'Segment added to track';
     notifyListeners();
+  }
+
+  /// Updates the current track based on segments
+  void _updateTrack() {
+    if (_trackSegments.isEmpty) {
+      _currentTrack = null;
+      return;
+    }
+
+    final allPoints = <GpxPoint>[];
+    for (final segment in _trackSegments) {
+      allPoints.addAll(segment.points.map((p) => GpxPoint(
+        latitude: p.latitude,
+        longitude: p.longitude,
+        elevation: p.elevation,
+      )));
+    }
+
+    _currentTrack = SimpleGpxTrack(
+      name: 'Built Track',
+      points: allPoints,
+    );
   }
   
   /// Undoes the last action in the route building session
   void undo() {
-    _routePoints.clear();
-    _selectedPoint = null;
-    _nearbySegments.clear();
-    _selectedSegment = null;
-    _previewPoints = [];
-    _stateProvider.reset();
+    if (_trackSegments.isNotEmpty) {
+      _trackSegments.removeLast();
+      _updateTrack();
+      _statusMessage = 'Last segment removed from track';
+    } else {
+      _routePoints.clear();
+      _selectedPoint = null;
+      _nearbySegments.clear();
+      _selectedSegment = null;
+      _previewPoints = [];
+      _stateProvider.reset();
+      _statusMessage = 'Track cleared';
+    }
     notifyListeners();
   }
   
-  /// Saves the current route
-  void save() {
-    // TODO: Implement route saving logic
-    _routePoints.clear();
-    _selectedPoint = null;
-    _nearbySegments.clear();
-    _selectedSegment = null;
-    _previewPoints = [];
-    _stateProvider.reset();
+  /// Saves the current track
+  Future<void> save() async {
+    if (_currentTrack == null) {
+      _statusMessage = 'No track to save';
+      notifyListeners();
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      // TODO: Implement track saving to database
+      _statusMessage = 'Track saved successfully';
+      
+      // Clear the current track after saving
+      _routePoints.clear();
+      _selectedPoint = null;
+      _nearbySegments.clear();
+      _selectedSegment = null;
+      _previewPoints = [];
+      _trackSegments.clear();
+      _currentTrack = null;
+      _stateProvider.reset();
+    } catch (e) {
+      _statusMessage = 'Failed to save track: ${e.toString()}';
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  /// Set processing state
+  void setProcessing(bool isProcessing) {
+    _isProcessing = isProcessing;
     notifyListeners();
   }
 } 

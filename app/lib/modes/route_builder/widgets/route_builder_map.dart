@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../services/route_builder_service.dart';
+import '../models/route_builder_state.dart';
 import '../../map/services/map_service.dart';
 import '../../../../shared/widgets/map_controls.dart';
 import '../../../../shared/widgets/base_map_view.dart';
@@ -21,8 +22,8 @@ class _RouteBuilderMapState extends State<RouteBuilderMap> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer3<RouteBuilderService, MapService, SegmentService>(
-      builder: (context, routeBuilder, mapService, segmentService, child) {
+    return Consumer4<RouteBuilderService, MapService, SegmentService, RouteBuilderStateProvider>(
+      builder: (context, routeBuilder, mapService, segmentService, stateProvider, child) {
         // Initialize map view to show all segments if not already done
         if (!_hasInitialized && routeBuilder.routePoints.isEmpty) {
           _hasInitialized = true;
@@ -146,6 +147,21 @@ class _RouteBuilderMapState extends State<RouteBuilderMap> {
                           ),
                         ),
                     ],
+                  ),
+                // Track segments
+                if (routeBuilder.trackSegments.isNotEmpty)
+                  PolylineLayer(
+                    polylines: routeBuilder.trackSegments.map((segment) {
+                      final points = segment.points.map((p) => 
+                        LatLng(p.latitude, p.longitude)
+                      ).toList();
+                      
+                      return Polyline(
+                        points: points,
+                        color: Colors.blue.withOpacity(0.5),
+                        strokeWidth: 2.0,
+                      );
+                    }).toList(),
                   ),
               ],
             ),
