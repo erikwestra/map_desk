@@ -11,6 +11,8 @@ class RouteBuilderService extends ChangeNotifier {
   final SegmentService _segmentService;
   LatLng? _selectedPoint;
   List<Segment> _nearbySegments = [];
+  Segment? _selectedSegment;
+  List<LatLng> _previewPoints = [];
   static const double _searchRadius = 10.0; // 10 meters radius
   
   RouteBuilderService(this._stateProvider, this._segmentService);
@@ -18,6 +20,8 @@ class RouteBuilderService extends ChangeNotifier {
   List<LatLng> get routePoints => List.unmodifiable(_routePoints);
   LatLng? get selectedPoint => _selectedPoint;
   List<Segment> get nearbySegments => List.unmodifiable(_nearbySegments);
+  Segment? get selectedSegment => _selectedSegment;
+  List<LatLng> get previewPoints => List.unmodifiable(_previewPoints);
   
   /// Handles map tap events based on current state
   Future<void> handleMapTap(LatLng point) async {
@@ -78,12 +82,66 @@ class RouteBuilderService extends ChangeNotifier {
              distance.as(LengthUnit.Meter, point, lastPoint) <= _searchRadius;
     }).toList();
   }
+
+  /// Selects a segment and generates preview points
+  void selectSegment(Segment segment) {
+    _selectedSegment = segment;
+    _generatePreviewPoints();
+    notifyListeners();
+  }
+
+  /// Generates preview points for the selected segment
+  void _generatePreviewPoints() {
+    if (_selectedSegment == null) {
+      _previewPoints = [];
+      return;
+    }
+
+    final segment = _selectedSegment!;
+    final lastRoutePoint = _routePoints.last;
+    final Distance distance = Distance();
+
+    // Convert segment points to LatLng
+    final segmentPoints = segment.points.map((p) => 
+      LatLng(p.latitude, p.longitude)
+    ).toList();
+
+    // For one-way segments, only use the points in order
+    if (segment.direction == 'one-way') {
+      _previewPoints = segmentPoints;
+      return;
+    }
+
+    // For bidirectional segments, determine which direction to use
+    final firstPoint = segmentPoints.first;
+    final lastPoint = segmentPoints.last;
+
+    // Use the direction that's closer to the last route point
+    if (distance.as(LengthUnit.Meter, lastRoutePoint, firstPoint) <
+        distance.as(LengthUnit.Meter, lastRoutePoint, lastPoint)) {
+      _previewPoints = segmentPoints;
+    } else {
+      _previewPoints = segmentPoints.reversed.toList();
+    }
+  }
+
+  /// Adds the selected segment to the route
+  void addSelectedSegmentToRoute() {
+    if (_selectedSegment == null || _previewPoints.isEmpty) return;
+
+    _routePoints.addAll(_previewPoints);
+    _selectedSegment = null;
+    _previewPoints = [];
+    notifyListeners();
+  }
   
   /// Undoes the last action in the route building session
   void undo() {
     _routePoints.clear();
     _selectedPoint = null;
     _nearbySegments.clear();
+    _selectedSegment = null;
+    _previewPoints = [];
     _stateProvider.reset();
     notifyListeners();
   }
@@ -94,6 +152,8 @@ class RouteBuilderService extends ChangeNotifier {
     _routePoints.clear();
     _selectedPoint = null;
     _nearbySegments.clear();
+    _selectedSegment = null;
+    _previewPoints = [];
     _stateProvider.reset();
     notifyListeners();
   }

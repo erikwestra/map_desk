@@ -6,15 +6,29 @@ import '../services/route_builder_service.dart';
 import '../../map/services/map_service.dart';
 import '../../../../shared/widgets/map_controls.dart';
 import '../../../../shared/widgets/base_map_view.dart';
+import '../../../../core/services/segment_service.dart';
 
 /// Map widget specifically for route building interaction
-class RouteBuilderMap extends StatelessWidget {
+class RouteBuilderMap extends StatefulWidget {
   const RouteBuilderMap({super.key});
 
   @override
+  State<RouteBuilderMap> createState() => _RouteBuilderMapState();
+}
+
+class _RouteBuilderMapState extends State<RouteBuilderMap> {
+  bool _hasInitialized = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer2<RouteBuilderService, MapService>(
-      builder: (context, routeBuilder, mapService, child) {
+    return Consumer3<RouteBuilderService, MapService, SegmentService>(
+      builder: (context, routeBuilder, mapService, segmentService, child) {
+        // Initialize map view to show all segments if not already done
+        if (!_hasInitialized && routeBuilder.routePoints.isEmpty) {
+          _hasInitialized = true;
+          _initializeMapView(mapService, segmentService);
+        }
+
         return Stack(
           children: [
             BaseMapView(
@@ -28,12 +42,24 @@ class RouteBuilderMap extends StatelessWidget {
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.map_desk',
                 ),
+                // Current route
                 if (routeBuilder.routePoints.length > 1)
                   PolylineLayer(
                     polylines: [
                       Polyline(
                         points: routeBuilder.routePoints,
                         color: Theme.of(context).primaryColor,
+                        strokeWidth: 3.0,
+                      ),
+                    ],
+                  ),
+                // Preview route
+                if (routeBuilder.previewPoints.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: routeBuilder.previewPoints,
+                        color: Colors.grey.withOpacity(0.7),
                         strokeWidth: 3.0,
                       ),
                     ],
@@ -74,5 +100,29 @@ class RouteBuilderMap extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _initializeMapView(MapService mapService, SegmentService segmentService) async {
+    try {
+      final segments = await segmentService.getAllSegments();
+      if (segments.isEmpty) return;
+
+      // Collect all points from all segments
+      final allPoints = segments.expand((segment) => 
+        segment.points.map((p) => LatLng(p.latitude, p.longitude))
+      ).toList();
+
+      if (allPoints.isEmpty) return;
+
+      // Calculate bounds and zoom to them
+      final bounds = LatLngBounds.fromPoints(allPoints);
+      mapService.mapController.fitBounds(
+        bounds,
+        options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
+      );
+    } catch (e) {
+      // If there's an error, just use the default view
+      mapService.resetMapController();
+    }
   }
 } 

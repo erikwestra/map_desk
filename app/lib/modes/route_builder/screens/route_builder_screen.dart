@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/route_builder_state.dart';
 import '../widgets/route_builder_map.dart';
 import '../services/route_builder_service.dart';
+import '../../../../shared/widgets/segment_direction_indicator.dart';
 
 /// Main screen for the route builder feature
 class RouteBuilderScreen extends StatelessWidget {
@@ -65,34 +66,8 @@ class RouteBuilderScreen extends StatelessWidget {
     final segments = routeBuilder.nearbySegments;
     
     if (segments.isEmpty) {
-      return Column(
-        children: [
-          const Expanded(
-            child: Center(
-              child: Text('No segments found nearby'),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    routeBuilder.undo();
-                  },
-                  child: const Text('Undo'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    routeBuilder.save();
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            ),
-          ),
-        ],
+      return const Center(
+        child: Text('No segments found nearby'),
       );
     }
 
@@ -110,35 +85,30 @@ class RouteBuilderScreen extends StatelessWidget {
             itemCount: segments.length,
             itemBuilder: (context, index) {
               final segment = segments[index];
+              final isSelected = segment == routeBuilder.selectedSegment;
+              
               return ListTile(
                 title: Text(segment.name),
-                subtitle: Text('${segment.pointCount} points'),
-                trailing: Text(segment.direction),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SegmentDirectionIndicator(
+                      direction: segment.direction,
+                      size: 32,
+                    ),
+                    if (isSelected)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8.0),
+                        child: Icon(Icons.check, color: Colors.green),
+                      ),
+                  ],
+                ),
+                selected: isSelected,
                 onTap: () {
-                  // TODO: Handle segment selection
+                  routeBuilder.selectSegment(segment);
                 },
               );
             },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  routeBuilder.undo();
-                },
-                child: const Text('Undo'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  routeBuilder.save();
-                },
-                child: const Text('Save'),
-              ),
-            ],
           ),
         ),
       ],
@@ -146,8 +116,8 @@ class RouteBuilderScreen extends StatelessWidget {
   }
 
   Widget _buildStatusBar(BuildContext context) {
-    return Consumer<RouteBuilderStateProvider>(
-      builder: (context, stateProvider, child) {
+    return Consumer2<RouteBuilderStateProvider, RouteBuilderService>(
+      builder: (context, stateProvider, routeBuilder, child) {
         String statusMessage;
         
         switch (stateProvider.currentState) {
@@ -169,6 +139,35 @@ class RouteBuilderScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
+              const SizedBox(width: 16),
+              if (routeBuilder.selectedPoint != null) ...[
+                TextButton(
+                  onPressed: () {
+                    routeBuilder.undo();
+                  },
+                  child: const Text('Undo'),
+                ),
+                if (routeBuilder.selectedSegment != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        routeBuilder.addSelectedSegmentToRoute();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Add Segment'),
+                    ),
+                  ),
+                TextButton(
+                  onPressed: () {
+                    routeBuilder.save();
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
             ],
           ),
         );

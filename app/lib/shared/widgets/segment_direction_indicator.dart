@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// A widget that displays the direction of a segment using a line with arrowheads.
 /// Shows a green dot at start and red dot at end, with arrow(s) indicating direction.
 /// Direction can be:
-/// - 'forward': shows right arrow only
+/// - 'oneWay': shows right arrow only
 /// - 'backward': shows left arrow only
 /// - 'bidirectional': shows both arrows
 class SegmentDirectionIndicator extends StatelessWidget {
