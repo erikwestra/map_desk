@@ -14,7 +14,6 @@ import 'screens/home_screen.dart';
 void main() {
   // Initialize FFI for desktop platforms
   sqfliteFfiInit();
-  // Change the default factory for desktop platforms
   databaseFactory = databaseFactoryFfi;
   
   runApp(const MyApp());

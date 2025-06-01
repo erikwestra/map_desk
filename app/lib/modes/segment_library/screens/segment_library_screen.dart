@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:map_desk/core/models/segment.dart';
-import 'package:map_desk/core/services/segment_service.dart';
-import 'package:map_desk/modes/segment_library/services/segment_library_service.dart';
-import 'package:map_desk/modes/segment_library/widgets/segment_library_list.dart';
-import 'package:map_desk/modes/segment_library/widgets/segment_library_map.dart';
-import 'package:map_desk/modes/segment_library/widgets/segment_library_toolbar.dart';
+import 'package:provider/provider.dart';
+import '../../../core/models/segment.dart';
+import '../../../core/services/segment_service.dart';
+import '../services/segment_library_service.dart';
+import '../widgets/segment_library_list.dart';
+import '../widgets/segment_library_map.dart';
+import '../widgets/segment_library_toolbar.dart';
 
 /// Main screen for the segment library feature.
 /// Implements a split view with resizable sidebar and map area.
@@ -25,7 +26,7 @@ class SegmentLibraryScreen extends StatefulWidget {
 class _SegmentLibraryScreenState extends State<SegmentLibraryScreen> {
   double _sidebarWidth = 300.0;
   final double _minSidebarWidth = 200.0;
-  final double _maxSidebarWidth = 400.0;
+  final double _maxSidebarWidth = 500.0;
   bool _isLoading = false;
   String? _error;
 
@@ -103,102 +104,105 @@ class _SegmentLibraryScreenState extends State<SegmentLibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Row(
-            children: [
-              SizedBox(
-                width: _sidebarWidth,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SegmentLibraryList(
-                        segments: widget.segmentLibraryService.segments,
-                        selectedSegment: widget.segmentLibraryService.selectedSegment,
-                        onSegmentSelected: (segment) {
-                          widget.segmentLibraryService.selectSegment(segment);
+    return Stack(
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: _sidebarWidth,
+              child: Stack(
+                children: [
+                  SegmentLibraryList(
+                    segments: widget.segmentLibraryService.segments,
+                    selectedSegment: widget.segmentLibraryService.selectedSegment,
+                    onSegmentSelected: widget.segmentLibraryService.selectSegment,
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.resizeLeftRight,
+                      child: GestureDetector(
+                        onHorizontalDragUpdate: (details) {
+                          setState(() {
+                            _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                                .clamp(_minSidebarWidth, _maxSidebarWidth);
+                          });
                         },
+                        child: Container(
+                          width: 8,
+                          color: Colors.transparent,
+                        ),
                       ),
                     ),
-                    if (widget.segmentLibraryService.selectedSegment != null)
-                      SegmentLibraryToolbar(
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 1,
+              color: Theme.of(context).dividerColor,
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  SegmentLibraryMap(
+                    selectedSegment: widget.segmentLibraryService.selectedSegment,
+                  ),
+                  if (widget.segmentLibraryService.selectedSegment != null)
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      child: SegmentLibraryToolbar(
                         selectedSegment: widget.segmentLibraryService.selectedSegment!,
-                        onDelete: (segment) => _deleteSegment(segment),
-                        onUpdate: (segment) => _updateSegment(segment),
+                        onDelete: () => _deleteSegment(widget.segmentLibraryService.selectedSegment!),
+                        onUpdate: _updateSegment,
                       ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (_error != null)
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: Material(
+              color: Theme.of(context).colorScheme.error,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onError,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      color: Theme.of(context).colorScheme.onError,
+                      onPressed: _clearError,
+                    ),
                   ],
                 ),
               ),
-              VerticalDivider(
-                width: 1,
-                thickness: 1,
-                color: Theme.of(context).dividerColor,
-              ),
-              Expanded(
-                child: SegmentLibraryMap(
-                  selectedSegment: widget.segmentLibraryService.selectedSegment,
-                ),
-              ),
-            ],
+            ),
           ),
-          if (_error != null)
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: Material(
-                color: Theme.of(context).colorScheme.error,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _error!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onError,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        color: Theme.of(context).colorScheme.onError,
-                        onPressed: _clearError,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+        if (_isLoading)
+          Container(
+            color: Colors.black.withOpacity(0.5),
+            child: const Center(
+              child: CircularProgressIndicator(),
             ),
-          if (_isLoading)
-            Container(
-              color: Colors.black.withOpacity(0.5),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResizeHandle() {
-    return MouseRegion(
-      cursor: SystemMouseCursors.resizeLeftRight,
-      child: GestureDetector(
-        onHorizontalDragUpdate: (details) {
-          setState(() {
-            _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                .clamp(_minSidebarWidth, _maxSidebarWidth);
-          });
-        },
-        child: Container(
-          width: 4,
-          color: Theme.of(context).dividerColor,
-        ),
-      ),
+          ),
+      ],
     );
   }
 } 
