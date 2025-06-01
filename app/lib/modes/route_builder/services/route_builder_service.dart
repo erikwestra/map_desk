@@ -135,7 +135,7 @@ class RouteBuilderService extends ChangeNotifier {
   }
 
   /// Adds the selected segment to the route
-  void addSelectedSegmentToRoute() {
+  Future<void> addSelectedSegmentToRoute() async {
     if (_selectedSegment == null || _previewPoints.isEmpty) return;
 
     _routePoints.addAll(_previewPoints);
@@ -144,6 +144,18 @@ class RouteBuilderService extends ChangeNotifier {
     _selectedSegment = null;
     _previewPoints = [];
     _statusMessage = 'Segment added to track';
+
+    // Find nearby segments at the new end point
+    final lastPoint = _routePoints.last;
+    await _findNearbySegments(lastPoint);
+    
+    // If we found nearby segments, stay in choosingNextSegment state
+    // Otherwise, transition back to awaitingStartPoint
+    if (_nearbySegments.isEmpty) {
+      _stateProvider.setState(RouteBuilderState.awaitingStartPoint);
+      _statusMessage = 'No more segments found nearby';
+    }
+    
     notifyListeners();
   }
 
