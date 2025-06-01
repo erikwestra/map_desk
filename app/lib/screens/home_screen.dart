@@ -7,6 +7,9 @@ import '../core/services/gpx_service.dart';
 import '../modes/map/services/map_service.dart';
 import '../modes/map/widgets/map_view.dart';
 import '../modes/import_track/widgets/import_track_view.dart';
+import '../modes/segment_library/screens/segment_library_screen.dart';
+import '../modes/segment_library/services/segment_library_service.dart';
+import '../core/services/segment_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -100,8 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
       case AppMode.importTrack:
         return const ImportTrackView();
       case AppMode.segmentLibrary:
-        // TODO: Implement segment library view
-        return const Center(child: Text('Segment Library'));
+        return SegmentLibraryScreen(
+          segmentService: context.read<SegmentService>(),
+          segmentLibraryService: context.read<SegmentLibraryService>(),
+        );
       case AppMode.routeBuilder:
         // TODO: Implement route builder view
         return const Center(child: Text('Route Builder'));

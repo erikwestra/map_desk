@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import 'core/services/mode_service.dart';
 import 'core/services/database_service.dart';
 import 'core/services/gpx_service.dart';
+import 'core/services/segment_service.dart';
 import 'modes/map/services/map_service.dart';
 import 'modes/import_track/services/import_service.dart';
+import 'modes/segment_library/services/segment_library_service.dart';
 import 'screens/home_screen.dart';
 
 void main() {
@@ -22,8 +24,18 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ModeService()),
         Provider(create: (_) => DatabaseService()),
         Provider(create: (_) => GpxService()),
+        Provider(
+          create: (context) => SegmentService(
+            context.read<DatabaseService>(),
+          ),
+        ),
         ChangeNotifierProvider(create: (_) => MapService()),
         ChangeNotifierProvider(create: (_) => ImportService()),
+        Provider(
+          create: (context) => SegmentLibraryService(
+            context.read<SegmentService>(),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'MapDesk',
