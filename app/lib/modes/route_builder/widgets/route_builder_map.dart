@@ -21,7 +21,6 @@ class RouteBuilderMap extends StatelessWidget {
               options: MapOptions(
                 initialCenter: const LatLng(0, 0),
                 initialZoom: 2.0,
-                onTap: (_, point) => routeBuilder.handleMapTap(point),
               ),
               children: [
                 TileLayer(
