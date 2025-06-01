@@ -446,9 +446,28 @@ class ImportService extends ChangeNotifier {
       ? 'Segment $_currentSegmentNumber'
       : '${_importOptions.segmentName} $_currentSegmentNumber';
     
-    // Check if segment name already exists
-    if (_segments.any((s) => s.name == segmentName)) {
+    // Check if segment name already exists in the database
+    final existingSegments = await _segmentService.getAllSegments();
+    if (existingSegments.any((s) => s.name == segmentName)) {
+      // Show error message
       _showError(context, 'A segment with this name already exists. Please choose a different name.');
+      
+      // Show the options dialog again with the current options
+      final options = await showDialog<SegmentImportOptions>(
+        context: context,
+        builder: (context) => ImportTrackOptionsDialog(
+          initialOptions: _importOptions,
+        ),
+      );
+
+      if (options == null || !context.mounted) {
+        return; // User cancelled the dialog
+      }
+      
+      setImportOptions(options);
+      
+      // Try creating the segment again with the new options
+      createSegment(context);
       return;
     }
     
