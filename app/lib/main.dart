@@ -40,7 +40,10 @@ class MyApp extends StatelessWidget {
         
         // State management services
         ChangeNotifierProvider(create: (_) => ModeService()),
-        ChangeNotifierProvider(create: (_) => MapService()),
+        ChangeNotifierProvider<MapService>(
+          create: (_) => MapService(),
+          lazy: false, // Ensure MapService is created immediately
+        ),
         
         // Feature services
         ChangeNotifierProvider(
@@ -61,6 +64,7 @@ class MyApp extends StatelessWidget {
           create: (context) => RouteBuilderService(
             context.read<RouteBuilderStateProvider>(),
             context.read<SegmentService>(),
+            context.read<MapService>(),
           ),
         ),
       ],

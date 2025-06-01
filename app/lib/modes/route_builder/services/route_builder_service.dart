@@ -4,12 +4,14 @@ import '../models/route_builder_state.dart';
 import '../../../core/models/segment.dart';
 import '../../../core/services/segment_service.dart';
 import '../../../core/models/simple_gpx_track.dart';
+import '../../map/services/map_service.dart';
 
 /// Service class for handling route building logic
 class RouteBuilderService extends ChangeNotifier {
   final List<LatLng> _routePoints = [];
   final RouteBuilderStateProvider _stateProvider;
   final SegmentService _segmentService;
+  final MapService _mapService;
   LatLng? _selectedPoint;
   List<Segment> _nearbySegments = [];
   Segment? _selectedSegment;
@@ -20,7 +22,7 @@ class RouteBuilderService extends ChangeNotifier {
   bool _isProcessing = false;
   static const double _searchRadius = 10.0; // 10 meters radius
   
-  RouteBuilderService(this._stateProvider, this._segmentService);
+  RouteBuilderService(this._stateProvider, this._segmentService, this._mapService);
   
   List<LatLng> get routePoints => List.unmodifiable(_routePoints);
   LatLng? get selectedPoint => _selectedPoint;
@@ -148,6 +150,9 @@ class RouteBuilderService extends ChangeNotifier {
     // Find nearby segments at the new end point
     final lastPoint = _routePoints.last;
     await _findNearbySegments(lastPoint);
+    
+    // Pan the map to center on the new endpoint
+    _mapService.mapController.move(lastPoint, _mapService.mapController.zoom);
     
     // If we found nearby segments, stay in choosingNextSegment state
     // Otherwise, transition back to awaitingStartPoint
