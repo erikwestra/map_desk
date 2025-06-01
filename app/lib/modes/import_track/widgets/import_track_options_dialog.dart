@@ -1,5 +1,6 @@
 // Dialog for configuring import options in the import track mode
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/segment_import_options.dart';
 
 class ImportTrackOptionsDialog extends StatefulWidget {
@@ -36,76 +37,105 @@ class _ImportTrackOptionsDialogState extends State<ImportTrackOptionsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Segment Options'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Segment Name',
-              hintText: 'Enter a name for the segment',
-            ),
+    return Shortcuts(
+      shortcuts: {
+        LogicalKeySet(LogicalKeyboardKey.enter): const _SubmitIntent(),
+        LogicalKeySet(LogicalKeyboardKey.escape): const _CancelIntent(),
+      },
+      child: Actions(
+        actions: {
+          _SubmitIntent: CallbackAction<_SubmitIntent>(
+            onInvoke: (_) => _handleSubmit(context),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _numberController,
-            decoration: const InputDecoration(
-              labelText: 'Next Segment Number',
-              hintText: 'Enter the next segment number',
-            ),
-            keyboardType: TextInputType.number,
+          _CancelIntent: CallbackAction<_CancelIntent>(
+            onInvoke: (_) => Navigator.of(context).pop(),
           ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<SegmentDirection>(
-            value: _selectedDirection,
-            decoration: const InputDecoration(
-              labelText: 'Direction',
-            ),
-            items: SegmentDirection.values.map((direction) {
-              return DropdownMenuItem(
-                value: direction,
-                child: Text(direction == SegmentDirection.oneWay ? 'One Way' : 'Bidirectional'),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _selectedDirection = value;
-                });
-              }
-            },
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () {
-            // Validate segment number
-            final number = int.tryParse(_numberController.text);
-            if (number == null || number < 1) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Please enter a valid segment number (1 or greater)'),
+        },
+        child: Focus(
+          autofocus: true,
+          child: AlertDialog(
+            title: const Text('Segment Options'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Segment Name',
+                    hintText: 'Enter a name for the segment',
+                  ),
                 ),
-              );
-              return;
-            }
-
-            Navigator.of(context).pop(SegmentImportOptions(
-              segmentName: _nameController.text,
-              direction: _selectedDirection,
-              nextSegmentNumber: number,
-            ));
-          },
-          child: const Text('OK'),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _numberController,
+                  decoration: const InputDecoration(
+                    labelText: 'Next Segment Number',
+                    hintText: 'Enter the next segment number',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<SegmentDirection>(
+                  value: _selectedDirection,
+                  decoration: const InputDecoration(
+                    labelText: 'Direction',
+                  ),
+                  items: SegmentDirection.values.map((direction) {
+                    return DropdownMenuItem(
+                      value: direction,
+                      child: Text(direction == SegmentDirection.oneWay ? 'One Way' : 'Bidirectional'),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedDirection = value;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => _handleSubmit(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
+
+  void _handleSubmit(BuildContext context) {
+    // Validate segment number
+    final number = int.tryParse(_numberController.text);
+    if (number == null || number < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid segment number (1 or greater)'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop(SegmentImportOptions(
+      segmentName: _nameController.text,
+      direction: _selectedDirection,
+      nextSegmentNumber: number,
+    ));
+  }
+}
+
+class _SubmitIntent extends Intent {
+  const _SubmitIntent();
+}
+
+class _CancelIntent extends Intent {
+  const _CancelIntent();
 } 
