@@ -14,9 +14,21 @@ class SegmentLibraryService extends ChangeNotifier {
   double _lastZoomLevel = 2.0;
   bool _isLoading = false;
   String? _error;
+  bool _isInitialized = false;
 
   SegmentLibraryService(this._segmentService) {
-    _loadSegments();
+    // Initialize asynchronously
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    try {
+      await _loadSegments();
+      _isInitialized = true;
+      notifyListeners();
+    } catch (e) {
+      _showError('Failed to initialize segment library: $e');
+    }
   }
 
   // Getters
@@ -26,6 +38,7 @@ class SegmentLibraryService extends ChangeNotifier {
   double get lastZoomLevel => _lastZoomLevel;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get isInitialized => _isInitialized;
 
   void _showError(String message) {
     print('SegmentLibraryService: $message');
@@ -45,6 +58,7 @@ class SegmentLibraryService extends ChangeNotifier {
 
     try {
       final segments = await _segmentService.getAllSegments();
+      print('SegmentLibraryService: Loaded ${segments.length} segments');
       _segments = segments;
     } catch (e) {
       _showError('Failed to load segments: $e');
@@ -123,5 +137,10 @@ class SegmentLibraryService extends ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  /// Refreshes the segment list from the database
+  Future<void> refreshSegments() async {
+    await _loadSegments();
   }
 } 

@@ -36,13 +36,14 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => MapService()),
         ChangeNotifierProvider(
-          create: (context) => ImportService(
+          create: (context) => SegmentLibraryService(
             context.read<SegmentService>(),
           ),
         ),
         ChangeNotifierProvider(
-          create: (context) => SegmentLibraryService(
+          create: (context) => ImportService(
             context.read<SegmentService>(),
+            context.read<SegmentLibraryService>(),
           ),
         ),
       ],

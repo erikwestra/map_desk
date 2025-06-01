@@ -16,12 +16,11 @@ class SegmentService {
       final db = await _database.database;
       final List<Map<String, dynamic>> maps = await db.query('segments');
       return maps.map((map) {
-        final points = (map['points'] as String).split(';').map((pointStr) {
-          final coords = pointStr.split(',');
+        final points = (jsonDecode(map['points'] as String) as List).map((pointJson) {
           return SegmentPoint(
-            latitude: double.parse(coords[0]),
-            longitude: double.parse(coords[1]),
-            elevation: double.parse(coords[2]),
+            latitude: pointJson['latitude'] as double,
+            longitude: pointJson['longitude'] as double,
+            elevation: pointJson['elevation'] as double?,
           );
         }).toList();
 
@@ -29,7 +28,7 @@ class SegmentService {
           id: map['id'].toString(),
           name: map['name'] as String,
           points: points,
-          createdAt: DateTime.parse(map['created_at'] as String),
+          createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
           direction: map['direction'] as String,
         );
       }).toList();
@@ -51,12 +50,11 @@ class SegmentService {
       if (maps.isEmpty) return null;
 
       final map = maps.first;
-      final points = (map['points'] as String).split(';').map((pointStr) {
-        final coords = pointStr.split(',');
+      final points = (jsonDecode(map['points'] as String) as List).map((pointJson) {
         return SegmentPoint(
-          latitude: double.parse(coords[0]),
-          longitude: double.parse(coords[1]),
-          elevation: double.parse(coords[2]),
+          latitude: pointJson['latitude'] as double,
+          longitude: pointJson['longitude'] as double,
+          elevation: pointJson['elevation'] as double?,
         );
       }).toList();
 
@@ -64,7 +62,7 @@ class SegmentService {
         id: map['id'].toString(),
         name: map['name'] as String,
         points: points,
-        createdAt: DateTime.parse(map['created_at'] as String),
+        createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
         direction: map['direction'] as String,
       );
     } catch (e) {
@@ -90,15 +88,17 @@ class SegmentService {
   Future<void> updateSegment(Segment segment) async {
     try {
       final db = await _database.database;
-      final pointsStr = segment.points.map((p) => 
-        '${p.latitude},${p.longitude},${p.elevation}'
-      ).join(';');
+      final pointsJson = jsonEncode(segment.points.map((p) => {
+        'latitude': p.latitude,
+        'longitude': p.longitude,
+        'elevation': p.elevation,
+      }).toList());
 
       await db.update(
         'segments',
         {
           'name': segment.name,
-          'points': pointsStr,
+          'points': pointsJson,
           'direction': segment.direction,
         },
         where: 'id = ?',
@@ -113,18 +113,22 @@ class SegmentService {
   Future<Segment> createSegment(Segment segment) async {
     try {
       final db = await _database.database;
-      final pointsStr = segment.points.map((p) => 
-        '${p.latitude},${p.longitude},${p.elevation}'
-      ).join(';');
+      final pointsJson = jsonEncode(segment.points.map((p) => {
+        'latitude': p.latitude,
+        'longitude': p.longitude,
+        'elevation': p.elevation,
+      }).toList());
 
-      await db.insert('segments', {
-        'id': segment.id,
-        'name': segment.name,
-        'points': pointsStr,
-        'created_at': DateTime.now().toIso8601String(),
-        'direction': segment.direction,
-      });
-
+      await db.insert(
+        'segments',
+        {
+          'id': segment.id,
+          'name': segment.name,
+          'points': pointsJson,
+          'created_at': segment.createdAt.millisecondsSinceEpoch,
+          'direction': segment.direction,
+        },
+      );
       return segment;
     } catch (e) {
       throw Exception('Failed to create segment: $e');

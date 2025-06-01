@@ -11,6 +11,7 @@ import '../models/selectable_item.dart';
 import '../widgets/import_track_options_dialog.dart';
 import '../../../core/services/gpx_service.dart';
 import '../../../core/services/segment_service.dart';
+import '../../../modes/segment_library/services/segment_library_service.dart';
 
 enum ImportState {
   noFile,
@@ -34,8 +35,9 @@ class ImportService extends ChangeNotifier {
   bool _isProcessing = false;
   String? _selectedItemId;
   final SegmentService _segmentService;
+  final SegmentLibraryService _segmentLibraryService;
 
-  ImportService(this._segmentService);
+  ImportService(this._segmentService, this._segmentLibraryService);
 
   SplittableGpxTrack? get track => _track;
   bool get isTrackLoaded => _track != null;
@@ -475,6 +477,9 @@ class ImportService extends ChangeNotifier {
       // Set state to startPointSelected and select the first point
       _state = ImportState.startPointSelected;
       _track!.selectStartPoint(0);
+      
+      // Refresh the segment library to show the new segment
+      await _segmentLibraryService.refreshSegments();
       
       _updateStatusMessage();
       notifyListeners();
