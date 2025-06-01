@@ -18,115 +18,8 @@ class HomeScreen extends StatefulWidget {
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
-}
 
-class _HomeScreenState extends State<HomeScreen> {
-  void _showError(BuildContext context, String message) {
-    print('HomeScreen: $message');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return PlatformMenuBar(
-      menus: [
-        PlatformMenu(
-          label: 'MapDesk',
-          menus: [
-            PlatformMenuItem(
-              label: 'Quit',
-              shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
-              onSelected: () => _quitApp(context),
-            ),
-          ],
-        ),
-        PlatformMenu(
-          label: 'File',
-          menus: [
-            PlatformMenuItem(
-              label: 'Open',
-              shortcut: const SingleActivator(LogicalKeyboardKey.keyO, meta: true),
-              onSelected: () => _openGpxFile(context),
-            ),
-            PlatformMenuItem(
-              label: 'Reset Database',
-              onSelected: () => _resetDatabase(context),
-            ),
-          ],
-        ),
-        PlatformMenu(
-          label: 'Mode',
-          menus: [
-            PlatformMenuItem(
-              label: 'Map View',
-              shortcut: const SingleActivator(LogicalKeyboardKey.digit1, meta: true),
-              onSelected: () {
-                context.read<ModeService>().setMode(AppMode.map);
-              },
-            ),
-            PlatformMenuItem(
-              label: 'Import Track',
-              shortcut: const SingleActivator(LogicalKeyboardKey.digit2, meta: true),
-              onSelected: () {
-                context.read<ModeService>().setMode(AppMode.importTrack);
-              },
-            ),
-            PlatformMenuItem(
-              label: 'Segment Library',
-              shortcut: const SingleActivator(LogicalKeyboardKey.digit3, meta: true),
-              onSelected: () {
-                context.read<ModeService>().setMode(AppMode.segmentLibrary);
-              },
-            ),
-            PlatformMenuItem(
-              label: 'Route Builder',
-              shortcut: const SingleActivator(LogicalKeyboardKey.digit4, meta: true),
-              onSelected: () {
-                context.read<ModeService>().setMode(AppMode.routeBuilder);
-              },
-            ),
-          ],
-        ),
-        PlatformMenu(
-          label: 'Window',
-          menus: [
-            PlatformMenuItem(
-              label: 'MapDesk',
-              onSelected: () => _bringToFront(context),
-            ),
-          ],
-        ),
-      ],
-      child: Consumer<ModeService>(
-        builder: (context, modeService, child) {
-          return Scaffold(
-            body: _buildCurrentView(context, modeService.currentMode),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildCurrentView(BuildContext context, AppMode mode) {
-    switch (mode) {
-      case AppMode.map:
-        return const MapView();
-      case AppMode.importTrack:
-        return const ImportTrackView();
-      case AppMode.segmentLibrary:
-        return const SegmentLibraryScreen();
-      case AppMode.routeBuilder:
-        return const RouteBuilderScreen();
-    }
-  }
-
-  Future<void> _openGpxFile(BuildContext context) async {
+  static Future<void> openGpxFile(BuildContext context) async {
     bool isLoading = false;
     String? successMessage;
 
@@ -153,14 +46,14 @@ class _HomeScreenState extends State<HomeScreen> {
       isLoading = false;
     }
 
-    if (mounted && successMessage != null) {
+    if (successMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(successMessage)),
       );
     }
   }
 
-  Future<void> _resetDatabase(BuildContext context) async {
+  static Future<void> resetDatabase(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -182,21 +75,54 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    if (confirmed == true && mounted) {
+    if (confirmed == true) {
       try {
         await context.read<DatabaseService>().deleteAllSegments();
         await context.read<SegmentLibraryService>().refreshSegments();
         
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Database reset successfully')),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Database reset successfully')),
+        );
       } catch (e) {
-        if (mounted) {
-          _showError(context, 'Failed to reset database: ${e.toString()}');
-        }
+        _showError(context, 'Failed to reset database: ${e.toString()}');
       }
+    }
+  }
+
+  static void _showError(BuildContext context, String message) {
+    print('HomeScreen: $message');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Consumer<ModeService>(
+        builder: (context, modeService, child) {
+          return _buildCurrentView(context, modeService.currentMode);
+        },
+      ),
+    );
+  }
+
+  Widget _buildCurrentView(BuildContext context, AppMode mode) {
+    switch (mode) {
+      case AppMode.map:
+        return const MapView();
+      case AppMode.importTrack:
+        return const ImportTrackView();
+      case AppMode.segmentLibrary:
+        return const SegmentLibraryScreen();
+      case AppMode.routeBuilder:
+        return const RouteBuilderScreen();
     }
   }
 

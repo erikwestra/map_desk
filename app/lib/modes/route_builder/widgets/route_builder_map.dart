@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../services/route_builder_service.dart';
 import '../../map/services/map_service.dart';
 import '../../../../shared/widgets/map_controls.dart';
+import '../../../../shared/widgets/base_map_view.dart';
 
 /// Map widget specifically for route building interaction
 class RouteBuilderMap extends StatelessWidget {
@@ -16,12 +17,12 @@ class RouteBuilderMap extends StatelessWidget {
       builder: (context, routeBuilder, mapService, child) {
         return Stack(
           children: [
-            FlutterMap(
+            BaseMapView(
               mapController: mapService.mapController,
-              options: MapOptions(
-                initialCenter: const LatLng(0, 0),
-                initialZoom: 2.0,
-              ),
+              initialZoom: 2.0,
+              onTap: (point) {
+                routeBuilder.handleMapTap(point);
+              },
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -37,6 +38,20 @@ class RouteBuilderMap extends StatelessWidget {
                       ),
                     ],
                   ),
+                // Selected point marker
+                if (routeBuilder.selectedPoint != null)
+                  CircleLayer(
+                    circles: [
+                      CircleMarker(
+                        point: routeBuilder.selectedPoint!,
+                        color: Theme.of(context).primaryColor.withOpacity(0.5),
+                        borderColor: Theme.of(context).primaryColor,
+                        borderStrokeWidth: 2.0,
+                        radius: 8.0,
+                      ),
+                    ],
+                  ),
+                // Route point markers
                 MarkerLayer(
                   markers: routeBuilder.routePoints.map((point) {
                     return Marker(
