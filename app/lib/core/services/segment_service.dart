@@ -146,34 +146,7 @@ class SegmentService {
       }).toList();
 
       // Sort segments using natural sorting
-      segments.sort((a, b) {
-        // Split names into parts
-        final aParts = a.name.split(' ');
-        final bParts = b.name.split(' ');
-        
-        // Compare each part
-        for (var i = 0; i < aParts.length && i < bParts.length; i++) {
-          final aPart = aParts[i];
-          final bPart = bParts[i];
-          
-          // Try to parse as numbers
-          final aNum = int.tryParse(aPart);
-          final bNum = int.tryParse(bPart);
-          
-          if (aNum != null && bNum != null) {
-            // If both are numbers, compare numerically
-            if (aNum != bNum) return aNum.compareTo(bNum);
-          } else {
-            // If either is not a number, compare as strings
-            final comparison = aPart.compareTo(bPart);
-            if (comparison != 0) return comparison;
-          }
-        }
-        
-        // If all parts match up to the length of the shorter name,
-        // the shorter name comes first
-        return aParts.length.compareTo(bParts.length);
-      });
+      segments.sort(Segment.compareByName);
 
       return segments;
     } catch (e) {

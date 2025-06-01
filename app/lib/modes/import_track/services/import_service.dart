@@ -388,6 +388,8 @@ class ImportService extends ChangeNotifier {
 
   void addSegment(Segment segment) {
     _segments.add(segment);
+    // Sort segments using natural sorting
+    _segments.sort(Segment.compareByName);
     _state = ImportState.segmentSelected;
     _currentSegmentNumber++;
     _updateStatusMessage();

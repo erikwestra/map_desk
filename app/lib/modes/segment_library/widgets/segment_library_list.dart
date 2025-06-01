@@ -98,6 +98,8 @@ class SegmentLibraryList extends StatelessWidget {
                               direction: result['direction'] as String,
                             );
                             await service.updateSegment(updatedSegment);
+                            // Refresh the segment list to ensure proper sorting
+                            await service.refreshSegments();
                           }
                         },
                       )
