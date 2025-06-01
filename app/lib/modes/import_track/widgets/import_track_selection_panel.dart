@@ -37,21 +37,6 @@ class ImportTrackSelectionPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // File controls at the top - only show when no track is loaded
-          if (!hasTrack)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: onOpenFile,
-                      child: const Text('Open'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           // Item list
           Expanded(
             child: ListView.builder(
