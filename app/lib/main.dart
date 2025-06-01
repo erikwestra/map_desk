@@ -119,12 +119,6 @@ class AppMenuBar extends StatelessWidget {
                   : null,
               ),
               ...RouteBuilderMenu.buildFileMenuItems(context),
-              PlatformMenuItem(
-                label: 'Reset Database',
-                onSelected: () {
-                  HomeScreen.resetDatabase(context);
-                },
-              ),
             ],
           ),
           PlatformMenu(
@@ -163,6 +157,61 @@ class AppMenuBar extends StatelessWidget {
                 onSelected: () {
                   context.read<ModeService>().setMode(AppMode.routeBuilder);
                 },
+              ),
+            ],
+          ),
+          PlatformMenu(
+            label: 'Database',
+            menus: [
+              PlatformMenuItemGroup(
+                members: [
+                  PlatformMenuItem(
+                    label: 'Reset Database',
+                    onSelected: () {
+                      HomeScreen.resetDatabase(context);
+                    },
+                  ),
+                ],
+              ),
+              PlatformMenuItemGroup(
+                members: [
+                  PlatformMenuItem(
+                    label: 'Export Segments',
+                    onSelected: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Not Yet Implemented'),
+                          content: const Text('Export functionality is coming soon.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  PlatformMenuItem(
+                    label: 'Import Segments',
+                    onSelected: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Not Yet Implemented'),
+                          content: const Text('Import functionality is coming soon.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
