@@ -16,6 +16,8 @@ class SegmentLibraryList extends StatelessWidget {
     final segments = service.segments;
     final selectedSegment = service.selectedSegment;
 
+    print('Selected segment ID: ${selectedSegment?.id}');
+
     if (segments.isEmpty) {
       return Center(
         child: Text(
@@ -32,26 +34,28 @@ class SegmentLibraryList extends StatelessWidget {
       itemBuilder: (context, index) {
         final segment = segments[index];
         final isSelected = selectedSegment?.id == segment.id;
-        final theme = Theme.of(context);
+        
+        print('Segment ${segment.id}: isSelected = $isSelected');
 
-        return Container(
-          decoration: BoxDecoration(
-            color: isSelected 
-              ? theme.colorScheme.primaryContainer.withOpacity(0.3)
-              : null,
-          ),
-          child: ListTile(
-            title: Text(
-              segment.name,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? theme.colorScheme.primary : null,
-              ),
+        return ListTile(
+          title: Text(
+            segment.name,
+            style: TextStyle(
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? Theme.of(context).colorScheme.primary : null,
             ),
-            selected: isSelected,
-            selectedTileColor: theme.colorScheme.primaryContainer.withOpacity(0.3),
-            onTap: () => service.selectSegment(segment),
           ),
+          tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
+          onTap: () {
+            print('Tapped segment ${segment.id}');
+            service.selectSegment(segment);
+          },
+          trailing: isSelected ? IconButton(
+            icon: const Icon(Icons.edit, size: 20),
+            onPressed: () {
+              // TODO: Implement edit functionality
+            },
+          ) : null,
         );
       },
     );

@@ -117,20 +117,15 @@ class SegmentService {
         '${p.latitude},${p.longitude},${p.elevation}'
       ).join(';');
 
-      final id = await db.insert('segments', {
+      await db.insert('segments', {
+        'id': segment.id,
         'name': segment.name,
         'points': pointsStr,
         'created_at': DateTime.now().toIso8601String(),
         'direction': segment.direction,
       });
 
-      return Segment(
-        id: id.toString(),
-        name: segment.name,
-        points: segment.points,
-        createdAt: DateTime.now(),
-        direction: segment.direction,
-      );
+      return segment;
     } catch (e) {
       throw Exception('Failed to create segment: $e');
     }

@@ -97,6 +97,9 @@ class SegmentLibraryService extends ChangeNotifier {
 
   /// Selects a segment and zooms the map to it
   void selectSegment(Segment segment) {
+    print('Selecting segment: ${segment.id} - ${segment.name}');
+    print('Current selected segment: ${_selectedSegment?.id} - ${_selectedSegment?.name}');
+    
     _selectedSegment = segment;
     
     // Calculate bounds of the segment
@@ -111,6 +114,8 @@ class SegmentLibraryService extends ChangeNotifier {
     
     _lastZoomLevel = _mapController.zoom;
     notifyListeners();
+    
+    print('After selection - Selected segment: ${_selectedSegment?.id} - ${_selectedSegment?.name}');
   }
 
   /// Updates a segment in the list
