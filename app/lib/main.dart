@@ -12,6 +12,7 @@ import 'modes/import_track/services/import_service.dart';
 import 'modes/segment_library/services/segment_library_service.dart';
 import 'modes/route_builder/models/route_builder_state.dart';
 import 'modes/route_builder/services/route_builder_service.dart';
+import 'modes/route_builder/widgets/route_builder_menu.dart';
 import 'screens/home_screen.dart';
 
 void main() {
@@ -75,103 +76,114 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
         ),
-        home: PlatformMenuBar(
-          menus: [
-            PlatformMenu(
-              label: 'MapDesk',
-              menus: [
-                PlatformMenuItem(
-                  label: 'Quit',
-                  shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
-                  onSelected: () => SystemNavigator.pop(),
-                ),
-              ],
-            ),
-            PlatformMenu(
-              label: 'File',
-              menus: [
-                PlatformMenuItem(
-                  label: 'Open',
-                  shortcut: const SingleActivator(LogicalKeyboardKey.keyO, meta: true),
-                  onSelected: () {
-                    final context = navigatorKey.currentContext;
-                    if (context != null) {
-                      HomeScreen.openGpxFile(context);
-                    }
-                  },
-                ),
-                PlatformMenuItem(
-                  label: 'Reset Database',
-                  onSelected: () {
-                    final context = navigatorKey.currentContext;
-                    if (context != null) {
-                      HomeScreen.resetDatabase(context);
-                    }
-                  },
-                ),
-              ],
-            ),
-            PlatformMenu(
-              label: 'Mode',
-              menus: [
-                PlatformMenuItem(
-                  label: 'Map View',
-                  shortcut: const SingleActivator(LogicalKeyboardKey.digit1, meta: true),
-                  onSelected: () {
-                    final context = navigatorKey.currentContext;
-                    if (context != null) {
-                      context.read<ModeService>().setMode(AppMode.map);
-                    }
-                  },
-                ),
-                PlatformMenuItem(
-                  label: 'Import Track',
-                  shortcut: const SingleActivator(LogicalKeyboardKey.digit2, meta: true),
-                  onSelected: () {
-                    final context = navigatorKey.currentContext;
-                    if (context != null) {
-                      context.read<ModeService>().setMode(AppMode.importTrack);
-                    }
-                  },
-                ),
-                PlatformMenuItem(
-                  label: 'Segment Library',
-                  shortcut: const SingleActivator(LogicalKeyboardKey.digit3, meta: true),
-                  onSelected: () {
-                    final context = navigatorKey.currentContext;
-                    if (context != null) {
-                      context.read<ModeService>().setMode(AppMode.segmentLibrary);
-                    }
-                  },
-                ),
-                PlatformMenuItem(
-                  label: 'Route Builder',
-                  shortcut: const SingleActivator(LogicalKeyboardKey.digit4, meta: true),
-                  onSelected: () {
-                    final context = navigatorKey.currentContext;
-                    if (context != null) {
-                      context.read<ModeService>().setMode(AppMode.routeBuilder);
-                    }
-                  },
-                ),
-              ],
-            ),
-            PlatformMenu(
-              label: 'Window',
-              menus: [
-                PlatformMenuItem(
-                  label: 'MapDesk',
-                  onSelected: () {
-                    final context = navigatorKey.currentContext;
-                    if (context != null) {
-                      FocusScope.of(context).requestFocus();
-                    }
-                  },
-                ),
-              ],
-            ),
-          ],
-          child: const HomeScreen(),
+        home: Consumer<ModeService>(
+          builder: (context, modeService, child) {
+            final menus = [
+              PlatformMenu(
+                label: 'MapDesk',
+                menus: [
+                  PlatformMenuItem(
+                    label: 'Quit',
+                    shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
+                    onSelected: () => SystemNavigator.pop(),
+                  ),
+                ],
+              ),
+              PlatformMenu(
+                label: 'File',
+                menus: [
+                  PlatformMenuItem(
+                    label: 'Open',
+                    shortcut: const SingleActivator(LogicalKeyboardKey.keyO, meta: true),
+                    onSelected: () {
+                      final context = navigatorKey.currentContext;
+                      if (context != null) {
+                        HomeScreen.openGpxFile(context);
+                      }
+                    },
+                  ),
+                  PlatformMenuItem(
+                    label: 'Reset Database',
+                    onSelected: () {
+                      final context = navigatorKey.currentContext;
+                      if (context != null) {
+                        HomeScreen.resetDatabase(context);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              PlatformMenu(
+                label: 'Mode',
+                menus: [
+                  PlatformMenuItem(
+                    label: 'Map View',
+                    shortcut: const SingleActivator(LogicalKeyboardKey.digit1, meta: true),
+                    onSelected: () {
+                      final context = navigatorKey.currentContext;
+                      if (context != null) {
+                        context.read<ModeService>().setMode(AppMode.map);
+                      }
+                    },
+                  ),
+                  PlatformMenuItem(
+                    label: 'Import Track',
+                    shortcut: const SingleActivator(LogicalKeyboardKey.digit2, meta: true),
+                    onSelected: () {
+                      final context = navigatorKey.currentContext;
+                      if (context != null) {
+                        context.read<ModeService>().setMode(AppMode.importTrack);
+                      }
+                    },
+                  ),
+                  PlatformMenuItem(
+                    label: 'Segment Library',
+                    shortcut: const SingleActivator(LogicalKeyboardKey.digit3, meta: true),
+                    onSelected: () {
+                      final context = navigatorKey.currentContext;
+                      if (context != null) {
+                        context.read<ModeService>().setMode(AppMode.segmentLibrary);
+                      }
+                    },
+                  ),
+                  PlatformMenuItem(
+                    label: 'Route Builder',
+                    shortcut: const SingleActivator(LogicalKeyboardKey.digit4, meta: true),
+                    onSelected: () {
+                      final context = navigatorKey.currentContext;
+                      if (context != null) {
+                        context.read<ModeService>().setMode(AppMode.routeBuilder);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              PlatformMenu(
+                label: 'Window',
+                menus: [
+                  PlatformMenuItem(
+                    label: 'MapDesk',
+                    onSelected: () {
+                      final context = navigatorKey.currentContext;
+                      if (context != null) {
+                        FocusScope.of(context).requestFocus();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ];
+
+            // Only add Route menu when in route builder mode
+            if (modeService.currentMode == AppMode.routeBuilder) {
+              menus.insert(3, RouteBuilderMenu.buildMenu(context));
+            }
+
+            return PlatformMenuBar(
+              menus: menus,
+              child: const HomeScreen(),
+            );
+          },
         ),
         debugShowCheckedModeBanner: false,
       ),
