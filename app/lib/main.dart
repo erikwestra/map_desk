@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
             context.read<SegmentService>(),
           ),
         ),
-        Provider(
+        ChangeNotifierProvider(
           create: (context) => SegmentLibraryService(
             context.read<SegmentService>(),
           ),

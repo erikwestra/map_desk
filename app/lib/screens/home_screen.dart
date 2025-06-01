@@ -114,10 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case AppMode.importTrack:
         return const ImportTrackView();
       case AppMode.segmentLibrary:
-        return SegmentLibraryScreen(
-          segmentService: context.read<SegmentService>(),
-          segmentLibraryService: context.read<SegmentLibraryService>(),
-        );
+        return const SegmentLibraryScreen();
       case AppMode.routeBuilder:
         // TODO: Implement route builder view
         return const Center(child: Text('Route Builder'));

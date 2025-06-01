@@ -2,80 +2,42 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 import '../../../core/models/segment.dart';
+import 'package:map_desk/shared/widgets/base_map_view.dart';
+import 'package:map_desk/shared/widgets/map_controls.dart';
+import 'package:map_desk/modes/segment_library/services/segment_library_service.dart';
 
-/// Widget that displays the selected segment on the map.
+/// Map view widget for displaying segments in the segment library.
 class SegmentLibraryMap extends StatelessWidget {
-  final Segment? selectedSegment;
-
-  const SegmentLibraryMap({
-    super.key,
-    required this.selectedSegment,
-  });
+  const SegmentLibraryMap({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (selectedSegment == null) {
-      return const Center(
-        child: Text('Select a segment to view on map'),
-      );
-    }
+    final service = context.watch<SegmentLibraryService>();
+    final selectedSegment = service.selectedSegment;
 
-    final points = selectedSegment!.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
-    final bounds = LatLngBounds.fromPoints(points);
-
-    return FlutterMap(
-      options: MapOptions(
-        initialCenter: bounds.center,
-        initialZoom: 13,
-        cameraConstraint: CameraConstraint.contain(
-          bounds: bounds,
-        ),
-      ),
+    return Stack(
       children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.mapdesk.app',
-        ),
-        PolylineLayer(
-          polylines: [
-            Polyline(
-              points: points,
-              color: Theme.of(context).colorScheme.primary,
-              strokeWidth: 3,
-            ),
+        BaseMapView(
+          mapController: service.mapController,
+          initialZoom: service.lastZoomLevel,
+          children: [
+            if (selectedSegment != null)
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                    points: selectedSegment.points.map((p) => 
+                      LatLng(p.latitude, p.longitude)
+                    ).toList(),
+                    color: Theme.of(context).colorScheme.primary,
+                    strokeWidth: 3.0,
+                  ),
+                ],
+              ),
           ],
         ),
-        // Direction arrows
-        PolylineLayer(
-          polylines: _createDirectionArrows(points, context),
-        ),
-        // Start marker
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: points.first,
-              width: 20,
-              height: 20,
-              child: Icon(
-                Icons.play_arrow,
-                color: Theme.of(context).colorScheme.primary,
-                size: 20,
-              ),
-            ),
-            // End marker
-            Marker(
-              point: points.last,
-              width: 20,
-              height: 20,
-              child: Icon(
-                Icons.stop,
-                color: Theme.of(context).colorScheme.primary,
-                size: 20,
-              ),
-            ),
-          ],
-        ),
+        MapControls(mapController: service.mapController),
       ],
     );
   }
