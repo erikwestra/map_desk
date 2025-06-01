@@ -1,5 +1,8 @@
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:xml/xml.dart';
+import 'dart:io';
 import '../models/route_builder_state.dart';
 import '../../../core/models/segment.dart';
 import '../../../core/services/segment_service.dart';
@@ -214,7 +217,54 @@ class RouteBuilderService extends ChangeNotifier {
 
     setProcessing(true);
     try {
-      // TODO: Implement track saving to database
+      // Prompt user for save location
+      final FileSaveLocation? saveLocation = await getSaveLocation(
+        acceptedTypeGroups: [
+          const XTypeGroup(
+            label: 'GPX Files',
+            extensions: ['gpx'],
+          ),
+        ],
+        suggestedName: '${_currentTrack!.name}.gpx',
+      );
+
+      if (saveLocation == null) {
+        _statusMessage = 'Save cancelled';
+        return;
+      }
+
+      // Create GPX document
+      final builder = XmlBuilder();
+      builder.processing('xml', 'version="1.0" encoding="UTF-8"');
+      builder.element('gpx', nest: () {
+        builder.attribute('version', '1.1');
+        builder.attribute('creator', 'MapDesk');
+        builder.attribute('xmlns', 'http://www.topografix.com/GPX/1/1');
+        builder.attribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+        builder.attribute('xsi:schemaLocation', 
+          'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd');
+        
+        // Add track
+        builder.element('trk', nest: () {
+          builder.element('name', nest: _currentTrack!.name);
+          builder.element('trkseg', nest: () {
+            for (final point in _currentTrack!.points) {
+              builder.element('trkpt', nest: () {
+                builder.attribute('lat', point.latitude.toString());
+                builder.attribute('lon', point.longitude.toString());
+                if (point.elevation != null) {
+                  builder.element('ele', nest: point.elevation.toString());
+                }
+              });
+            }
+          });
+        });
+      });
+
+      // Write to file
+      final file = File(saveLocation.path);
+      await file.writeAsString(builder.buildDocument().toString());
+      
       _statusMessage = 'Track saved successfully';
       
       // Clear the current track after saving
