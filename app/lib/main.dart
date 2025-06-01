@@ -102,6 +102,7 @@ class MyApp extends StatelessWidget {
                       }
                     },
                   ),
+                  ...RouteBuilderMenu.buildFileMenuItems(context),
                   PlatformMenuItem(
                     label: 'Reset Database',
                     onSelected: () {
@@ -111,6 +112,12 @@ class MyApp extends StatelessWidget {
                       }
                     },
                   ),
+                ],
+              ),
+              PlatformMenu(
+                label: 'Edit',
+                menus: [
+                  ...RouteBuilderMenu.buildEditMenuItems(context),
                 ],
               ),
               PlatformMenu(
@@ -173,11 +180,6 @@ class MyApp extends StatelessWidget {
                 ],
               ),
             ];
-
-            // Only add Route menu when in route builder mode
-            if (modeService.currentMode == AppMode.routeBuilder) {
-              menus.insert(3, RouteBuilderMenu.buildMenu(context));
-            }
 
             return PlatformMenuBar(
               menus: menus,

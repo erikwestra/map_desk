@@ -36,6 +36,7 @@ class RouteBuilderService extends ChangeNotifier {
   SimpleGpxTrack? get currentTrack => _currentTrack;
   String get statusMessage => _statusMessage;
   bool get isProcessing => _isProcessing;
+  bool get canUndo => _trackSegments.isNotEmpty || _routePoints.isNotEmpty;
   
   /// Handles map tap events based on current state
   Future<void> handleMapTap(LatLng point) async {
