@@ -30,6 +30,13 @@ class _SegmentLibraryScreenState extends State<SegmentLibraryScreen> {
   bool _isLoading = false;
   String? _error;
 
+  void _showError(String message) {
+    print('SegmentLibraryScreen: $message');
+    setState(() {
+      _error = message;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -46,9 +53,7 @@ class _SegmentLibraryScreenState extends State<SegmentLibraryScreen> {
       final segments = await widget.segmentService.getAllSegments();
       widget.segmentLibraryService.setSegments(segments);
     } catch (e) {
-      setState(() {
-        _error = 'Failed to load segments: $e';
-      });
+      _showError('Failed to load segments: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -66,9 +71,7 @@ class _SegmentLibraryScreenState extends State<SegmentLibraryScreen> {
       await widget.segmentService.deleteSegment(segment.id);
       widget.segmentLibraryService.removeSegment(segment);
     } catch (e) {
-      setState(() {
-        _error = 'Failed to delete segment: $e';
-      });
+      _showError('Failed to delete segment: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -86,9 +89,7 @@ class _SegmentLibraryScreenState extends State<SegmentLibraryScreen> {
       await widget.segmentService.updateSegment(segment);
       widget.segmentLibraryService.updateSegmentInList(segment);
     } catch (e) {
-      setState(() {
-        _error = 'Failed to update segment: $e';
-      });
+      _showError('Failed to update segment: $e');
     } finally {
       setState(() {
         _isLoading = false;

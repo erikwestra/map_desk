@@ -34,16 +34,26 @@ class SegmentLibraryList extends StatelessWidget {
       itemBuilder: (context, index) {
         final segment = segments[index];
         final isSelected = selectedSegment?.id == segment.id;
+        final theme = Theme.of(context);
 
-        return ListTile(
-          title: Text(
-            segment.name,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
+        return Container(
+          decoration: BoxDecoration(
+            color: isSelected 
+              ? theme.colorScheme.primaryContainer.withOpacity(0.3)
+              : null,
           ),
-          selected: isSelected,
-          onTap: () => onSegmentSelected(segment),
+          child: ListTile(
+            title: Text(
+              segment.name,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? theme.colorScheme.primary : null,
+              ),
+            ),
+            selected: isSelected,
+            selectedTileColor: theme.colorScheme.primaryContainer.withOpacity(0.3),
+            onTap: () => onSegmentSelected(segment),
+          ),
         );
       },
     );

@@ -82,6 +82,7 @@ class ImportService extends ChangeNotifier {
   }
 
   void _showError(BuildContext context, String message) {
+    print('ImportService: $message');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),

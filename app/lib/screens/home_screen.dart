@@ -19,6 +19,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  void _showError(BuildContext context, String message) {
+    print('HomeScreen: $message');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PlatformMenuBar(
@@ -115,14 +126,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openGpxFile(BuildContext context) async {
     bool isLoading = false;
-    String? errorMessage;
     String? successMessage;
 
     try {
       if (isLoading) return;
 
       isLoading = true;
-      errorMessage = null;
 
       final typeGroup = XTypeGroup(
         label: 'GPX',
@@ -136,15 +145,15 @@ class _HomeScreenState extends State<HomeScreen> {
         successMessage = 'GPX file loaded successfully';
       }
     } catch (e) {
-      errorMessage = e.toString();
+      _showError(context, 'Failed to load GPX file: ${e.toString()}');
       context.read<MapService>().clearTrack();
     } finally {
       isLoading = false;
     }
 
-    if (mounted) {
+    if (mounted && successMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(successMessage ?? errorMessage ?? '')),
+        SnackBar(content: Text(successMessage)),
       );
     }
   }
