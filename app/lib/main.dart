@@ -7,6 +7,7 @@ import 'core/services/mode_service.dart';
 import 'core/services/database_service.dart';
 import 'core/services/gpx_service.dart';
 import 'core/services/segment_service.dart';
+import 'core/services/segment_export_service.dart';
 import 'modes/map/services/map_service.dart';
 import 'modes/import_track/services/import_service.dart';
 import 'modes/segment_library/services/segment_library_service.dart';
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
         // Core services
         Provider(create: (_) => DatabaseService()),
         Provider(create: (_) => GpxService()),
+        Provider(create: (_) => SegmentExportService()),
         Provider(
           create: (context) => SegmentService(
             context.read<DatabaseService>(),
@@ -177,20 +179,27 @@ class AppMenuBar extends StatelessWidget {
                 members: [
                   PlatformMenuItem(
                     label: 'Export Segments',
-                    onSelected: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Not Yet Implemented'),
-                          content: const Text('Export functionality is coming soon.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('OK'),
+                    onSelected: () async {
+                      try {
+                        final segments = await context.read<SegmentService>().getAllSegments();
+                        await context.read<SegmentExportService>().exportToGeoJSON(segments);
+                      } catch (e) {
+                        if (context.mounted) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Export Failed'),
+                              content: Text('Failed to export segments: ${e.toString()}'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
+                          );
+                        }
+                      }
                     },
                   ),
                   PlatformMenuItem(
