@@ -194,6 +194,32 @@ class RouteBuilderService extends ChangeNotifier {
     if (_trackSegments.isNotEmpty) {
       _trackSegments.removeLast();
       _updateTrack();
+      
+      // Update route points to match the remaining segments
+      _routePoints.clear();
+      if (_trackSegments.isNotEmpty) {
+        // Add all points from remaining segments
+        for (final segment in _trackSegments) {
+          _routePoints.addAll(segment.points.map((p) => 
+            LatLng(p.latitude, p.longitude)
+          ));
+        }
+        
+        // Center map on the new end point
+        final lastPoint = _routePoints.last;
+        _mapService.mapController.move(lastPoint, _mapService.mapController.zoom);
+        
+        // Find nearby segments at the new end point
+        _findNearbySegments(lastPoint);
+      } else {
+        // If no segments left, clear everything
+        _selectedPoint = null;
+        _nearbySegments.clear();
+        _selectedSegment = null;
+        _previewPoints = [];
+        _stateProvider.reset();
+      }
+      
       _statusMessage = 'Last segment removed from track';
     } else {
       _routePoints.clear();
