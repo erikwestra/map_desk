@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:map_desk/core/models/segment.dart';
 import 'package:map_desk/core/services/database_service.dart';
 
@@ -13,16 +14,27 @@ class SegmentService {
   Future<List<Segment>> getAllSegments() async {
     try {
       final db = await _database.database;
-      final List<Map<String, dynamic>> maps = await db.query(
-        'segments',
-        orderBy: 'name ASC',
-      );
+      final List<Map<String, dynamic>> maps = await db.query('segments');
+      return maps.map((map) {
+        final points = (map['points'] as String).split(';').map((pointStr) {
+          final coords = pointStr.split(',');
+          return SegmentPoint(
+            latitude: double.parse(coords[0]),
+            longitude: double.parse(coords[1]),
+            elevation: double.parse(coords[2]),
+          );
+        }).toList();
 
-      return List.generate(maps.length, (i) {
-        return Segment.fromMap(maps[i]);
-      });
+        return Segment(
+          id: map['id'].toString(),
+          name: map['name'] as String,
+          points: points,
+          createdAt: DateTime.parse(map['created_at'] as String),
+          direction: map['direction'] as String,
+        );
+      }).toList();
     } catch (e) {
-      throw Exception('Failed to fetch segments: $e');
+      throw Exception('Failed to get segments: $e');
     }
   }
 
@@ -37,9 +49,26 @@ class SegmentService {
       );
 
       if (maps.isEmpty) return null;
-      return Segment.fromMap(maps.first);
+
+      final map = maps.first;
+      final points = (map['points'] as String).split(';').map((pointStr) {
+        final coords = pointStr.split(',');
+        return SegmentPoint(
+          latitude: double.parse(coords[0]),
+          longitude: double.parse(coords[1]),
+          elevation: double.parse(coords[2]),
+        );
+      }).toList();
+
+      return Segment(
+        id: map['id'].toString(),
+        name: map['name'] as String,
+        points: points,
+        createdAt: DateTime.parse(map['created_at'] as String),
+        direction: map['direction'] as String,
+      );
     } catch (e) {
-      throw Exception('Failed to fetch segment: $e');
+      throw Exception('Failed to get segment: $e');
     }
   }
 
@@ -61,9 +90,17 @@ class SegmentService {
   Future<void> updateSegment(Segment segment) async {
     try {
       final db = await _database.database;
+      final pointsStr = segment.points.map((p) => 
+        '${p.latitude},${p.longitude},${p.elevation}'
+      ).join(';');
+
       await db.update(
         'segments',
-        segment.toMap(),
+        {
+          'name': segment.name,
+          'points': pointsStr,
+          'direction': segment.direction,
+        },
         where: 'id = ?',
         whereArgs: [segment.id],
       );
@@ -73,10 +110,27 @@ class SegmentService {
   }
 
   /// Creates a new segment in the database
-  Future<int> createSegment(Segment segment) async {
+  Future<Segment> createSegment(Segment segment) async {
     try {
       final db = await _database.database;
-      return await db.insert('segments', segment.toMap());
+      final pointsStr = segment.points.map((p) => 
+        '${p.latitude},${p.longitude},${p.elevation}'
+      ).join(';');
+
+      final id = await db.insert('segments', {
+        'name': segment.name,
+        'points': pointsStr,
+        'created_at': DateTime.now().toIso8601String(),
+        'direction': segment.direction,
+      });
+
+      return Segment(
+        id: id.toString(),
+        name: segment.name,
+        points: segment.points,
+        createdAt: DateTime.now(),
+        direction: segment.direction,
+      );
     } catch (e) {
       throw Exception('Failed to create segment: $e');
     }

@@ -10,6 +10,7 @@ import '../models/segment_import_options.dart';
 import '../models/selectable_item.dart';
 import '../widgets/import_track_options_dialog.dart';
 import '../../../core/services/gpx_service.dart';
+import '../../../core/services/segment_service.dart';
 
 enum ImportState {
   noFile,
@@ -32,8 +33,9 @@ class ImportService extends ChangeNotifier {
   String _status = 'Ready to import track';
   bool _isProcessing = false;
   String? _selectedItemId;
+  final SegmentService _segmentService;
 
-  ImportService();
+  ImportService(this._segmentService);
 
   SplittableGpxTrack? get track => _track;
   bool get isTrackLoaded => _track != null;
@@ -455,21 +457,29 @@ class ImportService extends ChangeNotifier {
       direction: _importOptions.direction == SegmentDirection.oneWay ? 'oneWay' : 'bidirectional',
     );
     
-    addSegment(newSegment);
+    try {
+      // Save segment to database
+      await _segmentService.createSegment(newSegment);
+      
+      // Add to in-memory list
+      addSegment(newSegment);
 
-    // Remove the saved segment from the track
-    final endIndex = _track!.endPointIndex!;
-    _track!.removePointsUpTo(endIndex);
-    
-    // Clear the selection
-    _track!.clearSelection();
-    
-    // Set state to startPointSelected and select the first point
-    _state = ImportState.startPointSelected;
-    _track!.selectStartPoint(0);
-    
-    _updateStatusMessage();
-    notifyListeners();
+      // Remove the saved segment from the track
+      final endIndex = _track!.endPointIndex!;
+      _track!.removePointsUpTo(endIndex);
+      
+      // Clear the selection
+      _track!.clearSelection();
+      
+      // Set state to startPointSelected and select the first point
+      _state = ImportState.startPointSelected;
+      _track!.selectStartPoint(0);
+      
+      _updateStatusMessage();
+      notifyListeners();
+    } catch (e) {
+      _showError(context, 'Failed to save segment: ${e.toString()}');
+    }
   }
 
   LatLngBounds? calculateTrackEndpointsBounds() {

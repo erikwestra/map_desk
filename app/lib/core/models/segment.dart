@@ -43,6 +43,22 @@ class Segment {
     this.direction = 'bidirectional',
   });
 
+  Segment copyWith({
+    String? id,
+    String? name,
+    List<SegmentPoint>? points,
+    DateTime? createdAt,
+    String? direction,
+  }) {
+    return Segment(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      points: points ?? this.points,
+      createdAt: createdAt ?? this.createdAt,
+      direction: direction ?? this.direction,
+    );
+  }
+
   /// Create a new segment from a list of points
   factory Segment.fromPoints({
     required String name,
