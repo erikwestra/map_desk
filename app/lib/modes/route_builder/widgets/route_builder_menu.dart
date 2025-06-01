@@ -11,6 +11,7 @@ class RouteBuilderMenu {
     final isRouteBuilderMode = context.read<ModeService>().currentMode == AppMode.routeBuilder;
     final routeBuilder = context.watch<RouteBuilderService>();
     final canUndo = routeBuilder.canUndo;
+    final canClear = routeBuilder.trackSegments.isNotEmpty;
 
     return [
       PlatformMenuItem(
@@ -23,7 +24,7 @@ class RouteBuilderMenu {
       PlatformMenuItem(
         label: 'Clear Track',
         shortcut: const SingleActivator(LogicalKeyboardKey.keyK, meta: true),
-        onSelected: isRouteBuilderMode ? () {
+        onSelected: isRouteBuilderMode && canClear ? () {
           routeBuilder.clear();
         } : null,
       ),
@@ -33,12 +34,15 @@ class RouteBuilderMenu {
   /// Builds the File menu items for route builder mode
   static List<PlatformMenuItem> buildFileMenuItems(BuildContext context) {
     final isRouteBuilderMode = context.read<ModeService>().currentMode == AppMode.routeBuilder;
+    final routeBuilder = context.watch<RouteBuilderService>();
+    final canSave = routeBuilder.currentTrack != null;
+
     return [
       PlatformMenuItem(
         label: 'Save Track',
         shortcut: const SingleActivator(LogicalKeyboardKey.keyS, meta: true),
-        onSelected: isRouteBuilderMode ? () {
-          context.read<RouteBuilderService>().save();
+        onSelected: isRouteBuilderMode && canSave ? () {
+          routeBuilder.save();
         } : null,
       ),
     ];
