@@ -38,35 +38,50 @@ app/
 #### Map Menu
 - Label: "Map"
 - Menu Items:
-  - "Reset View" (placeholder)
-    - Action: Reset map to default view
-    - Shortcut: ⌘R
+  - "Load GPX Track"
+    - Action: Open file picker for GPX files
+    - Shortcut: ⌘O
+    - Note: Replaces "Open" command from File menu
 
 #### Import Menu
 - Label: "Import"
 - Menu Items:
-  - "Import File" (placeholder)
-    - Action: Open file picker
-    - Shortcut: ⌘I
+  - "Load GPX Track"
+    - Action: Open file picker for GPX files
+    - Shortcut: ⌘O
+    - Note: Replaces "Open" button in track importer
 
 #### Segment Menu
 - Label: "Segment"
 - Menu Items:
-  - "New Segment" (placeholder)
-    - Action: Create new segment
-    - Shortcut: ⌘N
+  - "Edit Segment"
+    - Action: Edit currently selected segment
+    - Shortcut: ⌘E
+    - Note: Replaces pencil icon in segment library
+    - Enabled only when a segment is selected
 
 #### Route Menu
 - Label: "Route"
 - Menu Items:
-  - "New Route" (placeholder)
-    - Action: Start new route
-    - Shortcut: ⌘N
+  - "Save Track"
+    - Action: Save current track as GPX
+    - Shortcut: ⌘S
+    - Note: Replaces Save Track button in status bar
+    - Enabled only when track has segments
+  - "Clear"
+    - Action: Clear current track
+    - Shortcut: ⌘⌫
+    - Note: Replaces Clear button in status bar
+    - Enabled only when track has segments
 
 ### Menu Integration
 - Update `main.dart` to use the mode menu builder
-- Add mode-specific menu to the menu bar
-- Position menu to the right of the "Mode" menu
+- Add mode-specific menu to the right of the "Mode" menu
+- Remove File menu (functionality moved to Map menu)
+- Update UI to remove redundant buttons:
+  - Remove Open button from track importer
+  - Remove pencil icon from segment library
+  - Remove Save Track and Clear buttons from route builder status bar
 - Ensure proper menu state management
 
 ## Technical Approach
@@ -81,18 +96,23 @@ app/
 - Use existing `ModeService` to determine current mode
 - Implement menu state updates through provider pattern
 - Ensure proper menu updates on mode changes
+- Handle menu item enabled/disabled states based on context
 
 ### Menu Item Actions
 - Define action handlers for each menu item
 - Implement proper error handling
 - Provide user feedback for actions
 - Support keyboard shortcuts
+- Maintain existing functionality while moving to menu-based approach
 
 ## Success Criteria
 - Mode-specific menus appear correctly
 - Menu items respond to user interaction
 - Keyboard shortcuts work as expected
 - Menu state updates properly with mode changes
+- Menu items are enabled/disabled appropriately
+- Existing functionality works through menu items
+- UI is cleaner with redundant buttons removed
 - Clean, maintainable code structure
 - No impact on existing functionality
 
@@ -101,4 +121,6 @@ app/
 - Uses existing:
   - Flutter platform menu system
   - Provider for state management
-  - Existing mode service 
+  - Existing mode service
+  - File picker functionality
+  - GPX handling services 
