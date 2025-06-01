@@ -88,7 +88,14 @@ class RouteBuilderScreen extends StatelessWidget {
               final isSelected = segment == routeBuilder.selectedSegment;
               
               return ListTile(
-                title: Text(segment.name),
+                title: Text(
+                  segment.name,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                  ),
+                ),
+                tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -96,14 +103,8 @@ class RouteBuilderScreen extends StatelessWidget {
                       direction: segment.direction,
                       size: 32,
                     ),
-                    if (isSelected)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 8.0),
-                        child: Icon(Icons.check, color: Colors.green),
-                      ),
                   ],
                 ),
-                selected: isSelected,
                 onTap: () {
                   routeBuilder.selectSegment(segment);
                 },
