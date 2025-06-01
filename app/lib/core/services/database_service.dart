@@ -11,7 +11,7 @@ import 'package:latlong2/latlong.dart';
 /// Service for handling database operations
 class DatabaseService {
   static const String _databaseName = 'segments.db';
-  static const int _databaseVersion = 4; // Incremented for v013 migration
+  static const int _databaseVersion = 5; // Incremented for v020 migration
   
   static Database? _database;
   
@@ -53,12 +53,19 @@ class DatabaseService {
       await db.execute('''
         CREATE TABLE segments (
           id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
+          name TEXT UNIQUE NOT NULL,
           points TEXT NOT NULL,
-          created_at INTEGER NOT NULL,
-          direction TEXT NOT NULL DEFAULT 'bidirectional'
+          direction TEXT NOT NULL DEFAULT 'bidirectional',
+          start_lat REAL NOT NULL,
+          start_lng REAL NOT NULL,
+          end_lat REAL NOT NULL,
+          end_lng REAL NOT NULL
         )
       ''');
+
+      // Create indexes for spatial search
+      await db.execute('CREATE INDEX idx_start_coords ON segments (start_lat, start_lng)');
+      await db.execute('CREATE INDEX idx_end_coords ON segments (end_lat, end_lng)');
     } catch (e, stackTrace) {
       print('DatabaseService: Failed to create database tables: $e');
       rethrow;
@@ -152,6 +159,52 @@ class DatabaseService {
           await db.execute('ALTER TABLE segments_new RENAME TO segments');
         });
       }
+
+      if (oldVersion < 5) {
+        await _runMigration(db, 'v020', () async {
+          await db.execute('''
+            CREATE TABLE segments_new (
+              id TEXT PRIMARY KEY,
+              name TEXT UNIQUE NOT NULL,
+              points TEXT NOT NULL,
+              direction TEXT NOT NULL DEFAULT 'bidirectional',
+              start_lat REAL NOT NULL,
+              start_lng REAL NOT NULL,
+              end_lat REAL NOT NULL,
+              end_lng REAL NOT NULL
+            )
+          ''');
+
+          // Create indexes for spatial search
+          await db.execute('CREATE INDEX idx_start_coords ON segments_new (start_lat, start_lng)');
+          await db.execute('CREATE INDEX idx_end_coords ON segments_new (end_lat, end_lng)');
+          
+          final List<Map<String, dynamic>> existingSegments = await db.query('segments');
+          print('DatabaseService: Found ${existingSegments.length} segments to migrate');
+          
+          for (final segment in existingSegments) {
+            final points = jsonDecode(segment['points'] as String) as List;
+            if (points.isEmpty) continue;
+
+            final firstPoint = points.first as Map<String, dynamic>;
+            final lastPoint = points.last as Map<String, dynamic>;
+            
+            await db.insert('segments_new', {
+              'id': segment['id'],
+              'name': segment['name'],
+              'points': segment['points'],
+              'direction': segment['direction'],
+              'start_lat': firstPoint['latitude'] as double,
+              'start_lng': firstPoint['longitude'] as double,
+              'end_lat': lastPoint['latitude'] as double,
+              'end_lng': lastPoint['longitude'] as double,
+            });
+          }
+          
+          await db.execute('DROP TABLE segments');
+          await db.execute('ALTER TABLE segments_new RENAME TO segments');
+        });
+      }
     } catch (e, stackTrace) {
       print('DatabaseService: Failed to upgrade database: $e');
       rethrow;
@@ -178,8 +231,9 @@ class DatabaseService {
       print('  ID: ${segment.id}');
       print('  Name: ${segment.name}');
       print('  Points: ${segment.points.length} points');
-      print('  Created: ${segment.createdAt}');
       print('  Direction: ${segment.direction}');
+      print('  Start: (${segment.startLat}, ${segment.startLng})');
+      print('  End: (${segment.endLat}, ${segment.endLng})');
       
       // Check if segment already exists
       final existing = await db.query(
@@ -206,8 +260,11 @@ class DatabaseService {
           'id': segment.id,
           'name': segment.name,
           'points': pointsJson,
-          'created_at': segment.createdAt.millisecondsSinceEpoch,
           'direction': segment.direction,
+          'start_lat': segment.startLat,
+          'start_lng': segment.startLng,
+          'end_lat': segment.endLat,
+          'end_lng': segment.endLng,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -249,16 +306,20 @@ class DatabaseService {
             longitude: p['longitude'] as double,
             elevation: p['elevation'] as double?,
           )).toList(),
-          createdAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['created_at'] as int),
           direction: maps[i]['direction'] as String,
+          startLat: maps[i]['start_lat'] as double,
+          startLng: maps[i]['start_lng'] as double,
+          endLat: maps[i]['end_lat'] as double,
+          endLng: maps[i]['end_lng'] as double,
         );
         
         print('  Loaded segment:');
         print('    ID: ${segment.id}');
         print('    Name: ${segment.name}');
         print('    Points: ${segment.points.length} points');
-        print('    Created: ${segment.createdAt}');
         print('    Direction: ${segment.direction}');
+        print('    Start: (${segment.startLat}, ${segment.startLng})');
+        print('    End: (${segment.endLat}, ${segment.endLng})');
         
         return segment;
       });
@@ -294,16 +355,20 @@ class DatabaseService {
           longitude: p['longitude'] as double,
           elevation: p['elevation'] as double?,
         )).toList(),
-        createdAt: DateTime.fromMillisecondsSinceEpoch(maps[0]['created_at'] as int),
         direction: maps[0]['direction'] as String,
+        startLat: maps[0]['start_lat'] as double,
+        startLng: maps[0]['start_lng'] as double,
+        endLat: maps[0]['end_lat'] as double,
+        endLng: maps[0]['end_lng'] as double,
       );
       
       print('DatabaseService: Loaded segment:');
       print('  ID: ${segment.id}');
       print('  Name: ${segment.name}');
       print('  Points: ${segment.points.length} points');
-      print('  Created: ${segment.createdAt}');
       print('  Direction: ${segment.direction}');
+      print('  Start: (${segment.startLat}, ${segment.startLng})');
+      print('  End: (${segment.endLat}, ${segment.endLng})');
       
       return segment;
     } catch (e, stackTrace) {

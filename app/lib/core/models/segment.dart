@@ -32,30 +32,42 @@ class Segment {
   final String id;
   final String name;
   final List<SegmentPoint> points;
-  final DateTime createdAt;
   final String direction;
+  final double startLat;
+  final double startLng;
+  final double endLat;
+  final double endLng;
 
   const Segment({
     required this.id,
     required this.name,
     required this.points,
-    required this.createdAt,
     this.direction = 'bidirectional',
+    required this.startLat,
+    required this.startLng,
+    required this.endLat,
+    required this.endLng,
   });
 
   Segment copyWith({
     String? id,
     String? name,
     List<SegmentPoint>? points,
-    DateTime? createdAt,
     String? direction,
+    double? startLat,
+    double? startLng,
+    double? endLat,
+    double? endLng,
   }) {
     return Segment(
       id: id ?? this.id,
       name: name ?? this.name,
       points: points ?? this.points,
-      createdAt: createdAt ?? this.createdAt,
       direction: direction ?? this.direction,
+      startLat: startLat ?? this.startLat,
+      startLng: startLng ?? this.startLng,
+      endLat: endLat ?? this.endLat,
+      endLng: endLng ?? this.endLng,
     );
   }
 
@@ -67,12 +79,16 @@ class Segment {
     required int endIndex,
     String direction = 'bidirectional',
   }) {
+    final points = allPoints.sublist(startIndex, endIndex + 1);
     return Segment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
-      points: allPoints.sublist(startIndex, endIndex + 1),
-      createdAt: DateTime.now(),
+      points: points,
       direction: direction,
+      startLat: points.first.latitude,
+      startLng: points.first.longitude,
+      endLat: points.last.latitude,
+      endLng: points.last.longitude,
     );
   }
 
@@ -82,8 +98,11 @@ class Segment {
       'id': id,
       'name': name,
       'points': points.map((p) => p.toJson()).toList(),
-      'created_at': createdAt.millisecondsSinceEpoch,
       'direction': direction,
+      'start_lat': startLat,
+      'start_lng': startLng,
+      'end_lat': endLat,
+      'end_lng': endLng,
     };
   }
 
@@ -93,8 +112,11 @@ class Segment {
       id: json['id'] as String,
       name: json['name'] as String,
       points: (json['points'] as List).map((p) => SegmentPoint.fromJson(p)).toList(),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['created_at'] as int),
       direction: json['direction'] as String? ?? 'bidirectional',
+      startLat: json['start_lat'] as double,
+      startLng: json['start_lng'] as double,
+      endLat: json['end_lat'] as double,
+      endLng: json['end_lng'] as double,
     );
   }
 
@@ -133,22 +155,31 @@ class Segment {
     return {
       'name': name,
       'points': points.map((p) => [p.latitude, p.longitude]).toList(),
-      'createdAt': createdAt.toIso8601String(),
+      'start_lat': startLat,
+      'start_lng': startLng,
+      'end_lat': endLat,
+      'end_lng': endLng,
     };
   }
 
   /// Creates a Segment from a Map
   factory Segment.fromMap(Map<String, dynamic> map) {
+    final points = (map['points'] as List)
+        .map((point) => SegmentPoint(
+          latitude: point[0] as double,
+          longitude: point[1] as double,
+        ))
+        .toList();
+
     return Segment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: map['name'] as String,
-      points: (map['points'] as List)
-          .map((point) => SegmentPoint(
-        latitude: point[0] as double,
-        longitude: point[1] as double,
-      ))
-          .toList(),
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      points: points,
+      direction: 'bidirectional',
+      startLat: map['start_lat'] as double,
+      startLng: map['start_lng'] as double,
+      endLat: map['end_lat'] as double,
+      endLng: map['end_lng'] as double,
     );
   }
 

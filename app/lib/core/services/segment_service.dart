@@ -28,8 +28,11 @@ class SegmentService {
           id: map['id'].toString(),
           name: map['name'] as String,
           points: points,
-          createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
           direction: map['direction'] as String,
+          startLat: map['start_lat'] as double,
+          startLng: map['start_lng'] as double,
+          endLat: map['end_lat'] as double,
+          endLng: map['end_lng'] as double,
         );
       }).toList();
     } catch (e) {
@@ -62,8 +65,11 @@ class SegmentService {
         id: map['id'].toString(),
         name: map['name'] as String,
         points: points,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
         direction: map['direction'] as String,
+        startLat: map['start_lat'] as double,
+        startLng: map['start_lng'] as double,
+        endLat: map['end_lat'] as double,
+        endLng: map['end_lng'] as double,
       );
     } catch (e) {
       throw Exception('Failed to get segment: $e');
@@ -100,6 +106,10 @@ class SegmentService {
           'name': segment.name,
           'points': pointsJson,
           'direction': segment.direction,
+          'start_lat': segment.startLat,
+          'start_lng': segment.startLng,
+          'end_lat': segment.endLat,
+          'end_lng': segment.endLng,
         },
         where: 'id = ?',
         whereArgs: [segment.id],
@@ -125,8 +135,11 @@ class SegmentService {
           'id': segment.id,
           'name': segment.name,
           'points': pointsJson,
-          'created_at': segment.createdAt.millisecondsSinceEpoch,
           'direction': segment.direction,
+          'start_lat': segment.startLat,
+          'start_lng': segment.startLng,
+          'end_lat': segment.endLat,
+          'end_lng': segment.endLng,
         },
       );
       return segment;
