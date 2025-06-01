@@ -13,7 +13,6 @@ import '../../../core/services/gpx_service.dart';
 
 enum ImportState {
   noFile,
-  fileLoaded,
   startPointSelected,
   segmentSelected,
 }
@@ -172,9 +171,6 @@ class ImportService extends ChangeNotifier {
       case ImportState.noFile:
         _statusMessage = '';
         break;
-      case ImportState.fileLoaded:
-        _statusMessage = 'Click on one end of the track to start splitting';
-        break;
       case ImportState.startPointSelected:
         _statusMessage = 'Click to select segment';
         break;
@@ -206,15 +202,19 @@ class ImportService extends ChangeNotifier {
       points: track.points,
       description: track.description,
     );
-    _state = ImportState.fileLoaded;
     _importOptions = SegmentImportOptions.defaults();
     _currentSegmentNumber = 1;
-    _updateStatusMessage();
     _currentTrack = track;
-    _status = 'Click on the start or end of the track to start splitting';
+    _status = 'Click to select segment';
     _isProcessing = false;
     _selectedItemId = 'file_${track.name}';
     _hasZoomedToBounds = false;  // Reset the flag when loading a new track
+    
+    // Automatically select the first point
+    _track!.selectStartPoint(0);
+    _state = ImportState.startPointSelected;
+    _updateStatusMessage();
+    
     // Only zoom to bounds when initially loading the file
     _scheduleZoomToTrackBounds();
     notifyListeners();
@@ -245,18 +245,6 @@ class ImportService extends ChangeNotifier {
     if (_track == null) return;
     
     switch (_state) {
-      case ImportState.fileLoaded:
-        // In fileLoaded state, we can only select first or last point as start point
-        if (index == 0 || index == _track!.points.length - 1) {
-          _track!.selectStartPoint(index);
-          _state = ImportState.startPointSelected;
-          _updateStatusMessage();
-          // Pan to the selected point at current zoom
-          _panToPoint(index);
-          notifyListeners();
-        }
-        break;
-        
       case ImportState.startPointSelected:
         // If we have a start point but no end point, select it
         if (_track!.startPointIndex != null) {
@@ -348,7 +336,8 @@ class ImportService extends ChangeNotifier {
   void clearSelection() {
     if (_track == null) return;
     _track!.clearSelection();
-    _state = ImportState.fileLoaded;
+    _state = ImportState.startPointSelected;
+    _track!.selectStartPoint(0);  // Automatically select first point
     _updateStatusMessage();
     notifyListeners();
   }
@@ -402,14 +391,16 @@ class ImportService extends ChangeNotifier {
 
   void removeSegment(Segment segment) {
     _segments.remove(segment);
-    _state = ImportState.fileLoaded;
+    _state = ImportState.startPointSelected;
+    _track?.selectStartPoint(0);  // Automatically select first point
     _updateStatusMessage();
     notifyListeners();
   }
 
   void clearSegments() {
     _segments.clear();
-    _state = ImportState.fileLoaded;
+    _state = ImportState.startPointSelected;
+    _track?.selectStartPoint(0);  // Automatically select first point
     _currentSegmentNumber = 1;
     _updateStatusMessage();
     notifyListeners();

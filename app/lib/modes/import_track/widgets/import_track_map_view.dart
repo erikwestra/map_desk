@@ -24,10 +24,11 @@ class _ImportTrackMapViewState extends State<ImportTrackMapView> {
   static const double _clickTolerance = 20.0; // 20 pixels
   ImportState? _previousState;
 
-  void _handleMapTap(LatLng point, List<LatLng> trackPoints, bool startOrEndOnly) {
+  int? _findClosestPoint(LatLng point) {
     final importService = context.read<ImportService>();
+    final trackPoints = importService.trackPoints;
     final mapController = importService.mapController;
-
+    
     // Find the closest point within tolerance
     double minDistance = double.infinity;
     int? closestIndex;
@@ -49,15 +50,26 @@ class _ImportTrackMapViewState extends State<ImportTrackMapView> {
       }
     }
     
-    // Check if the closest point is within tolerance
-    if (closestIndex != null && minDistance <= _clickTolerance) {
-      // If startOrEndOnly is true, only allow selecting first or last point
-      if (startOrEndOnly) {
-        if (closestIndex != 0 && closestIndex != trackPoints.length - 1) {
-          return; // Ignore clicks on points that aren't first or last
+    // Return the closest point if it's within tolerance
+    return (closestIndex != null && minDistance <= _clickTolerance) ? closestIndex : null;
+  }
+
+  void _handleMapTap(BuildContext context, LatLng point) {
+    final importService = context.read<ImportService>();
+    final state = importService.state;
+    
+    switch (state) {
+      case ImportState.startPointSelected:
+      case ImportState.segmentSelected:
+        // Find the closest point on the track
+        final closestPoint = _findClosestPoint(point);
+        if (closestPoint != null) {
+          importService.selectPoint(closestPoint);
         }
-      }
-      widget.onPointSelected(closestIndex);
+        break;
+      case ImportState.noFile:
+        // Do nothing in noFile state
+        break;
     }
   }
 
@@ -87,22 +99,7 @@ class _ImportTrackMapViewState extends State<ImportTrackMapView> {
           },
           onTap: (point) {
             // Handle tap based on import state
-            switch (importState) {
-              case ImportState.noFile:
-                // Do nothing when no file is loaded
-                return;
-              
-              case ImportState.fileLoaded:
-                // Select an endpoint of the track
-                _handleMapTap(point, trackPoints, true);
-                break;
-              
-              case ImportState.startPointSelected:
-              case ImportState.segmentSelected:
-                // Select a point within the track for segment creation
-                _handleMapTap(point, trackPoints, false);
-                break;
-            }
+            _handleMapTap(context, point);
           },
           children: [
             if (importService.isTrackLoaded) ...[
