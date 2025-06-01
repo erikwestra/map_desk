@@ -123,7 +123,7 @@ class SegmentService {
   Future<List<Segment>> getAllSegments() async {
     try {
       final db = await _database.database;
-      final List<Map<String, dynamic>> maps = await db.query('segments');
+      final List<Map<String, dynamic>> maps = await db.query('segments', orderBy: 'name ASC');
       return maps.map((map) {
         final points = (jsonDecode(map['points'] as String) as List).map((pointJson) {
           return SegmentPoint(
