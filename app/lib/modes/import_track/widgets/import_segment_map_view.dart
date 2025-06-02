@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/models/segment.dart';
-import '../../../shared/widgets/map_controls.dart';
-import '../../../shared/widgets/base_map_view.dart';
+import '../../../core/widgets/map_controls.dart';
+import '../../../core/widgets/base_map_view.dart';
 
 class ImportSegmentMapView extends StatelessWidget {
   final Segment segment;

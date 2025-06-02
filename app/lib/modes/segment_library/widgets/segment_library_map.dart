@@ -3,8 +3,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/segment.dart';
-import 'package:map_desk/shared/widgets/base_map_view.dart';
-import 'package:map_desk/shared/widgets/map_controls.dart';
+import 'package:map_desk/core/widgets/base_map_view.dart';
+import 'package:map_desk/core/widgets/map_controls.dart';
 import 'package:map_desk/modes/segment_library/services/segment_library_service.dart';
 
 /// Map view widget for displaying segments in the segment library.

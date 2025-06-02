@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/route_builder_state.dart';
 import '../widgets/route_builder_map.dart';
 import '../services/route_builder_service.dart';
-import '../../../../shared/widgets/segment_direction_indicator.dart';
+import '../../../../core/widgets/segment_direction_indicator.dart';
 
 /// Main screen for the route builder feature
 class RouteBuilderScreen extends StatelessWidget {

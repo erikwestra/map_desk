@@ -6,7 +6,7 @@ import 'package:map_desk/core/models/segment.dart';
 import 'package:map_desk/modes/segment_library/services/segment_library_service.dart';
 import 'package:map_desk/modes/segment_library/widgets/segment_library_map.dart';
 import 'package:map_desk/modes/segment_library/widgets/segment_library_edit_dialog.dart';
-import 'package:map_desk/shared/widgets/segment_direction_indicator.dart';
+import 'package:map_desk/core/widgets/segment_direction_indicator.dart';
 
 /// Widget that displays an alphabetical list of segments in the sidebar.
 class SegmentLibraryList extends StatelessWidget {

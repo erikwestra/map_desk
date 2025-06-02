@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import '../services/route_builder_service.dart';
 import '../models/route_builder_state.dart';
 import '../../map/services/map_service.dart';
-import '../../../../shared/widgets/map_controls.dart';
-import '../../../../shared/widgets/base_map_view.dart';
+import '../../../../core/widgets/map_controls.dart';
+import '../../../../core/widgets/base_map_view.dart';
 import '../../../../core/services/segment_service.dart';
 
 /// Map widget specifically for route building interaction
