@@ -1,5 +1,5 @@
-name: map_desk
-description: A desktop application for working with GPX tracks and segments.
+name: mapdesk
+description: A Flutter desktop application for mapping and GPX data support.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,16 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.2
-  file_selector: ^1.0.1
-  flutter_map: ^6.1.0
-  latlong2: ^0.9.0
   provider: ^6.1.1
-  sqflite: ^2.3.2
-  sqflite_common_ffi: ^2.3.2
-  path: ^1.8.3
-  path_provider: ^2.1.2
-  xml: ^6.3.0
+  flutter_map: ^6.0.1
+  latlong2: ^0.9.1
+  file_selector: ^1.0.2
 
 dev_dependencies:
   flutter_test:

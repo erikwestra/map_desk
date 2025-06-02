@@ -1,264 +1,243 @@
-// Main entry point for MapDesk that sets up the app's providers and navigation structure.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/services/mode_service.dart';
-import 'core/services/database_service.dart';
-import 'core/services/gpx_service.dart';
-import 'core/services/segment_service.dart';
-import 'core/services/segment_export_service.dart';
-import 'core/services/segment_import_service.dart';
-import 'modes/map/services/map_service.dart';
-import 'modes/import_track/services/import_service.dart';
-import 'modes/segment_library/services/segment_library_service.dart';
-import 'modes/route_builder/models/route_builder_state.dart';
-import 'modes/route_builder/services/route_builder_service.dart';
-import 'modes/route_builder/widgets/route_builder_menu.dart';
-import 'screens/home_screen.dart';
+import 'core/services/layout_service.dart';
+import 'core/services/menu_service.dart';
+import 'modes/view/view_mode_controller.dart';
+import 'modes/import/import_mode_controller.dart';
+import 'modes/browse/browse_mode_controller.dart';
+import 'modes/create/create_mode_controller.dart';
 
 void main() {
-  // Initialize FFI for desktop platforms
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
+  final modeService = ModeService();
+  final layoutService = LayoutService();
   
-  runApp(const MyApp());
+  // Register all mode controllers
+  modeService.registerMode(ViewModeController());
+  modeService.registerMode(ImportModeController());
+  modeService.registerMode(BrowseModeController());
+  modeService.registerMode(CreateModeController());
+  
+  // Start in View mode
+  modeService.switchMode('View');
+  
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: modeService),
+        ChangeNotifierProvider.value(value: layoutService),
+      ],
+      child: const MapDeskApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MapDeskApp extends StatelessWidget {
+  const MapDeskApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        // Core services
-        Provider(create: (_) => DatabaseService()),
-        Provider(create: (_) => GpxService()),
-        Provider(create: (_) => SegmentExportService()),
-        Provider(
-          create: (context) => SegmentImportService(
-            context.read<DatabaseService>(),
-          ),
-        ),
-        Provider(
-          create: (context) => SegmentService(
-            context.read<DatabaseService>(),
-          ),
-        ),
-        
-        // State management services
-        ChangeNotifierProvider(create: (_) => ModeService()),
-        ChangeNotifierProvider<MapService>(
-          create: (_) => MapService(),
-          lazy: false, // Ensure MapService is created immediately
-        ),
-        
-        // Feature services
-        ChangeNotifierProvider(
-          create: (context) => SegmentLibraryService(
-            context.read<SegmentService>(),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => ImportService(
-            context.read<SegmentService>(),
-            context.read<SegmentLibraryService>(),
-          ),
-        ),
-        
-        // Route builder services
-        ChangeNotifierProvider(create: (_) => RouteBuilderStateProvider()),
-        ChangeNotifierProvider(
-          create: (context) => RouteBuilderService(
-            context.read<RouteBuilderStateProvider>(),
-            context.read<SegmentService>(),
-            context.read<MapService>(),
-          ),
-        ),
-      ],
-      child: MaterialApp(
-        navigatorKey: navigatorKey,
-        title: 'MapDesk',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
-        home: const AppMenuBar(),
-        debugShowCheckedModeBanner: false,
+    return MaterialApp(
+      title: 'MapDesk',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
+      home: const MapDeskHome(),
     );
   }
 }
 
-class AppMenuBar extends StatelessWidget {
-  const AppMenuBar({super.key});
+class MapDeskHome extends StatelessWidget {
+  const MapDeskHome({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ModeService>(
-      builder: (context, modeService, child) {
+    return Consumer2<ModeService, LayoutService>(
+      builder: (context, modeService, layoutService, child) {
         final currentMode = modeService.currentMode;
-        final menus = [
-          PlatformMenu(
-            label: 'MapDesk',
-            menus: [
-              PlatformMenuItem(
-                label: 'Quit',
-                shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
-                onSelected: () => SystemNavigator.pop(),
-              ),
-            ],
-          ),
-          PlatformMenu(
-            label: 'File',
-            menus: [
-              PlatformMenuItem(
-                label: 'Open',
-                shortcut: const SingleActivator(LogicalKeyboardKey.keyO, meta: true),
-                onSelected: currentMode == AppMode.map || currentMode == AppMode.importTrack
-                  ? () {
-                      if (currentMode == AppMode.importTrack) {
-                        context.read<ImportService>().importGpxFile(context);
-                      } else {
-                        HomeScreen.openGpxFile(context);
-                      }
-                    }
-                  : null,
-              ),
-              ...RouteBuilderMenu.buildFileMenuItems(context),
-            ],
-          ),
-          PlatformMenu(
-            label: 'Edit',
-            menus: [
-              ...RouteBuilderMenu.buildEditMenuItems(context),
-            ],
-          ),
-          PlatformMenu(
-            label: 'Mode',
-            menus: [
-              PlatformMenuItem(
-                label: 'Map View',
-                shortcut: const SingleActivator(LogicalKeyboardKey.digit1, meta: true),
-                onSelected: () {
-                  context.read<ModeService>().setMode(AppMode.map);
-                },
-              ),
-              PlatformMenuItem(
-                label: 'Import Track',
-                shortcut: const SingleActivator(LogicalKeyboardKey.digit2, meta: true),
-                onSelected: () {
-                  context.read<ModeService>().setMode(AppMode.importTrack);
-                },
-              ),
-              PlatformMenuItem(
-                label: 'Segment Library',
-                shortcut: const SingleActivator(LogicalKeyboardKey.digit3, meta: true),
-                onSelected: () {
-                  context.read<ModeService>().setMode(AppMode.segmentLibrary);
-                },
-              ),
-              PlatformMenuItem(
-                label: 'Route Builder',
-                shortcut: const SingleActivator(LogicalKeyboardKey.digit4, meta: true),
-                onSelected: () {
-                  context.read<ModeService>().setMode(AppMode.routeBuilder);
-                },
-              ),
-            ],
-          ),
-          PlatformMenu(
-            label: 'Database',
-            menus: [
-              PlatformMenuItemGroup(
-                members: [
-                  PlatformMenuItem(
-                    label: 'Reset Database',
-                    onSelected: () {
-                      HomeScreen.resetDatabase(context);
-                    },
-                  ),
-                ],
-              ),
-              PlatformMenuItemGroup(
-                members: [
-                  PlatformMenuItem(
-                    label: 'Export Segments',
-                    onSelected: () async {
-                      try {
-                        final segments = await context.read<SegmentService>().getAllSegments();
-                        await context.read<SegmentExportService>().exportToGeoJSON(segments);
-                      } catch (e) {
-                        if (context.mounted) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Export Failed'),
-                              content: Text('Failed to export segments: ${e.toString()}'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text('OK'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                  PlatformMenuItem(
-                    label: 'Import Segments',
-                    onSelected: () async {
-                      try {
-                        await context.read<SegmentImportService>().importFromGeoJSON(context);
-                        // Refresh the segment library to show new segments
-                        await context.read<SegmentLibraryService>().refreshSegments();
-                      } catch (e) {
-                        if (context.mounted) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Import Failed'),
-                              content: Text('Failed to import segments: ${e.toString()}'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: const Text('OK'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          PlatformMenu(
-            label: 'Window',
-            menus: [
-              PlatformMenuItem(
-                label: 'MapDesk',
-                onSelected: () {
-                  FocusScope.of(context).requestFocus();
-                },
-              ),
-            ],
-          ),
-        ];
+        if (currentMode == null) {
+          return const Center(child: Text('No mode selected'));
+        }
 
         return PlatformMenuBar(
-          menus: menus,
-          child: const HomeScreen(),
+          menus: MenuService.buildMenuBar(context),
+          child: Scaffold(
+            body: Row(
+              children: [
+                if (currentMode.showLeftSidebar)
+                  SizedBox(
+                    width: 250,
+                    child: currentMode.buildLeftSidebar(context),
+                  ),
+                Expanded(
+                  child: currentMode.buildMapContent(context),
+                ),
+                if (currentMode.showRightSidebar)
+                  SizedBox(
+                    width: 250,
+                    child: currentMode.buildRightSidebar(context),
+                  ),
+              ],
+            ),
+            bottomNavigationBar: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Colors.grey[100],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Mode-specific status bar content
+                  currentMode.buildStatusBarContent(context),
+                  // Mode selector
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'View', label: Text('View')),
+                      ButtonSegment(value: 'Import', label: Text('Import')),
+                      ButtonSegment(value: 'Browse', label: Text('Browse')),
+                      ButtonSegment(value: 'Create', label: Text('Create')),
+                    ],
+                    selected: {currentMode.modeName},
+                    onSelectionChanged: (Set<String> selection) {
+                      if (selection.isNotEmpty) {
+                        modeService.switchMode(selection.first);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
   }
 }
 
-// Global key for accessing the navigator context
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+class MapDeskScaffold extends StatelessWidget {
+  final Widget child;
+
+  const MapDeskScaffold({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Shortcuts(
+      shortcuts: {
+        // File menu shortcuts
+        const SingleActivator(LogicalKeyboardKey.keyO, meta: true): OpenFileIntent(),
+        const SingleActivator(LogicalKeyboardKey.keyS, meta: true): SaveRouteIntent(),
+        
+        // Edit menu shortcuts
+        const SingleActivator(LogicalKeyboardKey.keyZ, meta: true): UndoIntent(),
+        const SingleActivator(LogicalKeyboardKey.backspace, meta: true): ClearTrackIntent(),
+        
+        // Mode menu shortcuts
+        const SingleActivator(LogicalKeyboardKey.digit1, meta: true): ViewModeIntent(),
+        const SingleActivator(LogicalKeyboardKey.digit2, meta: true): ImportModeIntent(),
+        const SingleActivator(LogicalKeyboardKey.digit3, meta: true): BrowseModeIntent(),
+        const SingleActivator(LogicalKeyboardKey.digit4, meta: true): CreateModeIntent(),
+        
+        // Quit shortcut
+        const SingleActivator(LogicalKeyboardKey.keyQ, meta: true): QuitIntent(),
+      },
+      child: Actions(
+        actions: {
+          OpenFileIntent: OpenFileAction(),
+          SaveRouteIntent: SaveRouteAction(),
+          UndoIntent: UndoAction(),
+          ClearTrackIntent: ClearTrackAction(),
+          ViewModeIntent: ViewModeAction(),
+          ImportModeIntent: ImportModeAction(),
+          BrowseModeIntent: BrowseModeAction(),
+          CreateModeIntent: CreateModeAction(),
+          QuitIntent: QuitAction(),
+        },
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            body: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Intent classes
+class OpenFileIntent extends Intent {}
+class SaveRouteIntent extends Intent {}
+class UndoIntent extends Intent {}
+class ClearTrackIntent extends Intent {}
+class ViewModeIntent extends Intent {}
+class ImportModeIntent extends Intent {}
+class BrowseModeIntent extends Intent {}
+class CreateModeIntent extends Intent {}
+class QuitIntent extends Intent {}
+
+// Action classes
+class OpenFileAction extends Action<OpenFileIntent> {
+  @override
+  void invoke(OpenFileIntent intent) {
+    // TODO: Implement file open
+  }
+}
+
+class SaveRouteAction extends Action<SaveRouteIntent> {
+  @override
+  void invoke(SaveRouteIntent intent) {
+    // TODO: Implement save route
+  }
+}
+
+class UndoAction extends Action<UndoIntent> {
+  @override
+  void invoke(UndoIntent intent) {
+    // TODO: Implement undo
+  }
+}
+
+class ClearTrackAction extends Action<ClearTrackIntent> {
+  @override
+  void invoke(ClearTrackIntent intent) {
+    // TODO: Implement clear track
+  }
+}
+
+class ViewModeAction extends Action<ViewModeIntent> {
+  @override
+  void invoke(ViewModeIntent intent) {
+    // TODO: Switch to View mode
+  }
+}
+
+class ImportModeAction extends Action<ImportModeIntent> {
+  @override
+  void invoke(ImportModeIntent intent) {
+    // TODO: Switch to Import mode
+  }
+}
+
+class BrowseModeAction extends Action<BrowseModeIntent> {
+  @override
+  void invoke(BrowseModeIntent intent) {
+    // TODO: Switch to Browse mode
+  }
+}
+
+class CreateModeAction extends Action<CreateModeIntent> {
+  @override
+  void invoke(CreateModeIntent intent) {
+    // TODO: Switch to Create mode
+  }
+}
+
+class QuitAction extends Action<QuitIntent> {
+  @override
+  void invoke(QuitIntent intent) {
+    SystemNavigator.pop();
+  }
+}
