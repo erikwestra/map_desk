@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'mode_service.dart';
 
 /// Service that manages the application menu bar.
-class MenuService {
+class MenuService extends ChangeNotifier {
   /// Menu item IDs for consistent reference
   static const String menuItemQuit = 'quit';
   static const String menuItemOpen = 'open';
@@ -32,7 +32,9 @@ class MenuService {
           PlatformMenuItem(
             label: 'Quit',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
-            onSelected: () => SystemNavigator.pop(),
+            onSelected: () {
+              SystemNavigator.pop();
+            },
           ),
         ],
       ),
@@ -44,12 +46,16 @@ class MenuService {
           PlatformMenuItem(
             label: 'Open',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyO, meta: true),
-            onSelected: () => currentMode?.handleEvent('menu_open', null),
+            onSelected: () {
+              currentMode?.handleEvent('menu_open', null);
+            },
           ),
           PlatformMenuItem(
             label: 'Save Route',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyS, meta: true),
-            onSelected: () => currentMode?.handleEvent('menu_save_route', null),
+            onSelected: () {
+              currentMode?.handleEvent('menu_save_route', null);
+            },
           ),
         ],
       ),
@@ -61,12 +67,16 @@ class MenuService {
           PlatformMenuItem(
             label: 'Undo',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyZ, meta: true),
-            onSelected: () => currentMode?.handleEvent('menu_undo', null),
+            onSelected: () {
+              currentMode?.handleEvent('menu_undo', null);
+            },
           ),
           PlatformMenuItem(
             label: 'Clear Track',
             shortcut: const SingleActivator(LogicalKeyboardKey.backspace, meta: true),
-            onSelected: () => currentMode?.handleEvent('menu_clear_track', null),
+            onSelected: () {
+              currentMode?.handleEvent('menu_clear_track', null);
+            },
           ),
         ],
       ),
@@ -138,7 +148,7 @@ class MenuService {
           PlatformMenuItem(
             label: 'MapDesk',
             onSelected: () {
-              // TODO: Implement bring to front
+              // No-op, just shows the window name
             },
           ),
         ],

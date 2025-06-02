@@ -35,19 +35,6 @@ class BrowseModeController extends ModeController {
   }
 
   @override
-  Widget buildMapContent(BuildContext context) {
-    return Container(
-      color: Colors.grey[200],
-      child: const Center(
-        child: Text(
-          'Browse Map Content',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget buildStatusBarContent(BuildContext context) {
     return const Text('Browse Mode');
   }

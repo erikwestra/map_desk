@@ -3,16 +3,18 @@ import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/mode_service.dart';
+import '../services/map_view_service.dart';
 import '../interfaces/mode_controller.dart';
 
 /// A widget that displays the map content.
-/// This is a placeholder that will be replaced with actual map functionality.
+/// Shows content for the current mode and handles map interactions.
 class MapView extends StatelessWidget {
   const MapView({super.key});
 
   @override
   Widget build(BuildContext context) {
     final modeService = context.watch<ModeService>();
+    final mapViewService = context.watch<MapViewService>();
     final currentMode = modeService.currentMode;
 
     return Stack(
@@ -24,12 +26,17 @@ class MapView extends StatelessWidget {
             onTap: (tapPosition, point) {
               currentMode?.handleEvent('map_click', point);
             },
+            onMapReady: () {
+              currentMode?.handleEvent('map_ready', null);
+            },
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.mapdesk.app',
             ),
+            // Show the current content from the service
+            ...mapViewService.content,
           ],
         ),
       ],

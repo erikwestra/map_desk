@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'dart:io';
 import '../../core/interfaces/mode_controller.dart';
 import '../../core/interfaces/mode_ui_context.dart';
@@ -30,10 +31,14 @@ class ViewModeController extends ModeController {
   bool get showRightSidebar => false;
 
   @override
-  void onActivate() {}
+  void onActivate() {
+    _updateMapContent();
+  }
 
   @override
-  void onDeactivate() {}
+  void onDeactivate() {
+    uiContext.mapViewService.clearContent();
+  }
 
   @override
   void dispose() {}
@@ -46,6 +51,41 @@ class ViewModeController extends ModeController {
   @override
   void restoreState(Map<String, dynamic> state) {
     _currentTrack = state['currentTrack'] as SimpleGpxTrack?;
+    _updateMapContent();
+  }
+
+  void _updateMapContent() {
+    if (!isTrackLoaded) {
+      uiContext.mapViewService.clearContent();
+      return;
+    }
+
+    uiContext.mapViewService.setContent([
+      PolylineLayer(
+        polylines: [
+          Polyline(
+            points: _currentTrack!.points.map((p) => p.toLatLng()).toList(),
+            color: Colors.blue,
+            strokeWidth: 3.0,
+          ),
+        ],
+      ),
+      // Add start and end markers
+      CircleLayer(
+        circles: [
+          CircleMarker(
+            point: _currentTrack!.points.first.toLatLng(),
+            color: Colors.green,
+            radius: 8.0,
+          ),
+          CircleMarker(
+            point: _currentTrack!.points.last.toLatLng(),
+            color: Colors.red,
+            radius: 8.0,
+          ),
+        ],
+      ),
+    ]);
   }
 
   @override
@@ -77,6 +117,9 @@ class ViewModeController extends ModeController {
       case 'route_point_selected':
         await _handleRoutePointSelection(eventData);
         break;
+      case 'track_loaded':
+        _updateMapContent();
+        break;
       default:
         print('ViewModeController: Unhandled event type: $eventType');
     }
@@ -97,10 +140,12 @@ class ViewModeController extends ModeController {
       if (file != null) {
         final track = await GpxService.parseGpxFile(File(file.path));
         _currentTrack = track;
+        _updateMapContent();
       }
     } catch (e) {
       print('Failed to load GPX file: ${e.toString()}');
       _currentTrack = null;
+      _updateMapContent();
     } finally {
       _isLoading = false;
     }
@@ -118,6 +163,7 @@ class ViewModeController extends ModeController {
 
   Future<void> _handleClearTrack() async {
     _currentTrack = null;
+    _updateMapContent();
   }
 
   Future<void> _handleMapClick(LatLng point) async {

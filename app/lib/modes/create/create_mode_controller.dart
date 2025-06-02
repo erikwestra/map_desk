@@ -40,19 +40,6 @@ class CreateModeController extends ModeController {
   }
 
   @override
-  Widget buildMapContent(BuildContext context) {
-    return Container(
-      color: Colors.grey[200],
-      child: const Center(
-        child: Text(
-          'Create Map Content',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget buildStatusBarContent(BuildContext context) {
     return const Text('Create Mode');
   }

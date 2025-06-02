@@ -6,6 +6,7 @@ import 'core/services/layout_service.dart';
 import 'core/services/menu_service.dart';
 import 'core/services/database_service.dart';
 import 'core/services/segment_service.dart';
+import 'core/services/map_view_service.dart';
 import 'core/interfaces/mode_ui_context.dart';
 import 'core/widgets/map_view.dart';
 import 'core/widgets/status_bar.dart';
@@ -23,10 +24,12 @@ final navigatorKey = GlobalKey<NavigatorState>();
 class ServiceProvider extends ChangeNotifier {
   late final DatabaseService databaseService;
   late final SegmentService segmentService;
+  late final MapViewService mapViewService;
 
   ServiceProvider() {
     databaseService = DatabaseService();
     segmentService = SegmentService(databaseService);
+    mapViewService = MapViewService();
   }
 
   /// Initialize all services
@@ -73,6 +76,8 @@ void main() async {
         ChangeNotifierProvider.value(value: serviceProvider),
         ChangeNotifierProvider.value(value: modeService),
         ChangeNotifierProvider(create: (_) => LayoutService()),
+        ChangeNotifierProvider(create: (_) => MenuService()),
+        ChangeNotifierProvider(create: (_) => MapViewService()),
       ],
       child: const MapDeskApp(),
     ),
