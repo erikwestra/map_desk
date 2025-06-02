@@ -6,6 +6,7 @@ import 'core/services/layout_service.dart';
 import 'core/services/menu_service.dart';
 import 'core/services/database_service.dart';
 import 'core/services/segment_service.dart';
+import 'core/interfaces/mode_ui_context.dart';
 import 'core/widgets/map_view.dart';
 import 'core/widgets/status_bar.dart';
 import 'core/widgets/segment_library_sidebar.dart';
@@ -41,34 +42,34 @@ class ServiceProvider extends ChangeNotifier {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final modeService = ModeService();
-  final layoutService = LayoutService();
-  final serviceProvider = ServiceProvider();
-  
   // Initialize services
-  try {
-    await serviceProvider.initialize();
-  } catch (e) {
-    print('Failed to initialize services: $e');
-    // You might want to show an error dialog here
-    return;
-  }
-  
-  // Register all mode controllers
-  modeService.registerMode(ViewModeController());
-  modeService.registerMode(ImportModeController());
-  modeService.registerMode(BrowseModeController());
-  modeService.registerMode(CreateModeController());
-  
-  // Start in View mode
-  modeService.switchMode('View');
-  
+  final serviceProvider = ServiceProvider();
+  await serviceProvider.initialize();
+
+  // Create shared UI context
+  final uiContext = ModeUIContext.defaultContext();
+
+  // Create mode controllers
+  final viewModeController = ViewModeController(uiContext);
+  final importModeController = ImportModeController(uiContext);
+  final browseModeController = BrowseModeController(uiContext);
+  final createModeController = CreateModeController(uiContext);
+
+  // Initialize mode service with controllers
+  final modeService = ModeService();
+  modeService.initializeControllers({
+    'View': viewModeController,
+    'Import': importModeController,
+    'Browse': browseModeController,
+    'Create': createModeController,
+  });
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: modeService),
-        ChangeNotifierProvider.value(value: layoutService),
         ChangeNotifierProvider.value(value: serviceProvider),
+        ChangeNotifierProvider.value(value: modeService),
+        ChangeNotifierProvider(create: (_) => LayoutService()),
       ],
       child: const MapDeskApp(),
     ),
@@ -82,12 +83,12 @@ class MapDeskApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MapDesk',
-      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
       home: const MapDeskHome(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

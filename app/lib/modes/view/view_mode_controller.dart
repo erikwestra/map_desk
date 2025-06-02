@@ -4,18 +4,21 @@ import 'package:file_selector/file_selector.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:io';
 import '../../core/interfaces/mode_controller.dart';
+import '../../core/interfaces/mode_ui_context.dart';
 import '../../core/services/mode_service.dart';
 import '../../core/services/menu_service.dart';
 import '../../core/services/gpx_service.dart';
 import '../../core/models/simple_gpx_track.dart';
 
 /// Controller for the View mode, which handles map viewing and navigation.
-class ViewModeController implements ModeController {
+class ViewModeController extends ModeController {
   SimpleGpxTrack? _currentTrack;
   bool _isLoading = false;
 
   SimpleGpxTrack? get currentTrack => _currentTrack;
   bool get isTrackLoaded => _currentTrack != null;
+
+  ViewModeController(ModeUIContext uiContext) : super(uiContext);
 
   @override
   String get modeName => 'View';
@@ -64,7 +67,9 @@ class ViewModeController implements ModeController {
       
       // UI interaction events
       case 'map_click':
-        await _handleMapClick(eventData as LatLng);
+        if (eventData is LatLng) {
+          await _handleMapClick(eventData);
+        }
         break;
       case 'segment_selected':
         await _handleSegmentSelection(eventData);

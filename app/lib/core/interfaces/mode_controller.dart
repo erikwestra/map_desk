@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'mode_ui_context.dart';
 
 /// Interface for mode controllers that manage different application modes.
 abstract class ModeController {
+  /// The UI context providing access to shared UI components
+  final ModeUIContext uiContext;
+
+  /// Creates a new mode controller with the given UI context
+  ModeController(this.uiContext);
+
   /// The name of this mode
   String get modeName;
 

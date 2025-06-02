@@ -4,18 +4,21 @@ import 'package:file_selector/file_selector.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:io';
 import '../../core/interfaces/mode_controller.dart';
+import '../../core/interfaces/mode_ui_context.dart';
 import '../../core/services/mode_service.dart';
 import '../../core/services/menu_service.dart';
 import '../../core/services/gpx_service.dart';
 import '../../core/models/simple_gpx_track.dart';
 
 /// Controller for the Import mode, which handles track import and segment creation.
-class ImportModeController implements ModeController {
+class ImportModeController extends ModeController {
   SimpleGpxTrack? _currentTrack;
   bool _isLoading = false;
 
   SimpleGpxTrack? get currentTrack => _currentTrack;
   bool get isTrackLoaded => _currentTrack != null;
+
+  ImportModeController(ModeUIContext uiContext) : super(uiContext);
 
   @override
   String get modeName => 'Import';
@@ -93,7 +96,9 @@ class ImportModeController implements ModeController {
       
       // UI interaction events
       case 'map_click':
-        await _handleMapClick(eventData as LatLng);
+        if (eventData is LatLng) {
+          await _handleMapClick(eventData);
+        }
         break;
       case 'segment_selected':
         await _handleSegmentSelection(eventData);
@@ -131,42 +136,31 @@ class ImportModeController implements ModeController {
   }
 
   Future<void> _handleSaveRoute() async {
-    // No-op in Import mode
-    print('ImportModeController: Save route called (disabled)');
+    // TODO: Implement save route
+    print('ImportModeController: Save route called');
   }
 
   Future<void> _handleUndo() async {
-    // TODO: Implement undo in Import mode
-    print('ImportModeController: handleUndo called');
+    // TODO: Implement undo
+    print('ImportModeController: Undo called');
   }
 
   Future<void> _handleClearTrack() async {
-    // TODO: Implement track clearing in Import mode
-    print('ImportModeController: handleClearTrack called');
     _currentTrack = null;
   }
 
   Future<void> _handleMapClick(LatLng point) async {
-    // In Import mode, map clicks might:
-    // - Select start/end points for segment creation
-    // - Show point details
-    // - Update the status bar
+    // TODO: Implement map click handling
     print('ImportModeController: Map clicked at $point');
   }
 
   Future<void> _handleSegmentSelection(dynamic segment) async {
-    // In Import mode, segment selection might:
-    // - Show the segment on the map
-    // - Display segment details
-    // - Update the status bar
+    // TODO: Implement segment selection
     print('ImportModeController: Segment selected: $segment');
   }
 
   Future<void> _handleRoutePointSelection(dynamic point) async {
-    // In Import mode, route point selection might:
-    // - Show point details
-    // - Update the status bar
-    // - Center the map on the point
+    // TODO: Implement route point selection
     print('ImportModeController: Route point selected: $point');
   }
 }

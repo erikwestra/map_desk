@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/interfaces/mode_controller.dart';
+import '../../core/interfaces/mode_ui_context.dart';
 import '../../core/services/mode_service.dart';
 import '../../core/services/menu_service.dart';
 
 /// Controller for the Create mode, which handles route creation.
-class CreateModeController implements ModeController {
+class CreateModeController extends ModeController {
+  CreateModeController(ModeUIContext uiContext) : super(uiContext);
+
   @override
   String get modeName => 'Create';
 
@@ -88,7 +91,9 @@ class CreateModeController implements ModeController {
       
       // UI interaction events
       case 'map_click':
-        await _handleMapClick(eventData as LatLng);
+        if (eventData is LatLng) {
+          await _handleMapClick(eventData);
+        }
         break;
       case 'segment_selected':
         await _handleSegmentSelection(eventData);
@@ -102,12 +107,12 @@ class CreateModeController implements ModeController {
   }
 
   Future<void> _handleOpen() async {
-    // TODO: Implement file open in Create mode
-    print('CreateModeController: handleOpen called');
+    // TODO: Implement file opening in Create mode
+    print('CreateModeController: Open called');
   }
 
   Future<void> _handleSaveRoute() async {
-    // TODO: Implement route saving in Create mode
+    // TODO: Implement save route in Create mode
     print('CreateModeController: Save route called');
   }
 
@@ -122,26 +127,17 @@ class CreateModeController implements ModeController {
   }
 
   Future<void> _handleMapClick(LatLng point) async {
-    // In Create mode, map clicks might:
-    // - Add points to the route
-    // - Show point details
-    // - Update the status bar
+    // TODO: Implement map click handling in Create mode
     print('CreateModeController: Map clicked at $point');
   }
 
   Future<void> _handleSegmentSelection(dynamic segment) async {
-    // In Create mode, segment selection might:
-    // - Add the segment to the route
-    // - Display segment details
-    // - Update the status bar
+    // TODO: Implement segment selection in Create mode
     print('CreateModeController: Segment selected: $segment');
   }
 
   Future<void> _handleRoutePointSelection(dynamic point) async {
-    // In Create mode, route point selection might:
-    // - Show point details
-    // - Allow point editing
-    // - Update the status bar
+    // TODO: Implement route point selection in Create mode
     print('CreateModeController: Route point selected: $point');
   }
 }
