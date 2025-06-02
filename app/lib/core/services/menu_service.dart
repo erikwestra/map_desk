@@ -99,6 +99,39 @@ class MenuService {
         ],
       ),
       
+      // Database menu
+      PlatformMenu(
+        label: 'Database',
+        menus: [
+          PlatformMenuItemGroup(
+            members: [
+              PlatformMenuItem(
+                label: 'Reset Database',
+                onSelected: () {
+                  // TODO: Implement reset database
+                },
+              ),
+            ],
+          ),
+          PlatformMenuItemGroup(
+            members: [
+              PlatformMenuItem(
+                label: 'Export Segments',
+                onSelected: () {
+                  // TODO: Implement export segments
+                },
+              ),
+              PlatformMenuItem(
+                label: 'Import Segments',
+                onSelected: () {
+                  // TODO: Implement import segments
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+      
       // Window menu
       PlatformMenu(
         label: 'Window',
