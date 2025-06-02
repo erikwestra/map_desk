@@ -15,6 +15,7 @@ class SegmentLibraryMap extends StatelessWidget {
   Widget build(BuildContext context) {
     final service = context.watch<SegmentLibraryService>();
     final selectedSegment = service.selectedSegment;
+    final allSegments = service.segments;
 
     return Stack(
       children: [
@@ -22,18 +23,20 @@ class SegmentLibraryMap extends StatelessWidget {
           mapController: service.mapController,
           initialZoom: service.lastZoomLevel,
           children: [
-            if (selectedSegment != null)
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: selectedSegment.points.map((p) => 
-                      LatLng(p.latitude, p.longitude)
-                    ).toList(),
-                    color: Theme.of(context).colorScheme.primary,
-                    strokeWidth: 3.0,
-                  ),
-                ],
-              ),
+            // All segments layer
+            PolylineLayer(
+              polylines: allSegments.map((segment) {
+                final isSelected = segment == selectedSegment;
+                return Polyline(
+                  points: segment.points.map((p) => 
+                    LatLng(p.latitude, p.longitude)
+                  ).toList(),
+                  color: Theme.of(context).colorScheme.primary,
+                  strokeWidth: isSelected ? 4.0 : 2.0,
+                );
+              }).toList(),
+            ),
+            // Selected segment markers
             if (selectedSegment != null)
               MarkerLayer(
                 markers: [
