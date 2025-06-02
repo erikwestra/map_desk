@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// A widget that displays the right sidebar.
-class CurrentRouteSidebar extends StatelessWidget {
-  const CurrentRouteSidebar({super.key});
+/// A sidebar widget that displays the current route.
+class RouteSidebar extends StatelessWidget {
+  const RouteSidebar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -10,8 +10,8 @@ class CurrentRouteSidebar extends StatelessWidget {
       width: 300,
       color: Colors.grey[100],
       child: const Center(
-        child: Text('Current Route'),
+        child: Text('Route Sidebar'),
       ),
     );
   }
-}
+} 

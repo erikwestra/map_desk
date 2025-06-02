@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// A widget that displays the left sidebar.
-class SegmentLibrarySidebar extends StatelessWidget {
-  const SegmentLibrarySidebar({super.key});
+/// A sidebar widget that displays the segment library.
+class SegmentSidebar extends StatelessWidget {
+  const SegmentSidebar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +10,7 @@ class SegmentLibrarySidebar extends StatelessWidget {
       width: 300,
       color: Colors.grey[100],
       child: const Center(
-        child: Text('Segments'),
+        child: Text('Segment Sidebar'),
       ),
     );
   }

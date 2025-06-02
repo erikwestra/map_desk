@@ -9,12 +9,15 @@ import 'core/services/segment_service.dart';
 import 'core/interfaces/mode_ui_context.dart';
 import 'core/widgets/map_view.dart';
 import 'core/widgets/status_bar.dart';
-import 'core/widgets/segment_library_sidebar.dart';
-import 'core/widgets/current_route_sidebar.dart';
+import 'core/widgets/segment_sidebar.dart';
+import 'core/widgets/route_sidebar.dart';
 import 'modes/view/view_mode_controller.dart';
 import 'modes/import/import_mode_controller.dart';
 import 'modes/browse/browse_mode_controller.dart';
 import 'modes/create/create_mode_controller.dart';
+
+/// Global navigator key for accessing context from actions
+final navigatorKey = GlobalKey<NavigatorState>();
 
 /// Service provider that manages the lifecycle of our services
 class ServiceProvider extends ChangeNotifier {
@@ -82,6 +85,7 @@ class MapDeskApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'MapDesk',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
@@ -111,12 +115,12 @@ class MapDeskHome extends StatelessWidget {
             body: Row(
               children: [
                 if (currentMode.showLeftSidebar)
-                  const SegmentLibrarySidebar(),
+                  const SegmentSidebar(),
                 const Expanded(
                   child: MapView(),
                 ),
                 if (currentMode.showRightSidebar)
-                  const CurrentRouteSidebar(),
+                  const RouteSidebar(),
               ],
             ),
             bottomNavigationBar: Container(
@@ -218,56 +222,100 @@ class QuitIntent extends Intent {}
 class OpenFileAction extends Action<OpenFileIntent> {
   @override
   void invoke(OpenFileIntent intent) {
-    // TODO: Implement file open
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final modeService = context.read<ModeService>();
+    final currentMode = modeService.currentMode;
+    if (currentMode == null) return;
+
+    currentMode.handleEvent('menu_open', null);
   }
 }
 
 class SaveRouteAction extends Action<SaveRouteIntent> {
   @override
   void invoke(SaveRouteIntent intent) {
-    // TODO: Implement save route
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final modeService = context.read<ModeService>();
+    final currentMode = modeService.currentMode;
+    if (currentMode == null) return;
+
+    currentMode.handleEvent('menu_save_route', null);
   }
 }
 
 class UndoAction extends Action<UndoIntent> {
   @override
   void invoke(UndoIntent intent) {
-    // TODO: Implement undo
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final modeService = context.read<ModeService>();
+    final currentMode = modeService.currentMode;
+    if (currentMode == null) return;
+
+    currentMode.handleEvent('menu_undo', null);
   }
 }
 
 class ClearTrackAction extends Action<ClearTrackIntent> {
   @override
   void invoke(ClearTrackIntent intent) {
-    // TODO: Implement clear track
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final modeService = context.read<ModeService>();
+    final currentMode = modeService.currentMode;
+    if (currentMode == null) return;
+
+    currentMode.handleEvent('menu_clear_track', null);
   }
 }
 
 class ViewModeAction extends Action<ViewModeIntent> {
   @override
   void invoke(ViewModeIntent intent) {
-    // TODO: Switch to View mode
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final modeService = context.read<ModeService>();
+    modeService.switchMode('View');
   }
 }
 
 class ImportModeAction extends Action<ImportModeIntent> {
   @override
   void invoke(ImportModeIntent intent) {
-    // TODO: Switch to Import mode
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final modeService = context.read<ModeService>();
+    modeService.switchMode('Import');
   }
 }
 
 class BrowseModeAction extends Action<BrowseModeIntent> {
   @override
   void invoke(BrowseModeIntent intent) {
-    // TODO: Switch to Browse mode
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final modeService = context.read<ModeService>();
+    modeService.switchMode('Browse');
   }
 }
 
 class CreateModeAction extends Action<CreateModeIntent> {
   @override
   void invoke(CreateModeIntent intent) {
-    // TODO: Switch to Create mode
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final modeService = context.read<ModeService>();
+    modeService.switchMode('Create');
   }
 }
 
