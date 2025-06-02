@@ -11,18 +11,6 @@ abstract class ModeController {
   /// Whether to show the right sidebar
   bool get showRightSidebar;
 
-  /// Builds the left sidebar widget
-  Widget buildLeftSidebar(BuildContext context);
-
-  /// Builds the right sidebar widget
-  Widget buildRightSidebar(BuildContext context);
-
-  /// Builds the main map content widget
-  Widget buildMapContent(BuildContext context);
-
-  /// Builds the left side of the status bar (mode-specific content)
-  Widget buildStatusBarContent(BuildContext context);
-
   /// Called when this mode is activated
   void onActivate();
 
@@ -32,21 +20,15 @@ abstract class ModeController {
   /// Called when this mode is disposed
   void dispose();
 
-  /// Gets the current state of this mode
-  Map<String, dynamic> getState();
-
-  /// Restores the state of this mode
-  void restoreState(Map<String, dynamic> state);
-
-  /// Handles the Open command
-  Future<void> handleOpen() async {}
-
-  /// Handles the Save Route command
-  Future<void> handleSaveRoute() async {}
-
-  /// Handles the Undo command
-  Future<void> handleUndo() async {}
-
-  /// Handles the Clear Track command
-  Future<void> handleClearTrack() async {}
+  /// Handle an event from the UI
+  /// 
+  /// Events can be any type of interaction from the UI, such as:
+  /// - Menu selections (open, save, undo, clear)
+  /// - Map clicks
+  /// - Sidebar selections
+  /// - Button clicks
+  /// - Drag and drop operations
+  /// 
+  /// The event type and data are passed as parameters.
+  Future<void> handleEvent(String eventType, dynamic eventData) async {}
 }

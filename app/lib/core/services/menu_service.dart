@@ -44,12 +44,12 @@ class MenuService {
           PlatformMenuItem(
             label: 'Open',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyO, meta: true),
-            onSelected: () => currentMode?.handleOpen(),
+            onSelected: () => currentMode?.handleEvent('menu_open', null),
           ),
           PlatformMenuItem(
             label: 'Save Route',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyS, meta: true),
-            onSelected: () => currentMode?.handleSaveRoute(),
+            onSelected: () => currentMode?.handleEvent('menu_save_route', null),
           ),
         ],
       ),
@@ -61,12 +61,12 @@ class MenuService {
           PlatformMenuItem(
             label: 'Undo',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyZ, meta: true),
-            onSelected: () => currentMode?.handleUndo(),
+            onSelected: () => currentMode?.handleEvent('menu_undo', null),
           ),
           PlatformMenuItem(
             label: 'Clear Track',
             shortcut: const SingleActivator(LogicalKeyboardKey.backspace, meta: true),
-            onSelected: () => currentMode?.handleClearTrack(),
+            onSelected: () => currentMode?.handleEvent('menu_clear_track', null),
           ),
         ],
       ),
@@ -138,7 +138,7 @@ class MenuService {
           PlatformMenuItem(
             label: 'MapDesk',
             onSelected: () {
-              // TODO: Implement window focus
+              // TODO: Implement bring to front
             },
           ),
         ],

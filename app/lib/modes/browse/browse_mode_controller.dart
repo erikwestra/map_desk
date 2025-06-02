@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
 import '../../core/interfaces/mode_controller.dart';
 import '../../core/services/mode_service.dart';
 import '../../core/services/menu_service.dart';
@@ -64,26 +65,78 @@ class BrowseModeController implements ModeController {
   void restoreState(Map<String, dynamic> state) {}
 
   @override
-  Future<void> handleOpen() async {
+  Future<void> handleEvent(String eventType, dynamic eventData) async {
+    switch (eventType) {
+      // Menu events
+      case 'menu_open':
+        await _handleOpen();
+        break;
+      case 'menu_save_route':
+        await _handleSaveRoute();
+        break;
+      case 'menu_undo':
+        await _handleUndo();
+        break;
+      case 'menu_clear_track':
+        await _handleClearTrack();
+        break;
+      
+      // UI interaction events
+      case 'map_click':
+        await _handleMapClick(eventData as LatLng);
+        break;
+      case 'segment_selected':
+        await _handleSegmentSelection(eventData);
+        break;
+      case 'route_point_selected':
+        await _handleRoutePointSelection(eventData);
+        break;
+      default:
+        print('BrowseModeController: Unhandled event type: $eventType');
+    }
+  }
+
+  Future<void> _handleOpen() async {
     // TODO: Implement file open in Browse mode
     print('BrowseModeController: handleOpen called');
   }
 
-  @override
-  Future<void> handleSaveRoute() async {
+  Future<void> _handleSaveRoute() async {
     // No-op in Browse mode
-    print('BrowseModeController: handleSaveRoute called (disabled)');
+    print('BrowseModeController: Save route called (disabled)');
   }
 
-  @override
-  Future<void> handleUndo() async {
+  Future<void> _handleUndo() async {
     // No-op in Browse mode
-    print('BrowseModeController: handleUndo called (disabled)');
+    print('BrowseModeController: Undo called (disabled)');
   }
 
-  @override
-  Future<void> handleClearTrack() async {
+  Future<void> _handleClearTrack() async {
     // No-op in Browse mode
-    print('BrowseModeController: handleClearTrack called (disabled)');
+    print('BrowseModeController: Clear track called (disabled)');
+  }
+
+  Future<void> _handleMapClick(LatLng point) async {
+    // In Browse mode, map clicks might:
+    // - Show segment details at clicked location
+    // - Center the map on the clicked point
+    // - Update the status bar
+    print('BrowseModeController: Map clicked at $point');
+  }
+
+  Future<void> _handleSegmentSelection(dynamic segment) async {
+    // In Browse mode, segment selection might:
+    // - Show the segment on the map
+    // - Display segment details
+    // - Update the status bar
+    print('BrowseModeController: Segment selected: $segment');
+  }
+
+  Future<void> _handleRoutePointSelection(dynamic point) async {
+    // In Browse mode, route point selection might:
+    // - Show point details
+    // - Update the status bar
+    // - Center the map on the point
+    print('BrowseModeController: Route point selected: $point');
   }
 }

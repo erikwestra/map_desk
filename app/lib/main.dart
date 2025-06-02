@@ -6,6 +6,10 @@ import 'core/services/layout_service.dart';
 import 'core/services/menu_service.dart';
 import 'core/services/database_service.dart';
 import 'core/services/segment_service.dart';
+import 'core/widgets/map_view.dart';
+import 'core/widgets/status_bar.dart';
+import 'core/widgets/segment_library_sidebar.dart';
+import 'core/widgets/current_route_sidebar.dart';
 import 'modes/view/view_mode_controller.dart';
 import 'modes/import/import_mode_controller.dart';
 import 'modes/browse/browse_mode_controller.dart';
@@ -106,18 +110,12 @@ class MapDeskHome extends StatelessWidget {
             body: Row(
               children: [
                 if (currentMode.showLeftSidebar)
-                  SizedBox(
-                    width: 250,
-                    child: currentMode.buildLeftSidebar(context),
-                  ),
-                Expanded(
-                  child: currentMode.buildMapContent(context),
+                  const SegmentLibrarySidebar(),
+                const Expanded(
+                  child: MapView(),
                 ),
                 if (currentMode.showRightSidebar)
-                  SizedBox(
-                    width: 250,
-                    child: currentMode.buildRightSidebar(context),
-                  ),
+                  const CurrentRouteSidebar(),
               ],
             ),
             bottomNavigationBar: Container(
@@ -126,8 +124,7 @@ class MapDeskHome extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Mode-specific status bar content
-                  currentMode.buildStatusBarContent(context),
+                  const StatusBar(),
                   // Mode selector
                   SegmentedButton<String>(
                     segments: const [
