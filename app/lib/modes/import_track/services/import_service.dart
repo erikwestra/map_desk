@@ -236,6 +236,7 @@ class ImportService extends ChangeNotifier {
     _isProcessing = false;
     _selectedItemId = null;
     _hasZoomedToBounds = false;  // Reset the flag when clearing the track
+    _segments.clear();  // Clear the segments list
     notifyListeners();
   }
 
@@ -287,22 +288,19 @@ class ImportService extends ChangeNotifier {
   }
 
   Future<void> showSegmentOptionsDialog(BuildContext context) async {
-    // Only show dialog if no segment name has been set
-    if (_importOptions.segmentName.isEmpty) {
-      // Calculate next segment number based on existing segments
-      final nextNumber = await _calculateNextSegmentNumber();
-      
-      // Create new options with calculated next number
-      final options = await showDialog<SegmentImportOptions>(
-        context: context,
-        builder: (context) => ImportTrackOptionsDialog(
-          initialOptions: _importOptions.copyWith(nextSegmentNumber: nextNumber),
-        ),
-      );
+    // Calculate next segment number based on existing segments
+    final nextNumber = await _calculateNextSegmentNumber();
+    
+    // Create new options with calculated next number
+    final options = await showDialog<SegmentImportOptions>(
+      context: context,
+      builder: (context) => ImportTrackOptionsDialog(
+        initialOptions: _importOptions.copyWith(nextSegmentNumber: nextNumber),
+      ),
+    );
 
-      if (options != null && context.mounted) {
-        setImportOptions(options);
-      }
+    if (options != null && context.mounted) {
+      setImportOptions(options);
     }
   }
 

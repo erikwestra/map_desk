@@ -60,6 +60,7 @@ class _ImportTrackOptionsDialogState extends State<ImportTrackOptionsDialog> {
               children: [
                 TextField(
                   controller: _nameController,
+                  autofocus: true,
                   decoration: const InputDecoration(
                     labelText: 'Segment Name',
                     hintText: 'Enter a name for the segment',

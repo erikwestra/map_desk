@@ -63,9 +63,21 @@ class ImportTrackSelectionPanel extends StatelessWidget {
                     ),
                     onTap: () => onItemSelected(item),
                     trailing: item.type == SelectableItemType.file
-                      ? IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: onCloseFile,
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.settings, size: 20),
+                              tooltip: 'Segment Options',
+                              onPressed: () {
+                                context.read<ImportService>().showSegmentOptionsDialog(context);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: onCloseFile,
+                            ),
+                          ],
                         )
                       : null,
                   ),
