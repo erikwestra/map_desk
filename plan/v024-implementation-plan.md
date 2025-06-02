@@ -7,9 +7,9 @@ Version v024 implements a unified window interface with a three-panel layout: a 
 ```
 +------------------+--------------------------------------------------+------------------+
 |                  |                                                  |                  |
-|   Segment        |                                                  |   Route          |
-|   Library        |                      Map                         |   Builder        |
-|   Sidebar        |                                                  |   Sidebar        |
+|   Segment        |                                                  |   Current        |
+|   Library        |                      Map                         |     Route        |
+|                  |                                                  |                  |
 |                  |                                                  |                  |
 |                  |                                                  |                  |
 +------------------+--------------------------------------------------+------------------+
@@ -27,8 +27,8 @@ Version v024 implements a unified window interface with a three-panel layout: a 
   - Import controls (when in import mode)
   - Search and filter options
 - **Behavior**:
-  - Visible in Import and Browse modes
-  - Hidden in View and Create modes
+  - Visible in Import, Browse, and Create modes
+  - Hidden in View mode
   - Maintains state when hidden/shown
   - Updates in real-time during track import
 
@@ -45,7 +45,7 @@ Version v024 implements a unified window interface with a three-panel layout: a 
   - Maintains view state between mode changes
   - Expands to fill available space when sidebars are hidden
 
-### Right Sidebar (Route Builder)
+### Right Sidebar (Current Route)
 - **Primary Purpose**: Route creation and editing
 - **Content**:
   - Route builder options
@@ -66,9 +66,9 @@ Version v024 implements a unified window interface with a three-panel layout: a 
 - **Mode Selector**:
   - Segmented control with four modes:
     - View: Basic map viewing mode (both sidebars hidden)
-    - Import: Track import and segment creation (left sidebar visible)
-    - Browse: Segment library browsing (left sidebar visible)
-    - Create: Route creation mode (right sidebar only)
+    - Import: Track import and segment creation (Segment Library sidebar visible)
+    - Browse: Segment library browsing (Segment Library sidebar visible)
+    - Create: Route creation mode (both sidebars visible)
   - Always visible
   - One-click mode switching
   - Clear visual indication of current mode
@@ -107,27 +107,76 @@ Database
 
 ## Implementation Details
 
-### 1. Layout Management
-- Implement responsive layout system
-- Handle sidebar visibility based on current mode
-- Maintain panel proportions
-- Support window resizing
-- Smooth transitions when showing/hiding sidebars
+### 1. Mode Management (Strategy Pattern)
+- **Mode Controller Interface**
+  - Define common interface for all mode controllers
+  - Handle mode-specific behavior
+  - Manage mode-specific state
+  - Provide content for shared layout components
 
-### 2. Mode Management
-- Track current application mode
-- Update panel content based on mode
-- Maintain state between mode changes
-- Handle mode transitions
-- Implement mode selector in status bar
-- Sync mode state between menu and status bar
-- Control sidebar visibility based on mode
+- **Mode Controllers** (Replacing Mode-Specific Services)
+  - **ViewModeController**
+    - Handles basic map viewing
+    - Manages map bounds and zoom
+    - Controls map interaction behavior
+    - Provides content for map view
+    - No sidebars visible
+    - Replaces functionality from map_service.dart
 
-### 3. Panel Communication
-- Real-time updates between panels
-- State synchronization
-- Event handling
-- Data flow management
+  - **ImportModeController**
+    - Manages track import process
+    - Provides content for segment library sidebar
+    - Handles import-specific map interactions
+    - Manages import circles and preview
+    - Provides content for map view
+    - Replaces functionality from import_service.dart
+
+  - **BrowseModeController**
+    - Manages segment library browsing
+    - Provides content for segment library sidebar
+    - Handles segment selection
+    - Manages map display of selected segments
+    - Provides content for map view
+    - Replaces functionality from segment_library_service.dart
+
+  - **CreateModeController**
+    - Manages route creation
+    - Provides content for current route sidebar
+    - Handles route-specific map interactions
+    - Manages route generation and editing
+    - Provides content for map view
+    - Replaces functionality from route_builder_service.dart
+
+### 2. Shared Components
+- **Map View**
+  - Mode-agnostic map display
+  - Delegates all interactions to current mode controller
+  - Renders content provided by mode controller
+  - Handles basic map operations (pan, zoom)
+
+- **Segment Library Sidebar**
+  - Mode-agnostic container
+  - Displays content provided by mode controller
+  - Handles basic layout and scrolling
+  - Delegates interactions to mode controller
+
+- **Current Route Sidebar**
+  - Mode-agnostic container
+  - Displays content provided by mode controller
+  - Handles basic layout and scrolling
+  - Delegates interactions to mode controller
+
+### 3. State Management
+- **App State**
+  - Current mode
+  - Mode-specific state
+  - Shared state (map position, etc.)
+  - User preferences
+
+- **Mode State**
+  - Each mode controller manages its own state
+  - State persists during mode switches
+  - Clean state transitions between modes
 
 ## File Structure
 ```
@@ -136,18 +185,37 @@ app/
 │   ├── core/
 │   │   ├── services/
 │   │   │   ├── layout_service.dart
-│   │   │   └── mode_service.dart
-│   │   └── models/
-│   │       └── app_state.dart
-│   ├── widgets/
-│   │   ├── left_sidebar.dart
-│   │   ├── right_sidebar.dart
-│   │   ├── map_view.dart
-│   │   └── status_bar.dart
-│   └── modes/
-│       ├── segment_library/
-│       ├── import_track/
-│       └── route_builder/
+│   │   │   ├── mode_service.dart
+│   │   │   └── app_state.dart
+│   │   ├── interfaces/
+│   │   │   └── mode_controller.dart
+│   │   └── widgets/
+│   │       ├── map_view.dart
+│   │       ├── segment_library_sidebar.dart
+│   │       ├── current_route_sidebar.dart
+│   │       └── status_bar.dart
+│   ├── modes/
+│   │   ├── view/
+│   │   │   ├── models/
+│   │   │   │   └── view_state.dart
+│   │   │   ├── view_mode_controller.dart    # Replaces map_service.dart
+│   │   │   └── widgets/                     # ...current widgets in modes/map/widgets
+│   │   ├── import/
+│   │   │   ├── models/
+│   │   │   │   ├── segment_import_options.dart
+│   │   │   │   └── selectable_item.dart
+│   │   │   ├── import_mode_controller.dart  # Replaces import_service.dart
+│   │   │   └── widgets/                     # ...current widgets in modes/import_track/widgets
+│   │   ├── browse/
+│   │   │   ├── models/
+│   │   │   │   └── browse_state.dart
+│   │   │   ├── browse_mode_controller.dart  # Replaces segment_library_service.dart
+│   │   │   └── widgets/                     # ...current widgets in modes/segment_library/widgets
+│   │   └── create/
+│   │       ├── models/
+│   │       │   └── create_state.dart
+│   │       ├── create_mode_controller.dart  # Replaces route_builder_service.dart
+│   │       └── widgets/                     # ...current widgets in modes/route_builder/widgets
 ```
 
 ## Success Criteria
@@ -163,6 +231,24 @@ app/
 - [ ] All panels maintain proper state
 - [ ] Mode selector works correctly
 - [ ] Status messages are clear and informative
+- [ ] Mode-specific behavior is properly isolated
+- [ ] Shared components remain mode-agnostic
+- [ ] State management works correctly across mode switches
 
 ## Dependencies
-- `provider`
+- `provider` for state management
+- `flutter_map` for map display
+- `latlong2` for coordinate handling
+
+## Notes
+- Focus on native macOS behavior
+- Maintain clean separation between modes
+- Ensure robust state management
+- Prioritize user experience
+- Handle window resizing gracefully
+- Preserve state across mode changes
+- Follow macOS UI guidelines for segmented controls
+- Sidebar visibility is mode-dependent, not user-controlled
+- Use Strategy Pattern to isolate mode-specific logic
+- Keep shared components mode-agnostic
+- Implement clean interfaces between modes and shared components
