@@ -5,9 +5,24 @@ import 'mode_service.dart';
 
 /// Service that manages the application menu bar.
 class MenuService {
+  /// Menu item IDs for consistent reference
+  static const String menuItemQuit = 'quit';
+  static const String menuItemOpen = 'open';
+  static const String menuItemSaveRoute = 'save_route';
+  static const String menuItemUndo = 'undo';
+  static const String menuItemClearTrack = 'clear_track';
+  static const String menuItemViewMap = 'view_map';
+  static const String menuItemImportTrack = 'import_track';
+  static const String menuItemBrowseSegments = 'browse_segments';
+  static const String menuItemCreateRoute = 'create_route';
+  static const String menuItemResetDatabase = 'reset_database';
+  static const String menuItemExportSegments = 'export_segments';
+  static const String menuItemImportSegments = 'import_segments';
+
   /// Builds the application menu bar
   static List<PlatformMenu> buildMenuBar(BuildContext context) {
-    final currentMode = context.read<ModeService>().currentMode?.modeName;
+    final modeService = context.read<ModeService>();
+    final currentMode = modeService.currentMode;
 
     return [
       // MapDesk menu
@@ -29,16 +44,12 @@ class MenuService {
           PlatformMenuItem(
             label: 'Open',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyO, meta: true),
-            onSelected: () {
-              // TODO: Implement file open
-            },
+            onSelected: () => currentMode?.handleOpen(),
           ),
           PlatformMenuItem(
             label: 'Save Route',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyS, meta: true),
-            onSelected: () {
-              // TODO: Implement save route
-            },
+            onSelected: () => currentMode?.handleSaveRoute(),
           ),
         ],
       ),
@@ -50,16 +61,12 @@ class MenuService {
           PlatformMenuItem(
             label: 'Undo',
             shortcut: const SingleActivator(LogicalKeyboardKey.keyZ, meta: true),
-            onSelected: () {
-              // TODO: Implement undo
-            },
+            onSelected: () => currentMode?.handleUndo(),
           ),
           PlatformMenuItem(
             label: 'Clear Track',
             shortcut: const SingleActivator(LogicalKeyboardKey.backspace, meta: true),
-            onSelected: () {
-              // TODO: Implement clear track
-            },
+            onSelected: () => currentMode?.handleClearTrack(),
           ),
         ],
       ),
@@ -71,30 +78,22 @@ class MenuService {
           PlatformMenuItem(
             label: 'View Map',
             shortcut: const SingleActivator(LogicalKeyboardKey.digit1, meta: true),
-            onSelected: () {
-              context.read<ModeService>().switchMode('View');
-            },
+            onSelected: () => modeService.switchMode('View'),
           ),
           PlatformMenuItem(
             label: 'Import Track',
             shortcut: const SingleActivator(LogicalKeyboardKey.digit2, meta: true),
-            onSelected: () {
-              context.read<ModeService>().switchMode('Import');
-            },
+            onSelected: () => modeService.switchMode('Import'),
           ),
           PlatformMenuItem(
             label: 'Browse Segments',
             shortcut: const SingleActivator(LogicalKeyboardKey.digit3, meta: true),
-            onSelected: () {
-              context.read<ModeService>().switchMode('Browse');
-            },
+            onSelected: () => modeService.switchMode('Browse'),
           ),
           PlatformMenuItem(
             label: 'Create Route',
             shortcut: const SingleActivator(LogicalKeyboardKey.digit4, meta: true),
-            onSelected: () {
-              context.read<ModeService>().switchMode('Create');
-            },
+            onSelected: () => modeService.switchMode('Create'),
           ),
         ],
       ),

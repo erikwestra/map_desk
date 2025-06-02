@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/interfaces/mode_controller.dart';
 import '../../core/services/mode_service.dart';
+import '../../core/services/menu_service.dart';
 
 /// Controller for the View mode, which handles map viewing and navigation.
 class ViewModeController implements ModeController {
@@ -61,4 +62,28 @@ class ViewModeController implements ModeController {
 
   @override
   void restoreState(Map<String, dynamic> state) {}
+
+  @override
+  Future<void> handleOpen() async {
+    // TODO: Implement file open in View mode
+    print('ViewModeController: handleOpen called');
+  }
+
+  @override
+  Future<void> handleSaveRoute() async {
+    // No-op in View mode
+    print('ViewModeController: handleSaveRoute called (disabled)');
+  }
+
+  @override
+  Future<void> handleUndo() async {
+    // No-op in View mode
+    print('ViewModeController: handleUndo called (disabled)');
+  }
+
+  @override
+  Future<void> handleClearTrack() async {
+    // No-op in View mode
+    print('ViewModeController: handleClearTrack called (disabled)');
+  }
 }

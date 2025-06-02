@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/interfaces/mode_controller.dart';
 import '../../core/services/mode_service.dart';
+import '../../core/services/menu_service.dart';
 
 /// Controller for the Import mode, which handles track import and segment creation.
 class ImportModeController implements ModeController {
@@ -61,4 +62,28 @@ class ImportModeController implements ModeController {
 
   @override
   void restoreState(Map<String, dynamic> state) {}
+
+  @override
+  Future<void> handleOpen() async {
+    // TODO: Implement file open in Import mode
+    print('ImportModeController: handleOpen called');
+  }
+
+  @override
+  Future<void> handleSaveRoute() async {
+    // No-op in Import mode
+    print('ImportModeController: handleSaveRoute called (disabled)');
+  }
+
+  @override
+  Future<void> handleUndo() async {
+    // TODO: Implement undo in Import mode
+    print('ImportModeController: handleUndo called');
+  }
+
+  @override
+  Future<void> handleClearTrack() async {
+    // TODO: Implement track clearing in Import mode
+    print('ImportModeController: handleClearTrack called');
+  }
 }

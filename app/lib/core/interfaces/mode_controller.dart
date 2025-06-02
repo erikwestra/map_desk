@@ -37,4 +37,16 @@ abstract class ModeController {
 
   /// Restores the state of this mode
   void restoreState(Map<String, dynamic> state);
+
+  /// Handles the Open command
+  Future<void> handleOpen() async {}
+
+  /// Handles the Save Route command
+  Future<void> handleSaveRoute() async {}
+
+  /// Handles the Undo command
+  Future<void> handleUndo() async {}
+
+  /// Handles the Clear Track command
+  Future<void> handleClearTrack() async {}
 }
