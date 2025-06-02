@@ -1,7 +1,82 @@
 # MapDesk v024 Implementation Plan
 
 ## Overview
-Version v024 implements a multi-window architecture for MapDesk, allowing users to work with different modes (Segment Library, Import Track, Route Builder, and Map View) in separate windows. This enhances productivity by enabling simultaneous access to different features.
+Version v024 implements a unified window interface with a three-panel layout: a left sidebar for the segment library, a central map view, and a right sidebar for route builder options. The content of each panel changes contextually based on the current mode, but their positions remain constant. A status bar at the bottom provides additional information and controls.
+
+## Window Layout
+```
++------------------+--------------------------------------------------+------------------+
+|                  |                                                  |                  |
+|   Segment        |                                                  |   Route          |
+|   Library        |                      Map                         |   Builder        |
+|   Sidebar        |                                                  |   Sidebar        |
+|                  |                                                  |                  |
+|                  |                                                  |                  |
++------------------+--------------------------------------------------+------------------+
+| Status message...                                       [View][Import][Browse][Create] |
++----------------------------------------------------------------------------------------+
+```
+
+## Panel Descriptions
+
+### Left Sidebar (Segment Library)
+- **Primary Purpose**: Display and manage track segments
+- **Content**:
+  - List of available segments
+  - Segment details and metadata
+  - Import controls (when in import mode)
+  - Search and filter options
+- **Behavior**:
+  - Visible in Import and Browse modes
+  - Hidden in View and Create modes
+  - Maintains state when hidden/shown
+  - Updates in real-time during track import
+
+### Central Map
+- **Primary Purpose**: Visual display and interaction
+- **Content**:
+  - GPX track visualization
+  - Import circles and track preview (import mode)
+  - Route builder track (route mode)
+  - Map controls and zoom
+- **Behavior**:
+  - Always visible
+  - Updates based on current mode
+  - Maintains view state between mode changes
+  - Expands to fill available space when sidebars are hidden
+
+### Right Sidebar (Route Builder)
+- **Primary Purpose**: Route creation and editing
+- **Content**:
+  - Route builder options
+  - Segment selection controls
+  - Route parameters
+  - Generation controls
+- **Behavior**:
+  - Visible only in Create mode
+  - Hidden in all other modes
+  - Context-sensitive options
+  - Updates based on selected segments
+
+### Status Bar
+- **Primary Purpose**: Information and controls
+- **Layout**:
+  - Left side: Status message and progress information
+  - Right side: Mode selector (segmented control)
+- **Mode Selector**:
+  - Segmented control with four modes:
+    - View: Basic map viewing mode (both sidebars hidden)
+    - Import: Track import and segment creation (left sidebar visible)
+    - Browse: Segment library browsing (left sidebar visible)
+    - Create: Route creation mode (right sidebar only)
+  - Always visible
+  - One-click mode switching
+  - Clear visual indication of current mode
+- **Status Message**:
+  - Shows current operation status
+  - Displays progress information
+  - Provides feedback for user actions
+  - Updates in real-time
 
 ## Menu Structure
 ```
@@ -11,91 +86,83 @@ MapDesk (Application Menu)
 
 File
 ├── Open                    ⌘O
-└── Close Window           ⌘W
+└── Save Route             ⌘S
 
 Edit
 ├── Undo                    ⌘Z
 └── Clear Track             ⌘⌫
+
+Mode
+├── View Map               ⌘1
+├── Import Track           ⌘2
+├── Browse Segments        ⌘3
+└── Create Route           ⌘4
 
 Database
 ├── Reset Database
 ├── ──────────────────────
 ├── Export Segments
 └── Import Segments
-
-Window
-├── Segment Library         ⌘1
-├── Import Track            ⌘2
-├── Route Builder           ⌘3
-└── Map View                ⌘4
 ```
 
 ## Implementation Details
 
-### 1. Window Management Service
-- Create `WindowManager` service using the `window_manager` package to:
-  - Create and manage separate windows for each mode
-  - Handle window show/hide operations from the menu
-  - Ensure windows maintain their state when hidden/shown
+### 1. Layout Management
+- Implement responsive layout system
+- Handle sidebar visibility based on current mode
+- Maintain panel proportions
+- Support window resizing
+- Smooth transitions when showing/hiding sidebars
 
-### 2. Window Types
-- **Segment Library Window**
-  - Default window on app launch
-  - Uses existing functionality from `lib/modes/segment_library/screens/segment_library_screen.dart`
-  - No changes to core functionality
-  - Simply moved into its own window
+### 2. Mode Management
+- Track current application mode
+- Update panel content based on mode
+- Maintain state between mode changes
+- Handle mode transitions
+- Implement mode selector in status bar
+- Sync mode state between menu and status bar
+- Control sidebar visibility based on mode
 
-- **Import Track Window**
-  - Dedicated window for track import
-  - Uses existing functionality from `lib/modes/import_track/screens/import_track_screen.dart`
-  - No changes to core functionality
-  - Simply moved into its own window
-
-- **Route Builder Window**
-  - Route creation interface
-  - Uses existing functionality from `lib/modes/route_builder/screens/route_builder_screen.dart`
-  - No changes to core functionality
-  - Simply moved into its own window
-
-- **Map View Window**
-  - Map visualization
-  - Uses existing functionality from `lib/modes/map_view/screens/map_view_screen.dart`
-  - No changes to core functionality
-  - Simply moved into its own window
-
-### 3. Window Communication
-- New segments created in the track importer are shown immediately in the segment library
+### 3. Panel Communication
+- Real-time updates between panels
+- State synchronization
+- Event handling
+- Data flow management
 
 ## File Structure
 ```
 app/
 ├── lib/
 │   ├── core/
-│   │   └── services/
-│   │       └── window_manager.dart
-│   └── windows/
-│       ├── segment_library/    # existing functionality copied from lib/modes/segment_library
-│       ├── import_track/       # existing functionality copied from lib/modes/import_track
-│       ├── route_builder/      # existing functionality copied from lib/modes/route_builder
-│       └── map_view/          # existing functionality copied from lib/modes/map_view
+│   │   ├── services/
+│   │   │   ├── layout_service.dart
+│   │   │   └── mode_service.dart
+│   │   └── models/
+│   │       └── app_state.dart
+│   ├── widgets/
+│   │   ├── left_sidebar.dart
+│   │   ├── right_sidebar.dart
+│   │   ├── map_view.dart
+│   │   └── status_bar.dart
+│   └── modes/
+│       ├── segment_library/
+│       ├── import_track/
+│       └── route_builder/
 ```
 
 ## Success Criteria
-- [ ] App launches with Segment Library window
-- [ ] All windows can be opened from menu
-- [ ] Windows maintain state when hidden/shown
-- [ ] Windows communicate state changes
-- [ ] Database operations work across windows
+- [ ] Three-panel layout works correctly
+- [ ] Sidebar visibility changes automatically with mode
+- [ ] Content updates correctly in each mode
+- [ ] State is maintained between mode changes
+- [ ] Real-time updates work across panels
+- [ ] Window resizing handles layout properly
 - [ ] Keyboard shortcuts work as specified
-- [ ] All windows maintain proper state
+- [ ] Status bar provides relevant information
+- [ ] Mode transitions are smooth
+- [ ] All panels maintain proper state
+- [ ] Mode selector works correctly
+- [ ] Status messages are clear and informative
 
 ## Dependencies
-- `window_manager` for window control
-- `provider` for state management
-
-## Notes
-- Focus on native macOS window behavior
-- Maintain clean separation between windows
-- Ensure robust state management
-- Prioritize user experience
- 
+- `provider`
