@@ -4,14 +4,51 @@ import 'package:provider/provider.dart';
 import 'core/services/mode_service.dart';
 import 'core/services/layout_service.dart';
 import 'core/services/menu_service.dart';
+import 'core/services/database_service.dart';
+import 'core/services/segment_service.dart';
 import 'modes/view/view_mode_controller.dart';
 import 'modes/import/import_mode_controller.dart';
 import 'modes/browse/browse_mode_controller.dart';
 import 'modes/create/create_mode_controller.dart';
 
-void main() {
+/// Service provider that manages the lifecycle of our services
+class ServiceProvider extends ChangeNotifier {
+  late final DatabaseService databaseService;
+  late final SegmentService segmentService;
+
+  ServiceProvider() {
+    databaseService = DatabaseService();
+    segmentService = SegmentService(databaseService);
+  }
+
+  /// Initialize all services
+  Future<void> initialize() async {
+    try {
+      // Initialize database first
+      await databaseService.database;
+      print('DatabaseService: Initialized successfully');
+    } catch (e) {
+      print('ServiceProvider: Failed to initialize services: $e');
+      rethrow;
+    }
+  }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   final modeService = ModeService();
   final layoutService = LayoutService();
+  final serviceProvider = ServiceProvider();
+  
+  // Initialize services
+  try {
+    await serviceProvider.initialize();
+  } catch (e) {
+    print('Failed to initialize services: $e');
+    // You might want to show an error dialog here
+    return;
+  }
   
   // Register all mode controllers
   modeService.registerMode(ViewModeController());
@@ -27,6 +64,7 @@ void main() {
       providers: [
         ChangeNotifierProvider.value(value: modeService),
         ChangeNotifierProvider.value(value: layoutService),
+        ChangeNotifierProvider.value(value: serviceProvider),
       ],
       child: const MapDeskApp(),
     ),
