@@ -37,7 +37,7 @@ class SegmentSidebarService extends ChangeNotifier {
       items.add(SidebarItem(
         type: 'current_track',
         value: _currentTrack?.name ?? 'No track loaded',
-        selectable: false,
+        selectable: _currentTrack != null,  // Only selectable if there is a current track
       ));
     }
     
