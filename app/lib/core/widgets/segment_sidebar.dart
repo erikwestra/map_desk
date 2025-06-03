@@ -103,7 +103,9 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
             if (item.type == 'current_track' && service.currentTrack == null)
               TextButton(
                 onPressed: () {
+                  print('SegmentSidebar: Open button pressed');
                   final modeService = Provider.of<ModeService>(context, listen: false);
+                  print('SegmentSidebar: Current mode: ${modeService.currentMode?.modeName}');
                   modeService.currentMode?.handleEvent('menu_open', null);
                 },
                 child: const Text('Open'),

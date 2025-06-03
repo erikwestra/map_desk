@@ -10,6 +10,7 @@ import '../../core/services/mode_service.dart';
 import '../../core/services/menu_service.dart';
 import '../../core/services/gpx_service.dart';
 import '../../core/models/simple_gpx_track.dart';
+import '../../main.dart';
 
 /// Controller for the View mode, which handles map viewing and navigation.
 class ViewModeController extends ModeController {
@@ -75,8 +76,79 @@ class ViewModeController extends ModeController {
   }
 
   Future<void> _handleOpen() async {
-    // TODO: Implement file opening in View mode
-    print('ViewModeController: Open called');
+    print('ViewModeController: Starting _handleOpen');
+    if (_isLoading) {
+      print('ViewModeController: Already loading, returning');
+      return;
+    }
+
+    try {
+      _isLoading = true;
+      print('ViewModeController: Opening file picker');
+
+      final typeGroup = XTypeGroup(
+        label: 'GPX',
+        extensions: ['gpx'],
+      );
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
+      print('ViewModeController: File picker result: ${file?.path}');
+
+      if (file != null) {
+        print('ViewModeController: Parsing GPX file');
+        final track = await GpxService.parseGpxFile(File(file.path));
+        _currentTrack = track;
+        
+        print('ViewModeController: Updating map content');
+        // Update the map content
+        final points = track.points.map((p) => p.toLatLng()).toList();
+        final bounds = LatLngBounds.fromPoints(points);
+        
+        // Set the map bounds to show the entire track
+        uiContext.mapViewService.mapController.move(
+          bounds.center,
+          uiContext.mapViewService.mapController.camera.zoom,
+        );
+        uiContext.mapViewService.mapController.fitBounds(
+          bounds,
+          options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+        );
+        
+        uiContext.mapViewService.setContent([
+          PolylineLayer(
+            polylines: [
+              Polyline(
+                points: points,
+                color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
+                strokeWidth: 3.0,
+              ),
+            ],
+          ),
+          CircleLayer(
+            circles: [
+              CircleMarker(
+                point: points.first,
+                color: Colors.green,
+                radius: 8.0,
+              ),
+              CircleMarker(
+                point: points.last,
+                color: Colors.red,
+                radius: 8.0,
+              ),
+            ],
+          ),
+        ]);
+        print('ViewModeController: Track loaded successfully');
+      } else {
+        print('ViewModeController: No file selected');
+      }
+    } catch (e) {
+      print('ViewModeController: Failed to load GPX file: $e');
+      // TODO: Show error to user
+    } finally {
+      _isLoading = false;
+      print('ViewModeController: Finished _handleOpen');
+    }
   }
 
   Future<void> _handleSaveRoute() async {

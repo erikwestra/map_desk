@@ -33,5 +33,11 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>MapDesk needs access to documents to open GPX files.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>MapDesk needs access to downloads to open GPX files.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>MapDesk needs access to desktop to open GPX files.</string>
 </dict>
 </plist>
