@@ -86,6 +86,7 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
 
     return Container(
       decoration: BoxDecoration(
+        color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
         border: Border(
           bottom: BorderSide(
             color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
@@ -143,7 +144,6 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
               ),
           ],
         ),
-        tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
         onTap: item.selectable ? () {
           // Clear any existing selection
           service.clearSelection();
