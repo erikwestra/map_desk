@@ -180,139 +180,54 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
     );
   }
 
-  Widget _buildCreateSegmentButton(BuildContext context, SegmentSidebarService service) {
-    final modeService = Provider.of<ModeService>(context, listen: false);
-    final importMode = modeService.currentMode?.modeName == 'Import';
-    final hasTrack = service.currentTrack != null;
-    final hasSelection = service.selectedItem?.type == 'current_track';
-
-    if (!importMode || !hasTrack || !hasSelection) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          ),
-        ),
-      ),
-      child: ElevatedButton(
-        onPressed: () {
-          modeService.currentMode?.handleEvent('create_segment', null);
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-          minimumSize: const Size(double.infinity, 40),
-        ),
-        child: const Text('Create Segment'),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final service = context.watch<SegmentSidebarService>();
-
-    return Container(
-      width: 300,
-      decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          ),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Search field in its own container
-          Container(
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                ),
+    return Consumer<SegmentSidebarService>(
+      builder: (context, service, _) {
+        return Container(
+          width: 300,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(
+              right: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
               ),
             ),
-            child: TextField(
-              controller: _searchController,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
-              decoration: InputDecoration(
-                hintText: 'Search',
-                hintStyle: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                  onPressed: _handleClearSearch,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-              onSubmitted: (_) => _handleSearch(),
-            ),
           ),
-          // Item list in its own container
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                  ),
-                ),
-              ),
-              child: service.items.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No items found',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                            ),
+          child: Column(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
                       ),
-                    )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      itemCount: service.items.length,
-                      itemBuilder: (context, index) {
-                        final item = service.items[index];
-                        return _buildSidebarItem(context, item, service);
-                      },
                     ),
-            ),
+                  ),
+                  child: service.items.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No items found',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollController,
+                          itemCount: service.items.length,
+                          itemBuilder: (context, index) {
+                            final item = service.items[index];
+                            return _buildSidebarItem(context, item, service);
+                          },
+                        ),
+                ),
+              ),
+            ],
           ),
-          // Create Segment button
-          _buildCreateSegmentButton(context, service),
-        ],
-      ),
+        );
+      },
     );
   }
 } 

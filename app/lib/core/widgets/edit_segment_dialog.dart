@@ -84,6 +84,7 @@ class _EditSegmentDialogState extends State<EditSegmentDialog> {
               TextField(
                 controller: _nameController,
                 autofocus: true,
+                onSubmitted: (_) => _handleSubmit(context),
                 decoration: const InputDecoration(
                   labelText: 'Segment Name',
                   hintText: 'Enter a name for the segment',

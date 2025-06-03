@@ -328,11 +328,12 @@ class ImportModeController extends ModeController {
 
     if (_selectableTrack!.endPointIndex == null) {
       uiContext.statusBarService.setContent(
-        Text('Start point selected. Click on the track to select end point.'),
+        const Text('Click on end of segment'),
       );
       return;
     }
 
+    // If we have both start and end points, show distance and action buttons
     final selectedPoints = _selectableTrack!.selectedPoints;
     final distance = Distance();
     var totalDistance = 0.0;
@@ -341,7 +342,46 @@ class ImportModeController extends ModeController {
     }
 
     uiContext.statusBarService.setContent(
-      Text('Selected segment: ${(totalDistance / 1000).toStringAsFixed(2)} km. Click "Create Segment" to save.'),
+      Row(
+        children: [
+          Text('Selected segment: ${(totalDistance / 1000).toStringAsFixed(2)} km'),
+          const SizedBox(width: 20),
+          ElevatedButton(
+            onPressed: () {
+              // Clear end point selection
+              _selectableTrack!.clearEndPoint();
+              _updateMapContent();
+              _updateStatusBar();
+            },
+            child: const Text('Cancel'),
+          ),
+          const SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: () {
+              // Remove points up to but not including the end point
+              _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex! - 1);
+              // Set the end point as the new start point
+              _selectableTrack!.selectStartPoint(0);
+              _updateMapContent();
+              _updateStatusBar();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.error.withOpacity(0.8),
+              foregroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.onError,
+            ),
+            child: const Text('Delete'),
+          ),
+          const SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: () => _handleCreateSegment(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.primary.withOpacity(0.8),
+              foregroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.onPrimary,
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -517,7 +557,9 @@ class ImportModeController extends ModeController {
       options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
     );
     
-    _updateStatusBar();
+    // Clear status bar when segment is selected
+    uiContext.statusBarService.clearContent();
+    
     print('ImportModeController: Segment selection handled');
   }
 
@@ -536,7 +578,8 @@ class ImportModeController extends ModeController {
         builder: (context) => EditSegmentDialog(
           name: 'Segment $_currentSegmentNumber',
           direction: 'bidirectional',
-          showDeleteButton: true,
+          showDeleteButton: false,
+          title: 'Create Segment',
           onDelete: () {
             // Remove points up to but not including the end point
             _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex! - 1);

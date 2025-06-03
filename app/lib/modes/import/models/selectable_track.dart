@@ -86,4 +86,9 @@ class SelectableTrack {
     _startPointIndex = null;
     _endPointIndex = null;
   }
+
+  /// Clear only the end point selection
+  void clearEndPoint() {
+    _endPointIndex = null;
+  }
 } 
