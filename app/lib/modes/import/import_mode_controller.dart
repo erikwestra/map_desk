@@ -132,11 +132,14 @@ class ImportModeController extends ModeController {
     // If the point is too far from the track, ignore it
     if (minDistance > 10.0) return; // 10 meters threshold
 
-    // If we have a start point but no end point, select it as the end point
-    if (_selectableTrack!.startPointIndex != null && _selectableTrack!.endPointIndex == null) {
-      _selectableTrack!.selectEndPoint(closestIndex);
-      _updateMapContent();
-      _updateStatusBar();
+    // If we have a start point, we can always select/update the end point
+    if (_selectableTrack!.startPointIndex != null) {
+      // Only allow selecting points after the start point
+      if (closestIndex > _selectableTrack!.startPointIndex!) {
+        _selectableTrack!.selectEndPoint(closestIndex);
+        _updateMapContent();
+        _updateStatusBar();
+      }
     }
   }
 
@@ -172,45 +175,130 @@ class ImportModeController extends ModeController {
     final selectedPoints = _selectableTrack!.selectedPoints;
     final unselectedPoints = _selectableTrack!.unselectedPoints;
 
-    uiContext.mapViewService.setContent([
-      // Draw unselected portion of track
-      PolylineLayer(
-        polylines: [
-          Polyline(
-            points: unselectedPoints,
-            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary.withOpacity(0.5),
-            strokeWidth: 2.0,
-          ),
-        ],
-      ),
-      // Draw selected portion of track
-      PolylineLayer(
-        polylines: [
-          Polyline(
-            points: selectedPoints,
-            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
-            strokeWidth: 3.0,
-          ),
-        ],
-      ),
-      // Draw markers for start and end points
-      CircleLayer(
-        circles: [
-          if (_selectableTrack!.startPointIndex != null)
-            CircleMarker(
-              point: _selectableTrack!.track.points[_selectableTrack!.startPointIndex!].toLatLng(),
-              color: Colors.green,
-              radius: 8.0,
+    // If we have an end point, the unselected portion should start from there
+    if (_selectableTrack!.endPointIndex != null) {
+      final endPoint = _selectableTrack!.track.points[_selectableTrack!.endPointIndex!].toLatLng();
+      final remainingPoints = _selectableTrack!.track.points
+          .skip(_selectableTrack!.endPointIndex! + 1)
+          .map((p) => p.toLatLng())
+          .toList();
+      
+      // Combine end point with remaining points
+      final adjustedUnselectedPoints = [endPoint, ...remainingPoints];
+
+      uiContext.mapViewService.setContent([
+        // Draw unselected portion of track
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: adjustedUnselectedPoints,
+              color: Colors.blue.withOpacity(0.5),
+              strokeWidth: 2.0,
             ),
-          if (_selectableTrack!.endPointIndex != null)
-            CircleMarker(
-              point: _selectableTrack!.track.points[_selectableTrack!.endPointIndex!].toLatLng(),
-              color: Colors.red,
-              radius: 8.0,
+          ],
+        ),
+        // Draw small blue circles around each unselected point
+        CircleLayer(
+          circles: adjustedUnselectedPoints.map((point) => CircleMarker(
+            point: point,
+            color: Colors.blue.withOpacity(0.5),
+            radius: 3.0,
+          )).toList(),
+        ),
+        // Draw selected portion of track
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: selectedPoints,
+              color: Colors.red.withOpacity(0.5),
+              strokeWidth: 3.0,
             ),
-        ],
-      ),
-    ]);
+          ],
+        ),
+        // Draw small red circles around each selected point
+        CircleLayer(
+          circles: selectedPoints.map((point) => CircleMarker(
+            point: point,
+            color: Colors.red.withOpacity(0.5),
+            radius: 3.0,
+          )).toList(),
+        ),
+        // Draw markers for start and end points
+        CircleLayer(
+          circles: [
+            if (_selectableTrack!.startPointIndex != null)
+              CircleMarker(
+                point: _selectableTrack!.track.points[_selectableTrack!.startPointIndex!].toLatLng(),
+                color: Colors.green,
+                radius: 8.0,
+              ),
+            if (_selectableTrack!.endPointIndex != null)
+              CircleMarker(
+                point: _selectableTrack!.track.points[_selectableTrack!.endPointIndex!].toLatLng(),
+                color: Colors.red,
+                radius: 8.0,
+              ),
+          ],
+        ),
+      ]);
+    } else {
+      // If no end point is selected yet, show all points as unselected
+      uiContext.mapViewService.setContent([
+        // Draw unselected portion of track
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: unselectedPoints,
+              color: Colors.blue.withOpacity(0.5),
+              strokeWidth: 2.0,
+            ),
+          ],
+        ),
+        // Draw small blue circles around each unselected point
+        CircleLayer(
+          circles: unselectedPoints.map((point) => CircleMarker(
+            point: point,
+            color: Colors.blue.withOpacity(0.5),
+            radius: 3.0,
+          )).toList(),
+        ),
+        // Draw selected portion of track
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: selectedPoints,
+              color: Colors.red.withOpacity(0.5),
+              strokeWidth: 3.0,
+            ),
+          ],
+        ),
+        // Draw small red circles around each selected point
+        CircleLayer(
+          circles: selectedPoints.map((point) => CircleMarker(
+            point: point,
+            color: Colors.red.withOpacity(0.5),
+            radius: 3.0,
+          )).toList(),
+        ),
+        // Draw markers for start and end points
+        CircleLayer(
+          circles: [
+            if (_selectableTrack!.startPointIndex != null)
+              CircleMarker(
+                point: _selectableTrack!.track.points[_selectableTrack!.startPointIndex!].toLatLng(),
+                color: Colors.green,
+                radius: 8.0,
+              ),
+            if (_selectableTrack!.endPointIndex != null)
+              CircleMarker(
+                point: _selectableTrack!.track.points[_selectableTrack!.endPointIndex!].toLatLng(),
+                color: Colors.red,
+                radius: 8.0,
+              ),
+          ],
+        ),
+      ]);
+    }
   }
 
   void _updateStatusBar() {
@@ -340,6 +428,41 @@ class ImportModeController extends ModeController {
     // Update the map content to show the segment
     final points = segment.points.map((p) => p.toLatLng()).toList();
     final bounds = LatLngBounds.fromPoints(points);
+    final theme = Theme.of(navigatorKey.currentContext!);
+    
+    // Create map content with the segment
+    final content = <Widget>[
+      // Segment layer
+      PolylineLayer(
+        polylines: [
+          Polyline(
+            points: points,
+            color: theme.colorScheme.primary,
+            strokeWidth: 4.0, // Thicker line for selected segment
+          ),
+        ],
+      ),
+      // Start and end markers
+      CircleLayer(
+        circles: [
+          // Start point marker (green)
+          CircleMarker(
+            point: points.first,
+            color: Colors.green,
+            radius: 8.0,
+          ),
+          // End point marker (red)
+          CircleMarker(
+            point: points.last,
+            color: Colors.red,
+            radius: 8.0,
+          ),
+        ],
+      ),
+    ];
+    
+    // Set the map content
+    uiContext.mapViewService.setContent(content);
     
     // Set the map bounds to show the entire segment
     uiContext.mapViewService.mapController.move(
@@ -351,7 +474,6 @@ class ImportModeController extends ModeController {
       options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
     );
     
-    _updateMapContent();
     _updateStatusBar();
     print('ImportModeController: Segment selection handled');
   }
@@ -385,8 +507,9 @@ class ImportModeController extends ModeController {
       // Save segment to database
       await _segmentService?.createSegment(segment);
 
-      // Remove the saved segment from the track
-      _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex!);
+      // Remove points up to but not including the end point
+      _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex! - 1);
+      // Set the end point as the new start point
       _selectableTrack!.selectStartPoint(0);
 
       // Increment segment number

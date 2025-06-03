@@ -238,6 +238,7 @@ class BrowseModeController extends ModeController with ChangeNotifier {
     final direction = data['direction'] as String;
 
     final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
+    final segmentSidebarService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
     
     try {
       // Update the segment in the database
@@ -247,6 +248,9 @@ class BrowseModeController extends ModeController with ChangeNotifier {
           direction: direction,
         ),
       );
+
+      // Refresh the segment list in the sidebar
+      await segmentSidebarService.refreshSegments();
 
       // Update the UI
       _updateStatusBar();
@@ -267,6 +271,9 @@ class BrowseModeController extends ModeController with ChangeNotifier {
 
       // Clear the selection
       segmentSidebarService.clearSelection();
+
+      // Refresh the segment list in the sidebar
+      await segmentSidebarService.refreshSegments();
 
       // Update the UI
       _updateStatusBar();

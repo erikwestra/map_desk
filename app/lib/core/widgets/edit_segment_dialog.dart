@@ -112,9 +112,32 @@ class _EditSegmentDialogState extends State<EditSegmentDialog> {
             actions: [
               if (widget.showDeleteButton && widget.onDelete != null)
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop('delete');
-                    widget.onDelete?.call();
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete Segment'),
+                        content: const Text('Are you sure you want to delete this segment? This action cannot be undone.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Theme.of(context).colorScheme.error,
+                            ),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirmed == true) {
+                      Navigator.of(context).pop('delete');
+                      widget.onDelete?.call();
+                    }
                   },
                   style: TextButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.error,
