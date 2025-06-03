@@ -52,8 +52,14 @@ void main() async {
   final serviceProvider = ServiceProvider();
   await serviceProvider.initialize();
 
+  // Create mode service
+  final modeService = ModeService();
+
   // Create shared UI context
-  final uiContext = ModeUIContext.defaultContext();
+  final uiContext = ModeUIContext.defaultContext(
+    modeService: modeService,
+    mapViewService: serviceProvider.mapViewService,
+  );
 
   // Create mode controllers
   final viewModeController = ViewModeController(uiContext);
@@ -62,7 +68,6 @@ void main() async {
   final createModeController = CreateModeController(uiContext);
 
   // Initialize mode service with controllers
-  final modeService = ModeService();
   modeService.initializeControllers({
     'View': viewModeController,
     'Import': importModeController,
@@ -77,7 +82,7 @@ void main() async {
         ChangeNotifierProvider.value(value: modeService),
         ChangeNotifierProvider(create: (_) => LayoutService()),
         ChangeNotifierProvider(create: (_) => MenuService()),
-        ChangeNotifierProvider(create: (_) => MapViewService()),
+        ChangeNotifierProvider.value(value: serviceProvider.mapViewService),
       ],
       child: const MapDeskApp(),
     ),
@@ -107,8 +112,8 @@ class MapDeskHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ModeService, LayoutService>(
-      builder: (context, modeService, layoutService, child) {
+    return Consumer3<ModeService, LayoutService, MapViewService>(
+      builder: (context, modeService, layoutService, mapViewService, child) {
         final currentMode = modeService.currentMode;
         if (currentMode == null) {
           return const Center(child: Text('No mode selected'));

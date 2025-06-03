@@ -55,37 +55,27 @@ class ViewModeController extends ModeController {
   }
 
   void _updateMapContent() {
-    if (!isTrackLoaded) {
+    if (isTrackLoaded) {
+      final points = currentTrack!.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+      
+      final polyline = Polyline(
+        points: points,
+        color: Colors.blue,
+        strokeWidth: 8.0,
+      );
+      
+      final contentLayer = PolylineLayer(polylines: [polyline]);
+      uiContext.mapViewService.setContent([contentLayer]);
+      
+      // Zoom to track bounds
+      final bounds = LatLngBounds.fromPoints(points);
+      uiContext.mapViewService.mapController.fitBounds(
+        bounds,
+        options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+      );
+    } else {
       uiContext.mapViewService.clearContent();
-      return;
     }
-
-    uiContext.mapViewService.setContent([
-      PolylineLayer(
-        polylines: [
-          Polyline(
-            points: _currentTrack!.points.map((p) => p.toLatLng()).toList(),
-            color: Colors.blue,
-            strokeWidth: 3.0,
-          ),
-        ],
-      ),
-      // Add start and end markers
-      CircleLayer(
-        circles: [
-          CircleMarker(
-            point: _currentTrack!.points.first.toLatLng(),
-            color: Colors.green,
-            radius: 8.0,
-          ),
-          CircleMarker(
-            point: _currentTrack!.points.last.toLatLng(),
-            color: Colors.red,
-            radius: 8.0,
-          ),
-        ],
-      ),
-    ]);
   }
 
   @override
