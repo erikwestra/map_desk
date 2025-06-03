@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:latlong2/latlong.dart';
 
 class SegmentPoint {
@@ -201,6 +202,90 @@ class Segment {
            point.latitude <= maxLat &&
            point.longitude >= minLng &&
            point.longitude <= maxLng;
+  }
+
+  /// Calculates the minimum distance from a point to a line segment
+  /// 
+  /// [point] The point to calculate distance from
+  /// [p1] First endpoint of the line segment
+  /// [p2] Second endpoint of the line segment
+  /// Returns the minimum distance in meters
+  double distanceToLineSegment(LatLng point, LatLng p1, LatLng p2) {
+    final Distance distance = Distance();
+    
+    // Calculate distance to each endpoint
+    final d1 = distance.as(LengthUnit.Meter, point, p1);
+    final d2 = distance.as(LengthUnit.Meter, point, p2);
+    
+    // Calculate the length of the line segment
+    final segmentLength = distance.as(LengthUnit.Meter, p1, p2);
+    
+    // If the segment is very short, just use the minimum distance to endpoints
+    if (segmentLength < 0.1) {
+      return math.min(d1, d2);
+    }
+    
+    // Calculate the dot product to determine if the point projects onto the segment
+    final dotProduct = ((point.latitude - p1.latitude) * (p2.latitude - p1.latitude) +
+                       (point.longitude - p1.longitude) * (p2.longitude - p1.longitude)) /
+                      (segmentLength * segmentLength);
+    
+    if (dotProduct < 0) {
+      // Point projects beyond p1
+      return d1;
+    } else if (dotProduct > 1) {
+      // Point projects beyond p2
+      return d2;
+    } else {
+      // Point projects onto the segment
+      // Calculate the perpendicular distance
+      final projectedLat = p1.latitude + dotProduct * (p2.latitude - p1.latitude);
+      final projectedLng = p1.longitude + dotProduct * (p2.longitude - p1.longitude);
+      return distance.as(LengthUnit.Meter, point, LatLng(projectedLat, projectedLng));
+    }
+  }
+
+  /// Checks if a point is near the segment using a two-step calculation
+  /// 
+  /// First checks if the point is within an expanded bounding box (20m buffer),
+  /// then if it is, performs a more precise distance calculation to the line segments.
+  /// 
+  /// [point] The point to check
+  /// [distanceMeters] The maximum distance in meters (default: 20.0)
+  /// Returns true if the point is within the specified distance of the segment
+  bool isPointNearSegment(LatLng point, {double distanceMeters = 20.0}) {
+    // Step 1: Calculate 10m deltas in lat/lng
+    // At the equator, 1 degree of latitude is approximately 111,320 meters
+    final latDelta = distanceMeters / 111320.0;
+    // 1 degree of longitude varies with latitude, so we use the cosine of the latitude
+    final lngDelta = distanceMeters / (111320.0 * math.cos(point.latitude * math.pi / 180.0));
+
+    // Step 2: Check if point is within expanded bounding box
+    final expandedMinLat = minLat - latDelta;
+    final expandedMaxLat = maxLat + latDelta;
+    final expandedMinLng = minLng - lngDelta;
+    final expandedMaxLng = maxLng + lngDelta;
+
+    if (point.latitude < expandedMinLat ||
+        point.latitude > expandedMaxLat ||
+        point.longitude < expandedMinLng ||
+        point.longitude > expandedMaxLng) {
+      return false;
+    }
+
+    // Step 3: If within expanded bounding box, check actual distance to line segments
+    double minDistance = double.infinity;
+
+    // Check distance to each line segment
+    for (int i = 0; i < points.length - 1; i++) {
+      final p1 = points[i].toLatLng();
+      final p2 = points[i + 1].toLatLng();
+      
+      final d = distanceToLineSegment(point, p1, p2);
+      minDistance = math.min(minDistance, d);
+    }
+
+    return minDistance <= distanceMeters;
   }
 
   /// Converts the segment to a Map for storage

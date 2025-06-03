@@ -131,7 +131,7 @@ class MapDeskHome extends StatelessWidget {
             body: Row(
               children: [
                 if (currentMode.showLeftSidebar)
-                  const SegmentSidebar(),
+                  SegmentSidebar(),
                 const Expanded(
                   child: MapView(),
                 ),

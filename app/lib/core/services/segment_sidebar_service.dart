@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/segment.dart';
 import '../services/segment_service.dart';
 import '../services/mode_service.dart';
+import '../widgets/segment_sidebar.dart';
 import '../../main.dart';
 
 /// Service that manages the state of the segment sidebar.
@@ -40,8 +41,8 @@ class SegmentSidebarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Select a segment
-  void selectSegment(Segment segment) {
+  /// Select a segment and optionally scroll to it
+  void selectSegment(Segment segment, {bool shouldScroll = false}) {
     _selectedSegment = segment;
     
     // Emit event to current mode controller
@@ -49,6 +50,10 @@ class SegmentSidebarService extends ChangeNotifier {
     modeService.currentMode?.handleEvent('segment_selected', segment);
     
     notifyListeners();
+    
+    if (shouldScroll) {
+      scrollToSegment(segment);
+    }
   }
 
   /// Clear the selected segment
@@ -72,5 +77,18 @@ class SegmentSidebarService extends ChangeNotifier {
   /// Refresh the segments list
   Future<void> refreshSegments() async {
     await _loadSegments();
+  }
+
+  /// Scroll to make a segment visible in the sidebar
+  void scrollToSegment(Segment segment) {
+    // Find the index of the segment in the filtered list
+    final index = segments.indexWhere((s) => s.id == segment.id);
+    if (index != -1) {
+      // Get the SegmentSidebar state using the global key
+      final state = SegmentSidebar.globalKey.currentState;
+      if (state != null) {
+        state.scrollToIndex(index);
+      }
+    }
   }
 } 

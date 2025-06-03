@@ -37,7 +37,7 @@ class ModeUIContext {
       modeService: modeService,
       mapViewService: mapViewService,
       statusBarService: statusBarService,
-      segmentSidebar: const SegmentSidebar(),
+      segmentSidebar: SegmentSidebar(),
       routeSidebar: const RouteSidebar(),
       statusBar: const StatusBar(),
     );

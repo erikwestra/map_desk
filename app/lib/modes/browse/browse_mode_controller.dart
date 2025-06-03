@@ -162,8 +162,41 @@ class BrowseModeController extends ModeController with ChangeNotifier {
   }
 
   Future<void> _handleMapClick(LatLng point) async {
-    // TODO: Implement map click handling in Browse mode
-    print('BrowseModeController: Map clicked at $point');
+    final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
+    final segmentSidebarService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
+    
+    // Get all segments
+    final segments = await segmentService.getAllSegments();
+    
+    // Find all segments that are near the clicked point
+    final nearbySegments = <Segment>[];
+    double minDistance = double.infinity;
+    Segment? closestSegment;
+
+    for (final segment in segments) {
+      // Check each line segment in the segment
+      for (int i = 0; i < segment.points.length - 1; i++) {
+        final p1 = segment.points[i].toLatLng();
+        final p2 = segment.points[i + 1].toLatLng();
+        
+        final distance = segment.distanceToLineSegment(point, p1, p2);
+        if (distance <= 20.0) { // Using the same 20m threshold as isPointNearSegment
+          nearbySegments.add(segment);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestSegment = segment;
+          }
+          break; // No need to check other line segments in this segment
+        }
+      }
+    }
+    
+    // Select the closest segment if any were found
+    if (closestSegment != null) {
+      segmentSidebarService.selectSegment(closestSegment, shouldScroll: true);
+    } else {
+      segmentSidebarService.clearSelection();
+    }
   }
 
   Future<void> _handleSegmentSelection(dynamic segment) async {
