@@ -136,6 +136,12 @@ class BrowseModeController extends ModeController with ChangeNotifier {
       case 'route_point_selected':
         await _handleRoutePointSelection(eventData);
         break;
+      case 'edit_segment':
+        await _handleEditSegment(eventData);
+        break;
+      case 'delete_segment':
+        await _handleDeleteSegment(eventData);
+        break;
       default:
         print('BrowseModeController: Unhandled event type: $eventType');
     }
@@ -224,5 +230,50 @@ class BrowseModeController extends ModeController with ChangeNotifier {
   Future<void> _handleRoutePointSelection(dynamic point) async {
     // TODO: Implement route point selection in Browse mode
     print('BrowseModeController: Route point selected: $point');
+  }
+
+  Future<void> _handleEditSegment(Map<String, dynamic> data) async {
+    final segment = data['segment'] as Segment;
+    final name = data['name'] as String;
+    final direction = data['direction'] as String;
+
+    final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
+    
+    try {
+      // Update the segment in the database
+      await segmentService.updateSegment(
+        segment.copyWith(
+          name: name,
+          direction: direction,
+        ),
+      );
+
+      // Update the UI
+      _updateStatusBar();
+      _updateMapContent();
+    } catch (error) {
+      print('BrowseModeController: Failed to update segment: $error');
+      // TODO: Show error message to user
+    }
+  }
+
+  Future<void> _handleDeleteSegment(Segment segment) async {
+    final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
+    final segmentSidebarService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
+    
+    try {
+      // Delete the segment from the database using its ID
+      await segmentService.deleteSegment(segment.id);
+
+      // Clear the selection
+      segmentSidebarService.clearSelection();
+
+      // Update the UI
+      _updateStatusBar();
+      _updateMapContent();
+    } catch (error) {
+      print('BrowseModeController: Failed to delete segment: $error');
+      // TODO: Show error message to user
+    }
   }
 }

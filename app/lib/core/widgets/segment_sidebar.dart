@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/segment_sidebar_service.dart';
 import '../services/mode_service.dart';
 import '../widgets/segment_direction_indicator.dart';
+import '../widgets/edit_segment_dialog.dart';
 import '../models/sidebar_item.dart';
 import '../models/segment.dart';
 import '../../main.dart';
@@ -125,6 +126,39 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
             ? Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (isSelected)
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () async {
+                        final segment = item.value as Segment;
+                        final result = await showDialog<dynamic>(
+                          context: context,
+                          builder: (context) => EditSegmentDialog(
+                            name: segment.name,
+                            direction: segment.direction,
+                            onDelete: () {
+                              // Delete will be handled by the dialog's onDelete callback
+                            },
+                          ),
+                        );
+
+                        if (result != null) {
+                          if (result is String && result == 'delete') {
+                            // Handle delete
+                            final modeService = Provider.of<ModeService>(context, listen: false);
+                            await modeService.currentMode?.handleEvent('delete_segment', segment);
+                          } else if (result is Map<String, String>) {
+                            // Handle edit
+                            final modeService = Provider.of<ModeService>(context, listen: false);
+                            await modeService.currentMode?.handleEvent('edit_segment', {
+                              'segment': segment,
+                              'name': result['name']!,
+                              'direction': result['direction']!,
+                            });
+                          }
+                        }
+                      },
+                    ),
                   SegmentDirectionIndicator(
                     direction: (item.value as Segment).direction,
                     size: 32,
