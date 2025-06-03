@@ -135,7 +135,7 @@ class _EditSegmentDialogState extends State<EditSegmentDialog> {
           ),
           actions: [
             if (widget.showDeleteButton && widget.onDelete != null)
-              TextButton(
+              ElevatedButton(
                 onPressed: () async {
                   final confirmed = await showDialog<bool>(
                     context: context,
@@ -143,14 +143,15 @@ class _EditSegmentDialogState extends State<EditSegmentDialog> {
                       title: const Text('Delete Segment'),
                       content: const Text('Are you sure you want to delete this segment? This action cannot be undone.'),
                       actions: [
-                        TextButton(
+                        ElevatedButton(
                           onPressed: () => Navigator.of(context).pop(false),
                           child: const Text('Cancel'),
                         ),
-                        TextButton(
+                        ElevatedButton(
                           onPressed: () => Navigator.of(context).pop(true),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Theme.of(context).colorScheme.error,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.error,
+                            foregroundColor: Theme.of(context).colorScheme.onError,
                           ),
                           child: const Text('Delete'),
                         ),
@@ -163,18 +164,19 @@ class _EditSegmentDialogState extends State<EditSegmentDialog> {
                     widget.onDelete?.call();
                   }
                 },
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
                 ),
                 child: const Text('Delete'),
               ),
             if (widget.showDeleteButton && widget.onDelete != null)
               const SizedBox(width: 16),
-            TextButton(
+            ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () => _handleSubmit(context),
               child: const Text('Save'),
             ),

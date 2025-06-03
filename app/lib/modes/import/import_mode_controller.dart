@@ -13,6 +13,7 @@ import '../../core/services/segment_sidebar_service.dart';
 import '../../core/services/segment_service.dart';
 import '../../core/models/simple_gpx_track.dart';
 import '../../core/models/segment.dart';
+import '../../core/widgets/edit_segment_dialog.dart';
 import '../../main.dart';
 import 'models/selectable_track.dart';
 
@@ -304,7 +305,16 @@ class ImportModeController extends ModeController {
   void _updateStatusBar() {
     if (_selectableTrack == null) {
       uiContext.statusBarService.setContent(
-        const Text('No track loaded. Use File > Open to load a GPX file.'),
+        Row(
+          children: [
+            const Text('No track loaded'),
+            const SizedBox(width: 20),
+            ElevatedButton(
+              onPressed: () => _handleOpen(),
+              child: const Text('Open'),
+            ),
+          ],
+        ),
       );
       return;
     }
@@ -487,10 +497,33 @@ class ImportModeController extends ModeController {
     }
 
     try {
-      // Create segment name
-      final segmentName = 'Segment $_currentSegmentNumber';
+      // Show edit dialog first
+      final result = await showDialog<dynamic>(
+        context: navigatorKey.currentContext!,
+        builder: (context) => EditSegmentDialog(
+          name: 'Segment $_currentSegmentNumber',
+          direction: 'bidirectional',
+          showDeleteButton: true,
+          onDelete: () {
+            // Remove points up to but not including the end point
+            _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex! - 1);
+            // Set the end point as the new start point
+            _selectableTrack!.selectStartPoint(0);
+            // Update UI
+            _updateMapContent();
+            _updateStatusBar();
+          },
+        ),
+      );
 
-      // Create segment from selected points
+      // If dialog was cancelled, just return
+      if (result == null) return;
+
+      // If result is 'delete', the onDelete callback was already called
+      if (result == 'delete') return;
+
+      // Create segment from selected points with the edited name and direction
+      final Map<String, dynamic> segmentData = result as Map<String, dynamic>;
       final points = _selectableTrack!.track.points.map((p) => SegmentPoint(
         latitude: p.latitude,
         longitude: p.longitude,
@@ -498,10 +531,11 @@ class ImportModeController extends ModeController {
       )).toList();
 
       final segment = Segment.fromPoints(
-        name: segmentName,
+        name: segmentData['name'],
         allPoints: points,
         startIndex: _selectableTrack!.startPointIndex!,
         endIndex: _selectableTrack!.endPointIndex!,
+        direction: segmentData['direction'],
       );
 
       // Save segment to database
