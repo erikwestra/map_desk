@@ -167,6 +167,36 @@ class ViewModeController extends ModeController {
   }
 
   void _updateMapContent() {
-    // TODO: Update map content based on current track
+    if (_currentTrack == null) {
+      uiContext.mapViewService.setContent([]);
+      return;
+    }
+
+    final points = _currentTrack!.points.map((p) => p.toLatLng()).toList();
+    uiContext.mapViewService.setContent([
+      PolylineLayer(
+        polylines: [
+          Polyline(
+            points: points,
+            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
+            strokeWidth: 3.0,
+          ),
+        ],
+      ),
+      CircleLayer(
+        circles: [
+          CircleMarker(
+            point: points.first,
+            color: Colors.green,
+            radius: 8.0,
+          ),
+          CircleMarker(
+            point: points.last,
+            color: Colors.red,
+            radius: 8.0,
+          ),
+        ],
+      ),
+    ]);
   }
 }

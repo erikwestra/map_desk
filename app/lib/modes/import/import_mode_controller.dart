@@ -67,6 +67,8 @@ class ImportModeController extends ModeController {
     _segmentSidebarService?.setShowCurrentTrack(false);
     // Clear status bar
     uiContext.statusBarService.clearContent();
+    // Clear map content
+    uiContext.mapViewService.setContent([]);
   }
 
   @override
