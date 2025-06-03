@@ -6,7 +6,16 @@ import '../widgets/segment_direction_indicator.dart';
 import '../widgets/edit_segment_dialog.dart';
 import '../models/sidebar_item.dart';
 import '../models/segment.dart';
+import '../constants/icons.dart';
 import '../../main.dart';
+
+/// Custom icons used in the segment sidebar.
+class _SidebarIcons {
+  /// Icon for a segment
+  static const IconData segment = Icons.turn_sharp_left;
+  /// Icon for a track
+  static const IconData track = Icons.edit_document;
+}
 
 /// Widget that displays the segment sidebar with search functionality.
 class SegmentSidebar extends StatefulWidget {
@@ -88,6 +97,24 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
         key: ValueKey('sidebar_item_${item.type}_${item.type == 'segment' ? (item.value as Segment).id : item.value}'),
         title: Row(
           children: [
+            if (item.type == 'current_track' && service.currentTrack != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Icon(
+                  _SidebarIcons.track,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            if (item.type == 'segment')
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Icon(
+                  _SidebarIcons.segment,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             Expanded(
               child: Text(
                 item.type == 'segment' ? (item.value as Segment).name : item.value.toString(),
