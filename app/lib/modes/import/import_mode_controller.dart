@@ -49,6 +49,7 @@ class ImportModeController extends ModeController {
 
   @override
   void onActivate() {
+    print('ImportModeController: onActivate called');
     // Initialize services if not already initialized
     _segmentSidebarService ??= Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
     _segmentService ??= Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
@@ -59,6 +60,8 @@ class ImportModeController extends ModeController {
     _segmentSidebarService?.clearSelection();
     // Update status bar
     _updateStatusBar();
+    // Update map content
+    _updateMapContent();
   }
 
   @override
@@ -83,10 +86,8 @@ class ImportModeController extends ModeController {
 
   @override
   Future<void> handleEvent(String eventType, dynamic eventData) async {
-    print('ImportModeController: Received event: $eventType');
     switch (eventType) {
       case 'menu_open':
-        print('ImportModeController: Handling menu_open event');
         await _handleOpen();
         break;
       case 'close_track':
@@ -100,6 +101,7 @@ class ImportModeController extends ModeController {
         break;
       case 'map_ready':
         _handleMapReady();
+        _updateMapContent();
         break;
       case 'map_click':
         _handleMapClick(eventData as LatLng);
@@ -136,6 +138,7 @@ class ImportModeController extends ModeController {
   }
 
   void _handleMapReady() {
+    print('ImportModeController: Map is ready');
     _isMapReady = true;
   }
 
@@ -171,8 +174,26 @@ class ImportModeController extends ModeController {
     }
   }
 
-  void _updateMapContent() {
-    if (_selectableTrack == null) return;
+  void _updateMapContent() async {
+    // Get all segments for background first
+    final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
+    final segments = await segmentService.getAllSegments();
+    final theme = Theme.of(navigatorKey.currentContext!);
+
+    if (_selectableTrack == null) {
+      // Even if no track is loaded, show all segments
+      uiContext.mapViewService.setContent([
+        // All segments layer
+        PolylineLayer(
+          polylines: segments.map((segment) => Polyline(
+            points: segment.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+            color: theme.colorScheme.primary.withOpacity(0.8),
+            strokeWidth: 3.0,
+          )).toList(),
+        ),
+      ]);
+      return;
+    }
 
     final selectedPoints = _selectableTrack!.selectedPoints;
     final unselectedPoints = _selectableTrack!.unselectedPoints;
@@ -189,6 +210,14 @@ class ImportModeController extends ModeController {
       final adjustedUnselectedPoints = [endPoint, ...remainingPoints];
 
       uiContext.mapViewService.setContent([
+        // Background segments layer
+        PolylineLayer(
+          polylines: segments.map((segment) => Polyline(
+            points: segment.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+            color: theme.colorScheme.primary.withOpacity(0.8),
+            strokeWidth: 3.0,
+          )).toList(),
+        ),
         // Draw unselected portion of track
         PolylineLayer(
           polylines: [
@@ -246,6 +275,14 @@ class ImportModeController extends ModeController {
     } else {
       // If no end point is selected yet, show all points as unselected
       uiContext.mapViewService.setContent([
+        // Background segments layer
+        PolylineLayer(
+          polylines: segments.map((segment) => Polyline(
+            points: segment.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+            color: theme.colorScheme.primary.withOpacity(0.8),
+            strokeWidth: 3.0,
+          )).toList(),
+        ),
         // Draw unselected portion of track
         PolylineLayer(
           polylines: [
@@ -486,15 +523,25 @@ class ImportModeController extends ModeController {
     print('ImportModeController: Track selection handled');
   }
 
-  void _handleSegmentSelected(Segment segment) {
-    print('ImportModeController: Handling segment selection');
+  void _handleSegmentSelected(Segment segment) async {
     // Update the map content to show the segment
     final points = segment.points.map((p) => p.toLatLng()).toList();
     final bounds = LatLngBounds.fromPoints(points);
     final theme = Theme.of(navigatorKey.currentContext!);
     
+    // Get all segments for background
+    final segments = await _segmentService?.getAllSegments() ?? [];
+    
     // Create map content with the segment
     final content = <Widget>[
+      // Background segments layer
+      PolylineLayer(
+        polylines: segments.map((s) => Polyline(
+          points: s.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+          color: theme.colorScheme.primary.withOpacity(0.8),
+          strokeWidth: 3.0,
+        )).toList(),
+      ),
       // Segment layer
       PolylineLayer(
         polylines: [
@@ -539,8 +586,6 @@ class ImportModeController extends ModeController {
     
     // Clear status bar when segment is selected
     uiContext.statusBarService.clearContent();
-    
-    print('ImportModeController: Segment selection handled');
   }
 
   Future<void> _handleCreateSegment() async {
