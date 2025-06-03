@@ -26,7 +26,6 @@ class ImportModeController extends ModeController {
   SegmentSidebarService? _segmentSidebarService;
   SegmentService? _segmentService;
   bool _isMapReady = false;
-  bool _hasZoomedToBounds = false;
   double _lastZoomLevel = 2.0;
   int _currentSegmentNumber = 1;
   String _lastDirection = 'bidirectional';  // Default direction
@@ -88,6 +87,9 @@ class ImportModeController extends ModeController {
         print('ImportModeController: Handling menu_open event');
         await _handleOpen();
         break;
+      case 'close_track':
+        _handleCloseTrack();
+        break;
       case 'track_selected':
         _handleTrackSelected(eventData as Segment);
         break;
@@ -133,9 +135,6 @@ class ImportModeController extends ModeController {
 
   void _handleMapReady() {
     _isMapReady = true;
-    if (isTrackLoaded && !_hasZoomedToBounds) {
-      _scheduleZoomToTrackBounds();
-    }
   }
 
   void _handleMapClick(LatLng point) {
@@ -167,32 +166,6 @@ class ImportModeController extends ModeController {
         _updateMapContent();
         _updateStatusBar();
       }
-    }
-  }
-
-  void _scheduleZoomToTrackBounds() {
-    if (!_isMapReady) return;
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (_isMapReady) {
-        _zoomToTrackBounds();
-      }
-    });
-  }
-
-  void _zoomToTrackBounds() {
-    if (!_isMapReady || _currentTrack == null || _currentTrack!.points.isEmpty) return;
-    try {
-      final points = _currentTrack!.points.map((p) => p.toLatLng()).toList();
-      final bounds = LatLngBounds.fromPoints(points);
-      uiContext.mapViewService.mapController.fitBounds(
-        bounds,
-        options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
-      );
-      _hasZoomedToBounds = true;
-      _lastZoomLevel = uiContext.mapViewService.mapController.zoom;
-    } catch (e) {
-      // If the map controller isn't ready yet, schedule another attempt
-      _scheduleZoomToTrackBounds();
     }
   }
 
@@ -440,7 +413,6 @@ class ImportModeController extends ModeController {
         final track = await GpxService.parseGpxFile(File(file.path));
         _currentTrack = track;
         _selectableTrack = SelectableTrack(track);
-        _hasZoomedToBounds = false;
         
         // Convert GpxPoint to SegmentPoint
         final segmentPoints = track.points.map((p) => SegmentPoint(
@@ -468,8 +440,14 @@ class ImportModeController extends ModeController {
         // Update status bar
         _updateStatusBar();
         
-        // Zoom to track bounds
-        _scheduleZoomToTrackBounds();
+        // If we have points, center on the first point and zoom to a reasonable level
+        if (track.points.isNotEmpty) {
+          final startPoint = track.points[0].toLatLng();
+          uiContext.mapViewService.mapController.move(
+            startPoint,
+            16.0, // This zoom level shows roughly 500m
+          );
+        }
         
         print('ImportModeController: Track loaded successfully');
       } else {
@@ -489,47 +467,15 @@ class ImportModeController extends ModeController {
     
     // Update the map content to show the track
     final points = track.points.map((p) => p.toLatLng()).toList();
-    final bounds = LatLngBounds.fromPoints(points);
     
-    // If we have a selectable track and points are selected, zoom to the appropriate point
-    if (_selectableTrack != null) {
-      LatLng? pointToZoom;
+    // If we have a selectable track with a start point, center on it
+    if (_selectableTrack != null && _selectableTrack!.startPointIndex != null) {
+      final startPoint = _selectableTrack!.track.points[_selectableTrack!.startPointIndex!].toLatLng();
       
-      // First try to zoom to end point if it exists
-      if (_selectableTrack!.endPointIndex != null) {
-        pointToZoom = _selectableTrack!.track.points[_selectableTrack!.endPointIndex!].toLatLng();
-      }
-      // If no end point, try to zoom to start point
-      else if (_selectableTrack!.startPointIndex != null) {
-        pointToZoom = _selectableTrack!.track.points[_selectableTrack!.startPointIndex!].toLatLng();
-      }
-      
-      // If we have a point to zoom to, move the map there
-      if (pointToZoom != null) {
-        uiContext.mapViewService.mapController.move(
-          pointToZoom,
-          uiContext.mapViewService.mapController.camera.zoom,
-        );
-      } else {
-        // If no specific point to zoom to, show the entire track
-        uiContext.mapViewService.mapController.move(
-          bounds.center,
-          uiContext.mapViewService.mapController.camera.zoom,
-        );
-        uiContext.mapViewService.mapController.fitBounds(
-          bounds,
-          options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
-        );
-      }
-    } else {
-      // If no selectable track, show the entire track
+      // Move to start point and zoom to a reasonable level (showing ~500m)
       uiContext.mapViewService.mapController.move(
-        bounds.center,
-        uiContext.mapViewService.mapController.camera.zoom,
-      );
-      uiContext.mapViewService.mapController.fitBounds(
-        bounds,
-        options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+        startPoint,
+        16.0, // This zoom level shows roughly 500m
       );
     }
     
@@ -790,5 +736,13 @@ class ImportModeController extends ModeController {
       }
     }
     return false; // Event was not handled
+  }
+
+  void _handleCloseTrack() {
+    _currentTrack = null;
+    _selectableTrack = null;
+    _segmentSidebarService?.setCurrentTrack(null);
+    _updateMapContent();
+    _updateStatusBar();
   }
 }

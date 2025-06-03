@@ -6,7 +6,6 @@ import '../widgets/segment_direction_indicator.dart';
 import '../widgets/edit_segment_dialog.dart';
 import '../models/sidebar_item.dart';
 import '../models/segment.dart';
-import '../constants/icons.dart';
 import '../../main.dart';
 
 /// Custom icons used in the segment sidebar.
@@ -97,13 +96,15 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
         key: ValueKey('sidebar_item_${item.type}_${item.type == 'segment' ? (item.value as Segment).id : item.value}'),
         title: Row(
           children: [
-            if (item.type == 'current_track' && service.currentTrack != null)
+            if (item.type == 'current_track')
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Icon(
                   _SidebarIcons.track,
                   size: 20,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: service.currentTrack != null
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                 ),
               ),
             if (item.type == 'segment')
@@ -128,15 +129,17 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
                 ),
               ),
             ),
-            if (item.type == 'current_track' && service.currentTrack == null)
-              TextButton(
+            if (item.type == 'current_track' && service.currentTrack != null)
+              IconButton(
+                icon: const Icon(Icons.close, size: 20),
                 onPressed: () {
-                  print('SegmentSidebar: Open button pressed');
                   final modeService = Provider.of<ModeService>(context, listen: false);
-                  print('SegmentSidebar: Current mode: ${modeService.currentMode?.modeName}');
-                  modeService.currentMode?.handleEvent('menu_open', null);
+                  modeService.currentMode?.handleEvent('close_track', null);
                 },
-                child: const Text('Open'),
+                tooltip: 'Close track',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                visualDensity: VisualDensity.compact,
               ),
           ],
         ),
