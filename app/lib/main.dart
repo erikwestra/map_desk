@@ -7,6 +7,7 @@ import 'core/services/menu_service.dart';
 import 'core/services/database_service.dart';
 import 'core/services/segment_service.dart';
 import 'core/services/map_view_service.dart';
+import 'core/services/segment_sidebar_service.dart';
 import 'core/interfaces/mode_ui_context.dart';
 import 'core/widgets/map_view.dart';
 import 'core/widgets/status_bar.dart';
@@ -27,12 +28,14 @@ class ServiceProvider extends ChangeNotifier {
   late final SegmentService segmentService;
   late final MapViewService mapViewService;
   late final StatusBarService statusBarService;
+  late final SegmentSidebarService segmentSidebarService;
 
   ServiceProvider() {
     databaseService = DatabaseService();
     segmentService = SegmentService(databaseService);
     mapViewService = MapViewService();
     statusBarService = StatusBarService();
+    segmentSidebarService = SegmentSidebarService(segmentService);
   }
 
   /// Initialize all services
@@ -88,6 +91,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => MenuService()),
         ChangeNotifierProvider.value(value: serviceProvider.mapViewService),
         ChangeNotifierProvider.value(value: serviceProvider.statusBarService),
+        ChangeNotifierProvider.value(value: serviceProvider.segmentSidebarService),
       ],
       child: const MapDeskApp(),
     ),
@@ -148,19 +152,22 @@ class MapDeskHome extends StatelessWidget {
                     child: const StatusBar(),
                   ),
                   // Mode selector
-                  SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'View', label: Text('View')),
-                      ButtonSegment(value: 'Import', label: Text('Import')),
-                      ButtonSegment(value: 'Browse', label: Text('Browse')),
-                      ButtonSegment(value: 'Create', label: Text('Create')),
-                    ],
-                    selected: {currentMode.modeName},
-                    onSelectionChanged: (Set<String> selection) {
-                      if (selection.isNotEmpty) {
-                        modeService.switchMode(selection.first);
-                      }
-                    },
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'View', label: Text('View')),
+                        ButtonSegment(value: 'Import', label: Text('Import')),
+                        ButtonSegment(value: 'Browse', label: Text('Browse')),
+                        ButtonSegment(value: 'Create', label: Text('Create')),
+                      ],
+                      selected: {currentMode.modeName},
+                      onSelectionChanged: (Set<String> selection) {
+                        if (selection.isNotEmpty) {
+                          modeService.switchMode(selection.first);
+                        }
+                      },
+                    ),
                   ),
                 ],
               ),
