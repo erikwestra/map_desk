@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import '../../core/interfaces/mode_controller.dart';
 import '../../core/interfaces/mode_ui_context.dart';
@@ -69,7 +70,8 @@ class ImportModeController extends ModeController {
   }
 
   @override
-  void dispose() {}
+  void dispose() {
+  }
 
   @override
   Map<String, dynamic> getState() => {};
@@ -99,6 +101,23 @@ class ImportModeController extends ModeController {
         break;
       case 'create_segment':
         await _handleCreateSegment();
+        break;
+      case 'key_enter':
+        // Only handle if both points are selected
+        if (_selectableTrack != null && 
+            _selectableTrack!.startPointIndex != null && 
+            _selectableTrack!.endPointIndex != null) {
+          await _handleCreateSegment();
+        }
+        break;
+      case 'key_escape':
+        // Only handle if we have an end point selected
+        if (_selectableTrack != null && _selectableTrack!.endPointIndex != null) {
+          // Clear end point selection
+          _selectableTrack!.clearEndPoint();
+          _updateMapContent();
+          _updateStatusBar();
+        }
         break;
       default:
         print('ImportModeController: Unhandled event type: $eventType');
@@ -600,6 +619,29 @@ class ImportModeController extends ModeController {
 
       // Create segment from selected points with the edited name and direction
       final Map<String, dynamic> segmentData = result as Map<String, dynamic>;
+      final String newName = segmentData['name'] as String;
+      
+      // Check if segment name already exists
+      final existingSegments = await _segmentService?.getAllSegments() ?? [];
+      if (existingSegments.any((s) => s.name == newName)) {
+        _showError('A segment with this name already exists. Please choose a different name.');
+        // Show the dialog again with the same name
+        return _handleCreateSegment();
+      }
+      
+      // Extract segment number from the name if it exists
+      final RegExp numberRegex = RegExp(r'(\d+)$');
+      final match = numberRegex.firstMatch(newName);
+      if (match != null) {
+        final numberStr = match.group(1);
+        if (numberStr != null) {
+          final number = int.tryParse(numberStr);
+          if (number != null) {
+            _currentSegmentNumber = number + 1;
+          }
+        }
+      }
+
       final points = _selectableTrack!.track.points.map((p) => SegmentPoint(
         latitude: p.latitude,
         longitude: p.longitude,
@@ -607,7 +649,7 @@ class ImportModeController extends ModeController {
       )).toList();
 
       final segment = Segment.fromPoints(
-        name: segmentData['name'],
+        name: newName,
         allPoints: points,
         startIndex: _selectableTrack!.startPointIndex!,
         endIndex: _selectableTrack!.endPointIndex!,
@@ -621,9 +663,6 @@ class ImportModeController extends ModeController {
       _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex! - 1);
       // Set the end point as the new start point
       _selectableTrack!.selectStartPoint(0);
-
-      // Increment segment number
-      _currentSegmentNumber++;
 
       // Update UI
       _updateMapContent();
@@ -661,5 +700,23 @@ class ImportModeController extends ModeController {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  // This method will be called by the map view to handle key events
+  bool handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      // Check if Return/Enter key was pressed
+      if (event.logicalKey == LogicalKeyboardKey.enter || 
+          event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+        // Only handle if both points are selected
+        if (_selectableTrack != null && 
+            _selectableTrack!.startPointIndex != null && 
+            _selectableTrack!.endPointIndex != null) {
+          _handleCreateSegment();
+          return true; // Event was handled
+        }
+      }
+    }
+    return false; // Event was not handled
   }
 }
