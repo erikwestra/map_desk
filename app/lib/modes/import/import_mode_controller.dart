@@ -10,18 +10,29 @@ import '../../core/services/mode_service.dart';
 import '../../core/services/menu_service.dart';
 import '../../core/services/gpx_service.dart';
 import '../../core/services/segment_sidebar_service.dart';
+import '../../core/services/segment_service.dart';
 import '../../core/models/simple_gpx_track.dart';
 import '../../core/models/segment.dart';
 import '../../main.dart';
+import 'models/selectable_track.dart';
 
 /// Controller for the Import mode, which handles track import and segment creation.
 class ImportModeController extends ModeController {
   SimpleGpxTrack? _currentTrack;
+  SelectableTrack? _selectableTrack;
   bool _isLoading = false;
   SegmentSidebarService? _segmentSidebarService;
+  SegmentService? _segmentService;
+  bool _isMapReady = false;
+  bool _hasZoomedToBounds = false;
+  double _lastZoomLevel = 2.0;
+  int _currentSegmentNumber = 1;
 
   SimpleGpxTrack? get currentTrack => _currentTrack;
   bool get isTrackLoaded => _currentTrack != null;
+  SelectableTrack? get selectableTrack => _selectableTrack;
+  bool get isMapReady => _isMapReady;
+  double get lastZoomLevel => _lastZoomLevel;
 
   ImportModeController(ModeUIContext uiContext) : super(uiContext);
 
@@ -36,19 +47,24 @@ class ImportModeController extends ModeController {
 
   @override
   void onActivate() {
-    // Initialize the segment sidebar service if not already initialized
+    // Initialize services if not already initialized
     _segmentSidebarService ??= Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
+    _segmentService ??= Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
     
     // Show the current track in the segment sidebar
     _segmentSidebarService?.setShowCurrentTrack(true);
     // Clear any existing selection
     _segmentSidebarService?.clearSelection();
+    // Update status bar
+    _updateStatusBar();
   }
 
   @override
   void onDeactivate() {
     // Hide the current track in the segment sidebar
     _segmentSidebarService?.setShowCurrentTrack(false);
+    // Clear status bar
+    uiContext.statusBarService.clearContent();
   }
 
   @override
@@ -74,9 +90,161 @@ class ImportModeController extends ModeController {
       case 'segment_selected':
         _handleSegmentSelected(eventData as Segment);
         break;
+      case 'map_ready':
+        _handleMapReady();
+        break;
+      case 'map_click':
+        _handleMapClick(eventData as LatLng);
+        break;
+      case 'create_segment':
+        await _handleCreateSegment();
+        break;
       default:
         print('ImportModeController: Unhandled event type: $eventType');
     }
+  }
+
+  void _handleMapReady() {
+    _isMapReady = true;
+    if (isTrackLoaded && !_hasZoomedToBounds) {
+      _scheduleZoomToTrackBounds();
+    }
+  }
+
+  void _handleMapClick(LatLng point) {
+    if (_selectableTrack == null) return;
+
+    // Find the closest point on the track
+    final points = _selectableTrack!.track.points;
+    var closestIndex = 0;
+    var minDistance = double.infinity;
+    final distance = Distance();
+
+    for (var i = 0; i < points.length; i++) {
+      final trackPoint = points[i].toLatLng();
+      final dist = distance.as(LengthUnit.Meter, point, trackPoint);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestIndex = i;
+      }
+    }
+
+    // If the point is too far from the track, ignore it
+    if (minDistance > 10.0) return; // 10 meters threshold
+
+    // If we have a start point but no end point, select it as the end point
+    if (_selectableTrack!.startPointIndex != null && _selectableTrack!.endPointIndex == null) {
+      _selectableTrack!.selectEndPoint(closestIndex);
+      _updateMapContent();
+      _updateStatusBar();
+    }
+  }
+
+  void _scheduleZoomToTrackBounds() {
+    if (!_isMapReady) return;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (_isMapReady) {
+        _zoomToTrackBounds();
+      }
+    });
+  }
+
+  void _zoomToTrackBounds() {
+    if (!_isMapReady || _currentTrack == null || _currentTrack!.points.isEmpty) return;
+    try {
+      final points = _currentTrack!.points.map((p) => p.toLatLng()).toList();
+      final bounds = LatLngBounds.fromPoints(points);
+      uiContext.mapViewService.mapController.fitBounds(
+        bounds,
+        options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
+      );
+      _hasZoomedToBounds = true;
+      _lastZoomLevel = uiContext.mapViewService.mapController.zoom;
+    } catch (e) {
+      // If the map controller isn't ready yet, schedule another attempt
+      _scheduleZoomToTrackBounds();
+    }
+  }
+
+  void _updateMapContent() {
+    if (_selectableTrack == null) return;
+
+    final selectedPoints = _selectableTrack!.selectedPoints;
+    final unselectedPoints = _selectableTrack!.unselectedPoints;
+
+    uiContext.mapViewService.setContent([
+      // Draw unselected portion of track
+      PolylineLayer(
+        polylines: [
+          Polyline(
+            points: unselectedPoints,
+            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary.withOpacity(0.5),
+            strokeWidth: 2.0,
+          ),
+        ],
+      ),
+      // Draw selected portion of track
+      PolylineLayer(
+        polylines: [
+          Polyline(
+            points: selectedPoints,
+            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
+            strokeWidth: 3.0,
+          ),
+        ],
+      ),
+      // Draw markers for start and end points
+      CircleLayer(
+        circles: [
+          if (_selectableTrack!.startPointIndex != null)
+            CircleMarker(
+              point: _selectableTrack!.track.points[_selectableTrack!.startPointIndex!].toLatLng(),
+              color: Colors.green,
+              radius: 8.0,
+            ),
+          if (_selectableTrack!.endPointIndex != null)
+            CircleMarker(
+              point: _selectableTrack!.track.points[_selectableTrack!.endPointIndex!].toLatLng(),
+              color: Colors.red,
+              radius: 8.0,
+            ),
+        ],
+      ),
+    ]);
+  }
+
+  void _updateStatusBar() {
+    if (_selectableTrack == null) {
+      uiContext.statusBarService.setContent(
+        const Text('No track loaded. Use File > Open to load a GPX file.'),
+      );
+      return;
+    }
+
+    if (_selectableTrack!.startPointIndex == null) {
+      uiContext.statusBarService.setContent(
+        Text('Track loaded: ${_currentTrack!.name}. Click on the track to select start point.'),
+      );
+      return;
+    }
+
+    if (_selectableTrack!.endPointIndex == null) {
+      uiContext.statusBarService.setContent(
+        Text('Start point selected. Click on the track to select end point.'),
+      );
+      return;
+    }
+
+    final selectedPoints = _selectableTrack!.selectedPoints;
+    final distance = Distance();
+    var totalDistance = 0.0;
+    for (var i = 0; i < selectedPoints.length - 1; i++) {
+      totalDistance += distance.as(LengthUnit.Meter, selectedPoints[i], selectedPoints[i + 1]);
+    }
+
+    uiContext.statusBarService.setContent(
+      Text('Selected segment: ${(totalDistance / 1000).toStringAsFixed(2)} km. Click "Create Segment" to save.'),
+    );
   }
 
   Future<void> _handleOpen() async {
@@ -101,6 +269,8 @@ class ImportModeController extends ModeController {
         print('ImportModeController: Parsing GPX file');
         final track = await GpxService.parseGpxFile(File(file.path));
         _currentTrack = track;
+        _selectableTrack = SelectableTrack(track);
+        _hasZoomedToBounds = false;
         
         // Convert GpxPoint to SegmentPoint
         final segmentPoints = track.points.map((p) => SegmentPoint(
@@ -123,41 +293,21 @@ class ImportModeController extends ModeController {
         
         print('ImportModeController: Updating map content');
         // Update the map content
-        final points = track.points.map((p) => p.toLatLng()).toList();
-        final bounds = LatLngBounds.fromPoints(points);
+        _updateMapContent();
         
-        uiContext.mapViewService.setContent([
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: points,
-                color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
-                strokeWidth: 3.0,
-              ),
-            ],
-          ),
-          CircleLayer(
-            circles: [
-              CircleMarker(
-                point: points.first,
-                color: Colors.green,
-                radius: 8.0,
-              ),
-              CircleMarker(
-                point: points.last,
-                color: Colors.red,
-                radius: 8.0,
-              ),
-            ],
-          ),
-        ]);
+        // Update status bar
+        _updateStatusBar();
+        
+        // Zoom to track bounds
+        _scheduleZoomToTrackBounds();
+        
         print('ImportModeController: Track loaded successfully');
       } else {
         print('ImportModeController: No file selected');
       }
     } catch (e) {
       print('ImportModeController: Failed to load GPX file: $e');
-      // TODO: Show error to user
+      _showError('Failed to load GPX file: $e');
     } finally {
       _isLoading = false;
       print('ImportModeController: Finished _handleOpen');
@@ -180,31 +330,8 @@ class ImportModeController extends ModeController {
       options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
     );
     
-    uiContext.mapViewService.setContent([
-      PolylineLayer(
-        polylines: [
-          Polyline(
-            points: points,
-            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
-            strokeWidth: 3.0,
-          ),
-        ],
-      ),
-      CircleLayer(
-        circles: [
-          CircleMarker(
-            point: points.first,
-            color: Colors.green,
-            radius: 8.0,
-          ),
-          CircleMarker(
-            point: points.last,
-            color: Colors.red,
-            radius: 8.0,
-          ),
-        ],
-      ),
-    ]);
+    _updateMapContent();
+    _updateStatusBar();
     print('ImportModeController: Track selection handled');
   }
 
@@ -224,31 +351,82 @@ class ImportModeController extends ModeController {
       options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
     );
     
-    uiContext.mapViewService.setContent([
-      PolylineLayer(
-        polylines: [
-          Polyline(
-            points: points,
-            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
-            strokeWidth: 3.0,
-          ),
-        ],
-      ),
-      CircleLayer(
-        circles: [
-          CircleMarker(
-            point: points.first,
-            color: Colors.green,
-            radius: 8.0,
-          ),
-          CircleMarker(
-            point: points.last,
-            color: Colors.red,
-            radius: 8.0,
-          ),
-        ],
-      ),
-    ]);
+    _updateMapContent();
+    _updateStatusBar();
     print('ImportModeController: Segment selection handled');
+  }
+
+  Future<void> _handleCreateSegment() async {
+    if (_selectableTrack == null || 
+        _selectableTrack!.startPointIndex == null || 
+        _selectableTrack!.endPointIndex == null) {
+      _showError('Please select both start and end points before creating a segment');
+      return;
+    }
+
+    try {
+      // Create segment name
+      final segmentName = 'Segment $_currentSegmentNumber';
+
+      // Create segment from selected points
+      final points = _selectableTrack!.track.points.map((p) => SegmentPoint(
+        latitude: p.latitude,
+        longitude: p.longitude,
+        elevation: p.elevation,
+      )).toList();
+
+      final segment = Segment.fromPoints(
+        name: segmentName,
+        allPoints: points,
+        startIndex: _selectableTrack!.startPointIndex!,
+        endIndex: _selectableTrack!.endPointIndex!,
+      );
+
+      // Save segment to database
+      await _segmentService?.createSegment(segment);
+
+      // Remove the saved segment from the track
+      _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex!);
+      _selectableTrack!.selectStartPoint(0);
+
+      // Increment segment number
+      _currentSegmentNumber++;
+
+      // Update UI
+      _updateMapContent();
+      _updateStatusBar();
+      _segmentSidebarService?.refreshSegments();
+
+      // Show success message
+      _showSuccess('Segment created successfully');
+    } catch (e) {
+      _showError('Failed to create segment: $e');
+    }
+  }
+
+  void _showError(String message) {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }
