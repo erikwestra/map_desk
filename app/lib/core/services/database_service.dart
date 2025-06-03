@@ -304,24 +304,32 @@ class DatabaseService {
       print('DatabaseService: Loading segments from database:');
       print('  Found ${maps.length} segments');
       
-      final segments = List.generate(maps.length, (i) {
-        print('DatabaseService: Processing segment ${i + 1}/${maps.length}');
-        final points = jsonDecode(maps[i]['points'] as String) as List;
+      final segments = await Future.wait(maps.map((map) async {
+        print('DatabaseService: Processing segment ${maps.indexOf(map) + 1}/${maps.length}');
+        final points = jsonDecode(map['points'] as String) as List;
         print('DatabaseService: Decoded ${points.length} points');
         
+        final segmentPoints = points.map((p) => SegmentPoint(
+          latitude: p['latitude'] as double,
+          longitude: p['longitude'] as double,
+          elevation: p['elevation'] as double?,
+        )).toList();
+
+        final bbox = Segment.calculateBoundingBox(segmentPoints);
+        
         final segment = Segment(
-          id: maps[i]['id'] as String,
-          name: maps[i]['name'] as String,
-          points: points.map((p) => SegmentPoint(
-            latitude: p['latitude'] as double,
-            longitude: p['longitude'] as double,
-            elevation: p['elevation'] as double?,
-          )).toList(),
-          direction: maps[i]['direction'] as String,
-          startLat: maps[i]['start_lat'] as double,
-          startLng: maps[i]['start_lng'] as double,
-          endLat: maps[i]['end_lat'] as double,
-          endLng: maps[i]['end_lng'] as double,
+          id: map['id'] as String,
+          name: map['name'] as String,
+          points: segmentPoints,
+          direction: map['direction'] as String,
+          startLat: map['start_lat'] as double,
+          startLng: map['start_lng'] as double,
+          endLat: map['end_lat'] as double,
+          endLng: map['end_lng'] as double,
+          minLat: bbox.minLat,
+          maxLat: bbox.maxLat,
+          minLng: bbox.minLng,
+          maxLng: bbox.maxLng,
         );
         
         print('  Loaded segment:');
@@ -333,7 +341,7 @@ class DatabaseService {
         print('    End: (${segment.endLat}, ${segment.endLng})');
         
         return segment;
-      });
+      }));
       
       print('DatabaseService: Successfully loaded all segments');
       return segments;
@@ -360,19 +368,27 @@ class DatabaseService {
       }
 
       final points = jsonDecode(maps[0]['points'] as String) as List;
+      final segmentPoints = points.map((p) => SegmentPoint(
+        latitude: p['latitude'] as double,
+        longitude: p['longitude'] as double,
+        elevation: p['elevation'] as double?,
+      )).toList();
+
+      final bbox = Segment.calculateBoundingBox(segmentPoints);
+      
       final segment = Segment(
         id: maps[0]['id'] as String,
         name: maps[0]['name'] as String,
-        points: points.map((p) => SegmentPoint(
-          latitude: p['latitude'] as double,
-          longitude: p['longitude'] as double,
-          elevation: p['elevation'] as double?,
-        )).toList(),
+        points: segmentPoints,
         direction: maps[0]['direction'] as String,
         startLat: maps[0]['start_lat'] as double,
         startLng: maps[0]['start_lng'] as double,
         endLat: maps[0]['end_lat'] as double,
         endLng: maps[0]['end_lng'] as double,
+        minLat: bbox.minLat,
+        maxLat: bbox.maxLat,
+        minLng: bbox.minLng,
+        maxLng: bbox.maxLng,
       );
       
       print('DatabaseService: Loaded segment:');

@@ -88,6 +88,8 @@ class SegmentService {
           );
         }).toList();
 
+        final bbox = Segment.calculateBoundingBox(points);
+
         final segment = Segment(
           id: map['id'].toString(),
           name: map['name'] as String,
@@ -97,6 +99,10 @@ class SegmentService {
           startLng: map['start_lng'] as double,
           endLat: map['end_lat'] as double,
           endLng: map['end_lng'] as double,
+          minLat: bbox.minLat,
+          maxLat: bbox.maxLat,
+          minLng: bbox.minLng,
+          maxLng: bbox.maxLng,
         );
 
         // For one-way segments, only check the starting point
@@ -133,6 +139,8 @@ class SegmentService {
           );
         }).toList();
 
+        final bbox = Segment.calculateBoundingBox(points);
+
         return Segment(
           id: map['id'].toString(),
           name: map['name'] as String,
@@ -142,6 +150,10 @@ class SegmentService {
           startLng: map['start_lng'] as double,
           endLat: map['end_lat'] as double,
           endLng: map['end_lng'] as double,
+          minLat: bbox.minLat,
+          maxLat: bbox.maxLat,
+          minLng: bbox.minLng,
+          maxLng: bbox.maxLng,
         );
       }).toList();
 
@@ -175,6 +187,8 @@ class SegmentService {
         );
       }).toList();
 
+      final bbox = Segment.calculateBoundingBox(points);
+
       return Segment(
         id: map['id'].toString(),
         name: map['name'] as String,
@@ -184,6 +198,10 @@ class SegmentService {
         startLng: map['start_lng'] as double,
         endLat: map['end_lat'] as double,
         endLng: map['end_lng'] as double,
+        minLat: bbox.minLat,
+        maxLat: bbox.maxLat,
+        minLng: bbox.minLng,
+        maxLng: bbox.maxLng,
       );
     } catch (e) {
       throw Exception('Failed to get segment: $e');

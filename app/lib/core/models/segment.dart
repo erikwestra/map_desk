@@ -38,6 +38,22 @@ class Segment {
   final double endLat;
   final double endLng;
 
+  // Bounding box properties
+  final double minLat;
+  final double maxLat;
+  final double minLng;
+  final double maxLng;
+
+  /// Calculates the bounding box for a list of points
+  static ({double minLat, double maxLat, double minLng, double maxLng}) calculateBoundingBox(List<SegmentPoint> points) {
+    return (
+      minLat: points.map((p) => p.latitude).reduce((a, b) => a < b ? a : b),
+      maxLat: points.map((p) => p.latitude).reduce((a, b) => a > b ? a : b),
+      minLng: points.map((p) => p.longitude).reduce((a, b) => a < b ? a : b),
+      maxLng: points.map((p) => p.longitude).reduce((a, b) => a > b ? a : b),
+    );
+  }
+
   const Segment({
     required this.id,
     required this.name,
@@ -47,6 +63,10 @@ class Segment {
     required this.startLng,
     required this.endLat,
     required this.endLng,
+    required this.minLat,
+    required this.maxLat,
+    required this.minLng,
+    required this.maxLng,
   });
 
   Segment copyWith({
@@ -58,6 +78,10 @@ class Segment {
     double? startLng,
     double? endLat,
     double? endLng,
+    double? minLat,
+    double? maxLat,
+    double? minLng,
+    double? maxLng,
   }) {
     return Segment(
       id: id ?? this.id,
@@ -68,6 +92,10 @@ class Segment {
       startLng: startLng ?? this.startLng,
       endLat: endLat ?? this.endLat,
       endLng: endLng ?? this.endLng,
+      minLat: minLat ?? this.minLat,
+      maxLat: maxLat ?? this.maxLat,
+      minLng: minLng ?? this.minLng,
+      maxLng: maxLng ?? this.maxLng,
     );
   }
 
@@ -80,6 +108,8 @@ class Segment {
     String direction = 'bidirectional',
   }) {
     final points = allPoints.sublist(startIndex, endIndex + 1);
+    final bbox = calculateBoundingBox(points);
+
     return Segment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
@@ -89,6 +119,10 @@ class Segment {
       startLng: points.first.longitude,
       endLat: points.last.latitude,
       endLng: points.last.longitude,
+      minLat: bbox.minLat,
+      maxLat: bbox.maxLat,
+      minLng: bbox.minLng,
+      maxLng: bbox.maxLng,
     );
   }
 
@@ -103,20 +137,31 @@ class Segment {
       'start_lng': startLng,
       'end_lat': endLat,
       'end_lng': endLng,
+      'min_lat': minLat,
+      'max_lat': maxLat,
+      'min_lng': minLng,
+      'max_lng': maxLng,
     };
   }
 
   /// Create a segment from JSON data
   factory Segment.fromJson(Map<String, dynamic> json) {
+    final points = (json['points'] as List).map((p) => SegmentPoint.fromJson(p)).toList();
+    final bbox = calculateBoundingBox(points);
+
     return Segment(
       id: json['id'] as String,
       name: json['name'] as String,
-      points: (json['points'] as List).map((p) => SegmentPoint.fromJson(p)).toList(),
+      points: points,
       direction: json['direction'] as String? ?? 'bidirectional',
       startLat: json['start_lat'] as double,
       startLng: json['start_lng'] as double,
       endLat: json['end_lat'] as double,
       endLng: json['end_lng'] as double,
+      minLat: bbox.minLat,
+      maxLat: bbox.maxLat,
+      minLng: bbox.minLng,
+      maxLng: bbox.maxLng,
     );
   }
 
@@ -150,6 +195,14 @@ class Segment {
     return totalDistance;
   }
 
+  /// Checks if a point is within the segment's bounding box
+  bool isPointInBoundingBox(LatLng point) {
+    return point.latitude >= minLat &&
+           point.latitude <= maxLat &&
+           point.longitude >= minLng &&
+           point.longitude <= maxLng;
+  }
+
   /// Converts the segment to a Map for storage
   Map<String, dynamic> toMap() {
     return {
@@ -171,6 +224,8 @@ class Segment {
         ))
         .toList();
 
+    final bbox = calculateBoundingBox(points);
+
     return Segment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: map['name'] as String,
@@ -180,6 +235,10 @@ class Segment {
       startLng: map['start_lng'] as double,
       endLat: map['end_lat'] as double,
       endLng: map['end_lng'] as double,
+      minLat: bbox.minLat,
+      maxLat: bbox.maxLat,
+      minLng: bbox.minLng,
+      maxLng: bbox.maxLng,
     );
   }
 
