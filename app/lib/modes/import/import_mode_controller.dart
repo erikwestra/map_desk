@@ -414,19 +414,52 @@ class ImportModeController extends ModeController {
 
   void _handleTrackSelected(Segment track) {
     print('ImportModeController: Handling track selection');
+    
     // Update the map content to show the track
     final points = track.points.map((p) => p.toLatLng()).toList();
     final bounds = LatLngBounds.fromPoints(points);
     
-    // Set the map bounds to show the entire track
-    uiContext.mapViewService.mapController.move(
-      bounds.center,
-      uiContext.mapViewService.mapController.camera.zoom,
-    );
-    uiContext.mapViewService.mapController.fitBounds(
-      bounds,
-      options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
-    );
+    // If we have a selectable track and points are selected, zoom to the appropriate point
+    if (_selectableTrack != null) {
+      LatLng? pointToZoom;
+      
+      // First try to zoom to end point if it exists
+      if (_selectableTrack!.endPointIndex != null) {
+        pointToZoom = _selectableTrack!.track.points[_selectableTrack!.endPointIndex!].toLatLng();
+      }
+      // If no end point, try to zoom to start point
+      else if (_selectableTrack!.startPointIndex != null) {
+        pointToZoom = _selectableTrack!.track.points[_selectableTrack!.startPointIndex!].toLatLng();
+      }
+      
+      // If we have a point to zoom to, move the map there
+      if (pointToZoom != null) {
+        uiContext.mapViewService.mapController.move(
+          pointToZoom,
+          uiContext.mapViewService.mapController.camera.zoom,
+        );
+      } else {
+        // If no specific point to zoom to, show the entire track
+        uiContext.mapViewService.mapController.move(
+          bounds.center,
+          uiContext.mapViewService.mapController.camera.zoom,
+        );
+        uiContext.mapViewService.mapController.fitBounds(
+          bounds,
+          options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+        );
+      }
+    } else {
+      // If no selectable track, show the entire track
+      uiContext.mapViewService.mapController.move(
+        bounds.center,
+        uiContext.mapViewService.mapController.camera.zoom,
+      );
+      uiContext.mapViewService.mapController.fitBounds(
+        bounds,
+        options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+      );
+    }
     
     _updateMapContent();
     _updateStatusBar();
