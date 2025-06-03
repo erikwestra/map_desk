@@ -8,6 +8,8 @@ import 'core/services/database_service.dart';
 import 'core/services/segment_service.dart';
 import 'core/services/map_view_service.dart';
 import 'core/services/segment_sidebar_service.dart';
+import 'core/services/segment_import_service.dart';
+import 'core/services/segment_export_service.dart';
 import 'core/interfaces/mode_ui_context.dart';
 import 'core/widgets/map_view.dart';
 import 'core/widgets/status_bar.dart';
@@ -29,6 +31,8 @@ class ServiceProvider extends ChangeNotifier {
   late final MapViewService mapViewService;
   late final StatusBarService statusBarService;
   late final SegmentSidebarService segmentSidebarService;
+  late final SegmentImportService segmentImportService;
+  late final SegmentExportService segmentExportService;
 
   ServiceProvider() {
     databaseService = DatabaseService();
@@ -36,6 +40,8 @@ class ServiceProvider extends ChangeNotifier {
     mapViewService = MapViewService();
     statusBarService = StatusBarService();
     segmentSidebarService = SegmentSidebarService(segmentService);
+    segmentImportService = SegmentImportService(databaseService);
+    segmentExportService = SegmentExportService();
   }
 
   /// Initialize all services

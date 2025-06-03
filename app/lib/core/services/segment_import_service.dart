@@ -118,6 +118,9 @@ class SegmentImportService {
         );
       }).toList();
 
+      // Calculate bounding box
+      final bbox = Segment.calculateBoundingBox(points);
+
       // Create segment
       return Segment(
         id: properties['id'] as String,
@@ -128,6 +131,10 @@ class SegmentImportService {
         startLng: points.first.longitude,
         endLat: points.last.latitude,
         endLng: points.last.longitude,
+        minLat: bbox.minLat,
+        maxLat: bbox.maxLat,
+        minLng: bbox.minLng,
+        maxLng: bbox.maxLng,
       );
     } catch (e) {
       print('SegmentImportService: Failed to convert feature to segment: $e');

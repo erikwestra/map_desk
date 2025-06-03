@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'mode_service.dart';
+import '../../main.dart';
+import 'segment_import_service.dart';
+import 'segment_export_service.dart';
+import 'database_service.dart';
 
 /// Service that manages the application menu bar.
 class MenuService extends ChangeNotifier {
@@ -23,6 +27,7 @@ class MenuService extends ChangeNotifier {
   static List<PlatformMenu> buildMenuBar(BuildContext context) {
     final modeService = context.read<ModeService>();
     final currentMode = modeService.currentMode;
+    final serviceProvider = context.read<ServiceProvider>();
 
     return [
       // MapDesk menu
@@ -116,8 +121,39 @@ class MenuService extends ChangeNotifier {
             members: [
               PlatformMenuItem(
                 label: 'Reset Database',
-                onSelected: () {
-                  // TODO: Implement reset database
+                onSelected: () async {
+                  // Show confirmation dialog
+                  final shouldReset = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Reset Database'),
+                      content: const Text('Are you sure you want to delete all segments? This action cannot be undone.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context).colorScheme.error,
+                          ),
+                          child: const Text('Reset'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (shouldReset == true) {
+                    try {
+                      await serviceProvider.databaseService.deleteAllSegments();
+                      // Refresh the segment list in the sidebar
+                      await serviceProvider.segmentSidebarService.refreshSegments();
+                    } catch (e) {
+                      print('MenuService: Failed to reset database: $e');
+                      // TODO: Show error message to user
+                    }
+                  }
                 },
               ),
             ],
@@ -126,14 +162,49 @@ class MenuService extends ChangeNotifier {
             members: [
               PlatformMenuItem(
                 label: 'Export Segments',
-                onSelected: () {
-                  // TODO: Implement export segments
+                onSelected: () async {
+                  try {
+                    final segments = await serviceProvider.segmentService.getAllSegments();
+                    if (segments.isEmpty) {
+                      // Show message that there are no segments to export
+                      if (context.mounted) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Export Segments'),
+                            content: const Text('There are no segments to export.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    final exportService = SegmentExportService();
+                    await exportService.exportToGeoJSON(segments);
+                  } catch (e) {
+                    print('MenuService: Failed to export segments: $e');
+                    // TODO: Show error message to user
+                  }
                 },
               ),
               PlatformMenuItem(
                 label: 'Import Segments',
-                onSelected: () {
-                  // TODO: Implement import segments
+                onSelected: () async {
+                  try {
+                    final importService = SegmentImportService(serviceProvider.databaseService);
+                    await importService.importFromGeoJSON(context);
+                    // Refresh the segment list in the sidebar
+                    await serviceProvider.segmentSidebarService.refreshSegments();
+                  } catch (e) {
+                    print('MenuService: Failed to import segments: $e');
+                    // TODO: Show error message to user
+                  }
                 },
               ),
             ],
