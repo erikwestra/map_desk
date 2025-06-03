@@ -28,31 +28,20 @@ class DatabaseService {
   Future<Database> _initDatabase() async {
     try {
       final appSupportDir = await getApplicationSupportDirectory();
-      print('DatabaseService: App support directory: ${appSupportDir.path}');
-      
       final dbDir = Directory(join(appSupportDir.path, 'databases'));
-      print('DatabaseService: Database directory: ${dbDir.path}');
       
       if (!await dbDir.exists()) {
-        print('DatabaseService: Creating database directory');
         await dbDir.create(recursive: true);
       }
       
       final dbPath = join(dbDir.path, _databaseName);
-      print('DatabaseService: Database path: $dbPath');
-      
-      print('DatabaseService: Opening database at: $dbPath');
-      final db = await openDatabase(
+      return await openDatabase(
         dbPath,
         version: _databaseVersion,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
       );
-      print('DatabaseService: Database opened successfully');
-      return db;
     } catch (e, stackTrace) {
-      print('DatabaseService: Failed to initialize database: $e');
-      print('DatabaseService: Stack trace: $stackTrace');
       rethrow;
     }
   }

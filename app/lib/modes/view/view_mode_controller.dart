@@ -54,42 +54,9 @@ class ViewModeController extends ModeController {
     _updateMapContent();
   }
 
-  void _updateMapContent() {
-    if (isTrackLoaded) {
-      final points = currentTrack!.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
-      
-      final polyline = Polyline(
-        points: points,
-        color: Colors.blue,
-        strokeWidth: 8.0,
-      );
-      
-      final contentLayer = PolylineLayer(polylines: [polyline]);
-      uiContext.mapViewService.setContent([contentLayer]);
-      
-      // Set status bar content
-      uiContext.statusBarService.setContent(
-        Text('Loaded track: ${currentTrack!.name}'),
-      );
-      
-      // Zoom to track bounds
-      final bounds = LatLngBounds.fromPoints(points);
-      uiContext.mapViewService.mapController.fitBounds(
-        bounds,
-        options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
-      );
-    } else {
-      uiContext.mapViewService.clearContent();
-      uiContext.statusBarService.setContent(
-        const Text('No track loaded'),
-      );
-    }
-  }
-
   @override
   Future<void> handleEvent(String eventType, dynamic eventData) async {
     switch (eventType) {
-      // Menu events
       case 'menu_open':
         await _handleOpen();
         break;
@@ -102,89 +69,32 @@ class ViewModeController extends ModeController {
       case 'menu_clear_track':
         await _handleClearTrack();
         break;
-      
-      // UI interaction events
-      case 'map_click':
-        if (eventData is LatLng) {
-          await _handleMapClick(eventData);
-        }
-        break;
-      case 'segment_selected':
-        await _handleSegmentSelection(eventData);
-        break;
-      case 'route_point_selected':
-        await _handleRoutePointSelection(eventData);
-        break;
-      case 'track_loaded':
-        _updateMapContent();
-        break;
       default:
         print('ViewModeController: Unhandled event type: $eventType');
     }
   }
 
   Future<void> _handleOpen() async {
-    if (_isLoading) return;
-
-    try {
-      _isLoading = true;
-
-      final typeGroup = XTypeGroup(
-        label: 'GPX',
-        extensions: ['gpx'],
-      );
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
-
-      if (file != null) {
-        final track = await GpxService.parseGpxFile(File(file.path));
-        _currentTrack = track;
-        _updateMapContent();
-      }
-    } catch (e) {
-      print('Failed to load GPX file: ${e.toString()}');
-      _currentTrack = null;
-      _updateMapContent();
-    } finally {
-      _isLoading = false;
-    }
+    // TODO: Implement file opening in View mode
+    print('ViewModeController: Open called');
   }
 
   Future<void> _handleSaveRoute() async {
-    // No-op in View mode
-    print('ViewModeController: Save route called (disabled)');
+    // TODO: Implement save route in View mode
+    print('ViewModeController: Save route called');
   }
 
   Future<void> _handleUndo() async {
-    // No-op in View mode
-    print('ViewModeController: Undo called (disabled)');
+    // TODO: Implement undo in View mode
+    print('ViewModeController: Undo called');
   }
 
   Future<void> _handleClearTrack() async {
-    _currentTrack = null;
-    _updateMapContent();
+    // TODO: Implement track clearing in View mode
+    print('ViewModeController: Clear track called');
   }
 
-  Future<void> _handleMapClick(LatLng point) async {
-    // In View mode, map clicks might:
-    // - Show info about the clicked location
-    // - Center the map on the clicked point
-    // - Show elevation profile for the clicked point
-    print('ViewModeController: Map clicked at $point');
-  }
-
-  Future<void> _handleSegmentSelection(dynamic segment) async {
-    // In View mode, segment selection might:
-    // - Show the segment on the map
-    // - Display segment details
-    // - Update the status bar
-    print('ViewModeController: Segment selected: $segment');
-  }
-
-  Future<void> _handleRoutePointSelection(dynamic point) async {
-    // In View mode, route point selection might:
-    // - Show point details
-    // - Update the status bar
-    // - Center the map on the point
-    print('ViewModeController: Route point selected: $point');
+  void _updateMapContent() {
+    // TODO: Update map content based on current track
   }
 }

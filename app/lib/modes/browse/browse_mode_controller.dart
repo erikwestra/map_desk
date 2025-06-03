@@ -11,8 +11,6 @@ import '../../main.dart';
 
 /// Controller for the Browse mode, which handles segment library browsing.
 class BrowseModeController extends ModeController with ChangeNotifier {
-  String _searchText = '';
-
   BrowseModeController(ModeUIContext uiContext) : super(uiContext);
 
   @override
@@ -25,63 +23,27 @@ class BrowseModeController extends ModeController with ChangeNotifier {
   bool get showRightSidebar => false;
 
   @override
-  Widget buildLeftSidebar(BuildContext context) {
-    return Container(
-      color: Colors.grey[100],
-      child: const Center(
-        child: Text('Browse Sidebar'),
-      ),
-    );
+  void onActivate() {
+    _updateStatusBar();
   }
 
   @override
-  Widget buildRightSidebar(BuildContext context) {
-    return const Center(child: Text('Right Sidebar'));
+  void onDeactivate() {
+    uiContext.statusBarService.clearContent();
   }
 
-  @override
-  Widget buildStatusBarContent(BuildContext context) {
-    final segmentService = Provider.of<ServiceProvider>(context, listen: false).segmentService;
+  void _updateStatusBar() {
+    final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
     
-    return FutureBuilder<List<Segment>>(
-      future: segmentService.getAllSegments(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        }
-
-        if (!snapshot.hasData) {
-          return const Text('Loading segments...');
-        }
-
-        final segments = snapshot.data!;
-        final matchingSegments = _searchText.isEmpty 
-            ? segments 
-            : segments.where((s) => s.name.toLowerCase().contains(_searchText.toLowerCase())).toList();
-
-        return Text(
-          _searchText.isEmpty
-              ? '${segments.length} segments'
-              : '${matchingSegments.length} matching segments',
-        );
-      },
-    );
-  }
-
-  void setSearchText(String text) {
-    _searchText = text;
-    notifyListeners();
-  }
-
-  @override
-  void onActivate() {}
-
-  @override
-  void onDeactivate() {}
-
-  @override
-  void dispose() {
-    super.dispose();
+    segmentService.getAllSegments().then((segments) {
+      uiContext.statusBarService.setContent(
+        Text('${segments.length} segments'),
+      );
+    }).catchError((error) {
+      uiContext.statusBarService.setContent(
+        Text('Error: $error'),
+      );
+    });
   }
 
   @override

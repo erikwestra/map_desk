@@ -41,17 +41,8 @@ class ServiceProvider extends ChangeNotifier {
   /// Initialize all services
   Future<void> initialize() async {
     try {
-      print('ServiceProvider: Starting initialization');
-      
-      // Initialize database first
-      print('ServiceProvider: Initializing database service');
       await databaseService.database;
-      print('ServiceProvider: Database service initialized successfully');
-      
-      print('ServiceProvider: All services initialized successfully');
     } catch (e, stackTrace) {
-      print('ServiceProvider: Failed to initialize services: $e');
-      print('ServiceProvider: Stack trace: $stackTrace');
       rethrow;
     }
   }

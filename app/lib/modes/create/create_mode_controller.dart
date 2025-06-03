@@ -20,31 +20,6 @@ class CreateModeController extends ModeController {
   bool get showRightSidebar => true;
 
   @override
-  Widget buildLeftSidebar(BuildContext context) {
-    return Container(
-      color: Colors.grey[100],
-      child: const Center(
-        child: Text('Create Left Sidebar'),
-      ),
-    );
-  }
-
-  @override
-  Widget buildRightSidebar(BuildContext context) {
-    return Container(
-      color: Colors.grey[100],
-      child: const Center(
-        child: Text('Create Right Sidebar'),
-      ),
-    );
-  }
-
-  @override
-  Widget buildStatusBarContent(BuildContext context) {
-    return const Text('Create Mode');
-  }
-
-  @override
   void onActivate() {}
 
   @override
@@ -62,7 +37,6 @@ class CreateModeController extends ModeController {
   @override
   Future<void> handleEvent(String eventType, dynamic eventData) async {
     switch (eventType) {
-      // Menu events
       case 'menu_open':
         await _handleOpen();
         break;
@@ -74,19 +48,6 @@ class CreateModeController extends ModeController {
         break;
       case 'menu_clear_track':
         await _handleClearTrack();
-        break;
-      
-      // UI interaction events
-      case 'map_click':
-        if (eventData is LatLng) {
-          await _handleMapClick(eventData);
-        }
-        break;
-      case 'segment_selected':
-        await _handleSegmentSelection(eventData);
-        break;
-      case 'route_point_selected':
-        await _handleRoutePointSelection(eventData);
         break;
       default:
         print('CreateModeController: Unhandled event type: $eventType');
@@ -111,20 +72,5 @@ class CreateModeController extends ModeController {
   Future<void> _handleClearTrack() async {
     // TODO: Implement track clearing in Create mode
     print('CreateModeController: Clear track called');
-  }
-
-  Future<void> _handleMapClick(LatLng point) async {
-    // TODO: Implement map click handling in Create mode
-    print('CreateModeController: Map clicked at $point');
-  }
-
-  Future<void> _handleSegmentSelection(dynamic segment) async {
-    // TODO: Implement segment selection in Create mode
-    print('CreateModeController: Segment selected: $segment');
-  }
-
-  Future<void> _handleRoutePointSelection(dynamic point) async {
-    // TODO: Implement route point selection in Create mode
-    print('CreateModeController: Route point selected: $point');
   }
 }

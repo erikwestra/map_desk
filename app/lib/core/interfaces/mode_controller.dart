@@ -38,4 +38,10 @@ abstract class ModeController {
   /// 
   /// The event type and data are passed as parameters.
   Future<void> handleEvent(String eventType, dynamic eventData) async {}
+
+  /// Get the current state of this mode
+  Map<String, dynamic> getState() => {};
+
+  /// Restore the state of this mode
+  void restoreState(Map<String, dynamic> state) {}
 }

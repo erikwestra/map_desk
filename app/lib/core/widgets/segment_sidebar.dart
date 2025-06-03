@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/segment_sidebar_service.dart';
-import '../models/segment.dart';
 
-/// A resizable sidebar widget that displays a list of segments with search functionality.
+/// Widget that displays the segment sidebar with search functionality.
 class SegmentSidebar extends StatefulWidget {
   const SegmentSidebar({super.key});
 
@@ -13,9 +12,6 @@ class SegmentSidebar extends StatefulWidget {
 
 class _SegmentSidebarState extends State<SegmentSidebar> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  double _width = 300.0;
-  bool _isDragging = false;
 
   @override
   void dispose() {
@@ -23,120 +19,110 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
     super.dispose();
   }
 
+  void _handleSearch() {
+    final service = context.read<SegmentSidebarService>();
+    service.updateSearchQuery(_searchController.text);
+  }
+
+  void _handleClearSearch() {
+    _searchController.clear();
+    final service = context.read<SegmentSidebarService>();
+    service.clearSearchQuery();
+  }
+
   @override
   Widget build(BuildContext context) {
     final service = context.watch<SegmentSidebarService>();
 
-    return Stack(
-      children: [
-        SizedBox(
-          width: _width,
-          child: Column(
-            children: [
-              // Search field
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Search',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                ),
-              ),
-              // Segment list
-              Expanded(
-                child: FutureBuilder<List<Segment>>(
-                  future: service.getAllSegments(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text(
-                          'Error loading segments: ${snapshot.error}',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      );
-                    }
-
-                    final segments = snapshot.data ?? [];
-                    final filteredSegments = segments.where((segment) {
-                      return segment.name.toLowerCase().contains(_searchQuery.toLowerCase());
-                    }).toList();
-
-                    if (filteredSegments.isEmpty) {
-                      return Center(
-                        child: Text(
-                          _searchQuery.isEmpty
-                              ? 'No segments found'
-                              : 'No segments match "$_searchQuery"',
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      itemCount: filteredSegments.length,
-                      itemBuilder: (context, index) {
-                        final segment = filteredSegments[index];
-                        final isSelected = service.selectedSegment?.id == segment.id;
-
-                        return ListTile(
-                          title: Text(segment.name),
-                          subtitle: Text('${segment.points.length} points'),
-                          selected: isSelected,
-                          onTap: () => service.selectSegment(segment),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
+    return Container(
+      width: 300,
+      decoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
           ),
         ),
-        // Resize handle
-        Positioned(
-          right: 0,
-          top: 0,
-          bottom: 0,
-          child: MouseRegion(
-            cursor: SystemMouseCursors.resizeColumn,
-            child: GestureDetector(
-              onHorizontalDragStart: (_) => setState(() => _isDragging = true),
-              onHorizontalDragEnd: (_) => setState(() => _isDragging = false),
-              onHorizontalDragUpdate: (details) {
-                setState(() {
-                  _width = (_width + details.delta.dx).clamp(200.0, 400.0);
-                });
-              },
-              child: Container(
-                width: 8,
-                color: _isDragging 
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                child: Center(
-                  child: Container(
-                    width: 2,
-                    height: 32,
-                    color: _isDragging
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+      ),
+      child: Column(
+        children: [
+          // Search field
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search',
+                hintStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                  onPressed: _handleClearSearch,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
+              onSubmitted: (_) => _handleSearch(),
             ),
           ),
-        ),
-      ],
+          // Segment list
+          Expanded(
+            child: service.segments.isEmpty
+                ? Center(
+                    child: Text(
+                      'No segments found',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: service.segments.length,
+                    itemBuilder: (context, index) {
+                      final segment = service.segments[index];
+                      final isSelected = service.selectedSegment?.id == segment.id;
+
+                      return ListTile(
+                        title: Text(
+                          segment.name,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                          ),
+                        ),
+                        tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
+                        onTap: () {
+                          service.selectSegment(segment);
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 } 
