@@ -165,41 +165,20 @@ class ImportModeController extends ModeController {
   }
 
   void _handleTrackSelected(Segment track) {
+    print('ImportModeController: Handling track selection');
     // Update the map content to show the track
     final points = track.points.map((p) => p.toLatLng()).toList();
     final bounds = LatLngBounds.fromPoints(points);
     
-    uiContext.mapViewService.setContent([
-      PolylineLayer(
-        polylines: [
-          Polyline(
-            points: points,
-            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
-            strokeWidth: 3.0,
-          ),
-        ],
-      ),
-      CircleLayer(
-        circles: [
-          CircleMarker(
-            point: points.first,
-            color: Colors.green,
-            radius: 8.0,
-          ),
-          CircleMarker(
-            point: points.last,
-            color: Colors.red,
-            radius: 8.0,
-          ),
-        ],
-      ),
-    ]);
-  }
-
-  void _handleSegmentSelected(Segment segment) {
-    // Update the map content to show the segment
-    final points = segment.points.map((p) => p.toLatLng()).toList();
-    final bounds = LatLngBounds.fromPoints(points);
+    // Set the map bounds to show the entire track
+    uiContext.mapViewService.mapController.move(
+      bounds.center,
+      uiContext.mapViewService.mapController.camera.zoom,
+    );
+    uiContext.mapViewService.mapController.fitBounds(
+      bounds,
+      options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+    );
     
     uiContext.mapViewService.setContent([
       PolylineLayer(
@@ -226,5 +205,50 @@ class ImportModeController extends ModeController {
         ],
       ),
     ]);
+    print('ImportModeController: Track selection handled');
+  }
+
+  void _handleSegmentSelected(Segment segment) {
+    print('ImportModeController: Handling segment selection');
+    // Update the map content to show the segment
+    final points = segment.points.map((p) => p.toLatLng()).toList();
+    final bounds = LatLngBounds.fromPoints(points);
+    
+    // Set the map bounds to show the entire segment
+    uiContext.mapViewService.mapController.move(
+      bounds.center,
+      uiContext.mapViewService.mapController.camera.zoom,
+    );
+    uiContext.mapViewService.mapController.fitBounds(
+      bounds,
+      options: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+    );
+    
+    uiContext.mapViewService.setContent([
+      PolylineLayer(
+        polylines: [
+          Polyline(
+            points: points,
+            color: Theme.of(navigatorKey.currentContext!).colorScheme.primary,
+            strokeWidth: 3.0,
+          ),
+        ],
+      ),
+      CircleLayer(
+        circles: [
+          CircleMarker(
+            point: points.first,
+            color: Colors.green,
+            radius: 8.0,
+          ),
+          CircleMarker(
+            point: points.last,
+            color: Colors.red,
+            radius: 8.0,
+          ),
+        ],
+      ),
+    ]);
+    print('ImportModeController: Segment selection handled');
   }
 }
