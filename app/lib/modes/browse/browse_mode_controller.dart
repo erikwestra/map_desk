@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_map/flutter_map.dart';
 import '../../core/interfaces/mode_controller.dart';
 import '../../core/interfaces/mode_ui_context.dart';
 import '../../core/services/mode_service.dart';
@@ -11,6 +12,8 @@ import '../../main.dart';
 
 /// Controller for the Browse mode, which handles segment library browsing.
 class BrowseModeController extends ModeController with ChangeNotifier {
+  final MapController _mapController = MapController();
+
   BrowseModeController(ModeUIContext uiContext) : super(uiContext);
 
   @override
@@ -112,8 +115,22 @@ class BrowseModeController extends ModeController with ChangeNotifier {
   }
 
   Future<void> _handleSegmentSelection(dynamic segment) async {
-    // TODO: Implement segment selection in Browse mode
-    print('BrowseModeController: Segment selected: $segment');
+    if (segment is! Segment) return;
+
+    // Update status bar with segment info
+    uiContext.statusBarService.setContent(
+      Text('Selected: ${segment.name} (${segment.points.length} points)'),
+    );
+
+    // Calculate bounds of the segment
+    final points = segment.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+    final bounds = LatLngBounds.fromPoints(points);
+    
+    // Fit the map to the segment bounds with padding
+    _mapController.fitBounds(
+      bounds,
+      options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
+    );
   }
 
   Future<void> _handleRoutePointSelection(dynamic point) async {

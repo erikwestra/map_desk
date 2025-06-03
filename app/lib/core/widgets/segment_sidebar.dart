@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/segment_sidebar_service.dart';
+import '../widgets/segment_direction_indicator.dart';
 
 /// Widget that displays the segment sidebar with search functionality.
 class SegmentSidebar extends StatefulWidget {
@@ -117,6 +118,15 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
                         onTap: () {
                           service.selectSegment(segment);
                         },
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SegmentDirectionIndicator(
+                              direction: segment.direction,
+                              size: 32,
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),

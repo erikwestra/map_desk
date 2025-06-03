@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/segment.dart';
 import '../services/segment_service.dart';
+import '../services/mode_service.dart';
+import '../../main.dart';
 
 /// Service that manages the state of the segment sidebar.
 class SegmentSidebarService extends ChangeNotifier {
@@ -40,6 +43,11 @@ class SegmentSidebarService extends ChangeNotifier {
   /// Select a segment
   void selectSegment(Segment segment) {
     _selectedSegment = segment;
+    
+    // Emit event to current mode controller
+    final modeService = Provider.of<ModeService>(navigatorKey.currentContext!, listen: false);
+    modeService.currentMode?.handleEvent('segment_selected', segment);
+    
     notifyListeners();
   }
 
