@@ -142,7 +142,7 @@ class MapDeskHome extends StatelessWidget {
                   child: MapView(),
                 ),
                 if (currentMode.showRightSidebar)
-                  const RouteSidebar(),
+                  RouteSidebar(),
               ],
             ),
             bottomNavigationBar: Container(
