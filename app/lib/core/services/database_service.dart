@@ -41,7 +41,8 @@ class DatabaseService {
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
+      print('DatabaseService: Failed to initialize database: $e');
       rethrow;
     }
   }
@@ -65,7 +66,7 @@ class DatabaseService {
       // Create indexes for spatial search
       await db.execute('CREATE INDEX idx_start_coords ON segments (start_lat, start_lng)');
       await db.execute('CREATE INDEX idx_end_coords ON segments (end_lat, end_lng)');
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('DatabaseService: Failed to create database tables: $e');
       rethrow;
     }
@@ -130,7 +131,6 @@ class DatabaseService {
           ''');
           
           final List<Map<String, dynamic>> existingSegments = await db.query('segments', orderBy: 'created_at ASC');
-          print('DatabaseService: Found ${existingSegments.length} segments to migrate');
           
           final Set<String> usedNames = {};
           for (final segment in existingSegments) {
@@ -179,7 +179,6 @@ class DatabaseService {
           await db.execute('CREATE INDEX idx_end_coords ON segments_new (end_lat, end_lng)');
           
           final List<Map<String, dynamic>> existingSegments = await db.query('segments');
-          print('DatabaseService: Found ${existingSegments.length} segments to migrate');
           
           for (final segment in existingSegments) {
             final points = jsonDecode(segment['points'] as String) as List;
@@ -204,7 +203,7 @@ class DatabaseService {
           await db.execute('ALTER TABLE segments_new RENAME TO segments');
         });
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('DatabaseService: Failed to upgrade database: $e');
       rethrow;
     }
@@ -214,7 +213,7 @@ class DatabaseService {
   Future<void> _runMigration(Database db, String version, Future<void> Function() migration) async {
     try {
       await migration();
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('DatabaseService: Failed to run $version migration: $e');
       rethrow;
     }
@@ -224,28 +223,6 @@ class DatabaseService {
   Future<void> saveSegment(Segment segment) async {
     try {
       final db = await database;
-      
-      // Log the segment data we're about to save
-      print('DatabaseService: Saving segment:');
-      print('  ID: ${segment.id}');
-      print('  Name: ${segment.name}');
-      print('  Points: ${segment.points.length} points');
-      print('  Direction: ${segment.direction}');
-      print('  Start: (${segment.startLat}, ${segment.startLng})');
-      print('  End: (${segment.endLat}, ${segment.endLng})');
-      
-      // Check if segment already exists
-      final existing = await db.query(
-        'segments',
-        where: 'id = ?',
-        whereArgs: [segment.id],
-      );
-      
-      if (existing.isNotEmpty) {
-        print('DatabaseService: Updating existing segment');
-      } else {
-        print('DatabaseService: Creating new segment');
-      }
       
       final pointsJson = jsonEncode(segment.points.map((p) => {
         'latitude': p.latitude,
@@ -267,20 +244,7 @@ class DatabaseService {
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-      
-      // Verify the save
-      final saved = await db.query(
-        'segments',
-        where: 'id = ?',
-        whereArgs: [segment.id],
-      );
-      
-      if (saved.isEmpty) {
-        print('DatabaseService: WARNING - Segment was not saved successfully');
-      } else {
-        print('DatabaseService: Segment saved and verified');
-      }
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('DatabaseService: Failed to save segment: $e');
       rethrow;
     }
@@ -289,65 +253,36 @@ class DatabaseService {
   /// Get all segments from the database
   Future<List<Segment>> getAllSegments() async {
     try {
-      print('DatabaseService: Getting all segments');
       final db = await database;
-      print('DatabaseService: Got database instance');
-      
       final List<Map<String, dynamic>> maps = await db.query('segments');
-      print('DatabaseService: Query returned ${maps.length} segments');
       
-      if (maps.isEmpty) {
-        print('DatabaseService: No segments found in database');
-        return [];
-      }
-      
-      print('DatabaseService: Loading segments from database:');
-      print('  Found ${maps.length} segments');
-      
-      final segments = await Future.wait(maps.map((map) async {
-        print('DatabaseService: Processing segment ${maps.indexOf(map) + 1}/${maps.length}');
-        final points = jsonDecode(map['points'] as String) as List;
-        print('DatabaseService: Decoded ${points.length} points');
-        
+      return List.generate(maps.length, (i) {
+        final points = jsonDecode(maps[i]['points'] as String) as List;
         final segmentPoints = points.map((p) => SegmentPoint(
           latitude: p['latitude'] as double,
           longitude: p['longitude'] as double,
           elevation: p['elevation'] as double?,
         )).toList();
-
+        
         final bbox = Segment.calculateBoundingBox(segmentPoints);
         
-        final segment = Segment(
-          id: map['id'] as String,
-          name: map['name'] as String,
+        return Segment(
+          id: maps[i]['id'] as String,
+          name: maps[i]['name'] as String,
           points: segmentPoints,
-          direction: map['direction'] as String,
-          startLat: map['start_lat'] as double,
-          startLng: map['start_lng'] as double,
-          endLat: map['end_lat'] as double,
-          endLng: map['end_lng'] as double,
+          direction: maps[i]['direction'] as String,
+          startLat: maps[i]['start_lat'] as double,
+          startLng: maps[i]['start_lng'] as double,
+          endLat: maps[i]['end_lat'] as double,
+          endLng: maps[i]['end_lng'] as double,
           minLat: bbox.minLat,
           maxLat: bbox.maxLat,
           minLng: bbox.minLng,
           maxLng: bbox.maxLng,
         );
-        
-        print('  Loaded segment:');
-        print('    ID: ${segment.id}');
-        print('    Name: ${segment.name}');
-        print('    Points: ${segment.points.length} points');
-        print('    Direction: ${segment.direction}');
-        print('    Start: (${segment.startLat}, ${segment.startLng})');
-        print('    End: (${segment.endLat}, ${segment.endLng})');
-        
-        return segment;
-      }));
-      
-      print('DatabaseService: Successfully loaded all segments');
-      return segments;
-    } catch (e, stackTrace) {
+      });
+    } catch (e) {
       print('DatabaseService: Failed to load segments: $e');
-      print('DatabaseService: Stack trace: $stackTrace');
       rethrow;
     }
   }
@@ -363,7 +298,6 @@ class DatabaseService {
       );
 
       if (maps.isEmpty) {
-        print('DatabaseService: No segment found with ID: $id');
         return null;
       }
 
@@ -373,10 +307,10 @@ class DatabaseService {
         longitude: p['longitude'] as double,
         elevation: p['elevation'] as double?,
       )).toList();
-
+      
       final bbox = Segment.calculateBoundingBox(segmentPoints);
       
-      final segment = Segment(
+      return Segment(
         id: maps[0]['id'] as String,
         name: maps[0]['name'] as String,
         points: segmentPoints,
@@ -390,17 +324,7 @@ class DatabaseService {
         minLng: bbox.minLng,
         maxLng: bbox.maxLng,
       );
-      
-      print('DatabaseService: Loaded segment:');
-      print('  ID: ${segment.id}');
-      print('  Name: ${segment.name}');
-      print('  Points: ${segment.points.length} points');
-      print('  Direction: ${segment.direction}');
-      print('  Start: (${segment.startLat}, ${segment.startLng})');
-      print('  End: (${segment.endLat}, ${segment.endLng})');
-      
-      return segment;
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('DatabaseService: Failed to load segment: $e');
       rethrow;
     }
@@ -410,38 +334,12 @@ class DatabaseService {
   Future<void> deleteSegment(String id) async {
     try {
       final db = await database;
-      
-      // Log the segment we're about to delete
-      final segment = await getSegment(id);
-      if (segment != null) {
-        print('DatabaseService: Deleting segment:');
-        print('  ID: ${segment.id}');
-        print('  Name: ${segment.name}');
-      } else {
-        print('DatabaseService: No segment found to delete with ID: $id');
-      }
-      
-      final count = await db.delete(
+      await db.delete(
         'segments',
         where: 'id = ?',
         whereArgs: [id],
       );
-      
-      print('DatabaseService: Deleted $count segment(s) with ID: $id');
-      
-      // Verify the deletion
-      final remaining = await db.query(
-        'segments',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-      
-      if (remaining.isNotEmpty) {
-        print('DatabaseService: WARNING - Segment was not deleted successfully');
-      } else {
-        print('DatabaseService: Segment deletion verified');
-      }
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('DatabaseService: Failed to delete segment: $e');
       rethrow;
     }
@@ -451,24 +349,8 @@ class DatabaseService {
   Future<void> deleteAllSegments() async {
     try {
       final db = await database;
-      
-      // Log the current state
-      final beforeCount = await db.query('segments');
-      print('DatabaseService: Deleting all segments:');
-      print('  Current segment count: ${beforeCount.length}');
-      
-      final count = await db.delete('segments');
-      print('DatabaseService: Deleted $count segment(s)');
-      
-      // Verify the deletion
-      final afterCount = await db.query('segments');
-      if (afterCount.isNotEmpty) {
-        print('DatabaseService: WARNING - Not all segments were deleted');
-        print('  Remaining segments: ${afterCount.length}');
-      } else {
-        print('DatabaseService: All segments deleted and verified');
-      }
-    } catch (e, stackTrace) {
+      await db.delete('segments');
+    } catch (e) {
       print('DatabaseService: Failed to delete all segments: $e');
       rethrow;
     }

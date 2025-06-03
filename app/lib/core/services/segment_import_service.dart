@@ -88,7 +88,6 @@ class SegmentImportService {
     try {
       // Validate feature structure
       if (feature['type'] != 'Feature') {
-        print('SegmentImportService: Invalid feature type: ${feature['type']}');
         return null;
       }
 
@@ -97,14 +96,12 @@ class SegmentImportService {
 
       // Validate geometry
       if (geometry['type'] != 'LineString') {
-        print('SegmentImportService: Unsupported geometry type: ${geometry['type']}');
         return null;
       }
 
       // Get coordinates
       final coordinates = geometry['coordinates'] as List;
       if (coordinates.isEmpty) {
-        print('SegmentImportService: Empty coordinates list');
         return null;
       }
 
