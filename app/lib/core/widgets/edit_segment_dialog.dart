@@ -44,6 +44,14 @@ class _EditSegmentDialogState extends State<EditSegmentDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.name);
     _selectedDirection = widget.direction;
+    
+    // Select all text after the frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _nameController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _nameController.text.length,
+      );
+    });
   }
 
   @override
@@ -68,94 +76,109 @@ class _EditSegmentDialogState extends State<EditSegmentDialog> {
             onInvoke: (_) => Navigator.of(context).pop(),
           ),
         },
-        child: Focus(
-          autofocus: true,
-          child: AlertDialog(
-            title: Text(widget.title ?? 'Edit Segment'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _nameController,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Segment Name',
-                    hintText: 'Enter a name for the segment',
-                  ),
+        child: AlertDialog(
+          title: Text(widget.title ?? 'Edit Segment'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nameController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Segment Name',
+                  hintText: 'Enter a name for the segment',
                 ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: _selectedDirection,
-                  decoration: const InputDecoration(
-                    labelText: 'Direction',
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'bidirectional',
-                      child: Text('Bidirectional'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'oneWay',
-                      child: Text('One Way'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        _selectedDirection = value;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-            actions: [
-              if (widget.showDeleteButton && widget.onDelete != null)
-                TextButton(
-                  onPressed: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Delete Segment'),
-                        content: const Text('Are you sure you want to delete this segment? This action cannot be undone.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(true),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Theme.of(context).colorScheme.error,
-                            ),
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      ),
-                    );
-
-                    if (confirmed == true) {
-                      Navigator.of(context).pop('delete');
-                      widget.onDelete?.call();
-                    }
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                  ),
-                  child: const Text('Delete'),
-                ),
-              if (widget.showDeleteButton && widget.onDelete != null)
-                const SizedBox(width: 16),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
               ),
-              TextButton(
-                onPressed: () => _handleSubmit(context),
-                child: const Text('Save'),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Radio<String>(
+                          value: 'bidirectional',
+                          groupValue: _selectedDirection,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _selectedDirection = value;
+                              });
+                            }
+                          },
+                        ),
+                        const Text('Bidirectional'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Radio<String>(
+                          value: 'oneWay',
+                          groupValue: _selectedDirection,
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _selectedDirection = value;
+                              });
+                            }
+                          },
+                        ),
+                        const Text('One Way'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+          actions: [
+            if (widget.showDeleteButton && widget.onDelete != null)
+              TextButton(
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Delete Segment'),
+                      content: const Text('Are you sure you want to delete this segment? This action cannot be undone.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context).colorScheme.error,
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed == true) {
+                    Navigator.of(context).pop('delete');
+                    widget.onDelete?.call();
+                  }
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                child: const Text('Delete'),
+              ),
+            if (widget.showDeleteButton && widget.onDelete != null)
+              const SizedBox(width: 16),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => _handleSubmit(context),
+              child: const Text('Save'),
+            ),
+          ],
         ),
       ),
     );
