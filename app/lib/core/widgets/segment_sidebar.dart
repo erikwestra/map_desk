@@ -35,11 +35,11 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
             children: [
               // Search field
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
                 child: TextField(
                   controller: _searchController,
                   decoration: const InputDecoration(
-                    hintText: 'Search segments...',
+                    hintText: 'Search',
                     prefixIcon: Icon(Icons.search),
                     border: OutlineInputBorder(),
                   ),

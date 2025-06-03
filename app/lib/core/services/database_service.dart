@@ -27,35 +27,32 @@ class DatabaseService {
   /// Initialize the database
   Future<Database> _initDatabase() async {
     try {
-      String dbPath;
+      final appSupportDir = await getApplicationSupportDirectory();
+      print('DatabaseService: App support directory: ${appSupportDir.path}');
       
-      if (Platform.isMacOS) {
-        // For macOS, use a direct path in the user's home directory
-        final homeDir = Platform.environment['HOME'] ?? '';
-        final dbDir = Directory(join(homeDir, 'Library', 'Application Support', 'MapDesk', 'databases'));
-        if (!await dbDir.exists()) {
-          await dbDir.create(recursive: true);
-        }
-        dbPath = join(dbDir.path, _databaseName);
-      } else {
-        // For other platforms, use path_provider
-        final appSupportDir = await getApplicationSupportDirectory();
-        final dbDir = Directory(join(appSupportDir.path, 'databases'));
-        if (!await dbDir.exists()) {
-          await dbDir.create(recursive: true);
-        }
-        dbPath = join(dbDir.path, _databaseName);
+      final dbDir = Directory(join(appSupportDir.path, 'databases'));
+      print('DatabaseService: Database directory: ${dbDir.path}');
+      
+      if (!await dbDir.exists()) {
+        print('DatabaseService: Creating database directory');
+        await dbDir.create(recursive: true);
       }
       
-      print('DatabaseService: Initializing database at: $dbPath');
-      return await openDatabase(
+      final dbPath = join(dbDir.path, _databaseName);
+      print('DatabaseService: Database path: $dbPath');
+      
+      print('DatabaseService: Opening database at: $dbPath');
+      final db = await openDatabase(
         dbPath,
         version: _databaseVersion,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
       );
+      print('DatabaseService: Database opened successfully');
+      return db;
     } catch (e, stackTrace) {
       print('DatabaseService: Failed to initialize database: $e');
+      print('DatabaseService: Stack trace: $stackTrace');
       rethrow;
     }
   }
@@ -303,14 +300,26 @@ class DatabaseService {
   /// Get all segments from the database
   Future<List<Segment>> getAllSegments() async {
     try {
+      print('DatabaseService: Getting all segments');
       final db = await database;
+      print('DatabaseService: Got database instance');
+      
       final List<Map<String, dynamic>> maps = await db.query('segments');
+      print('DatabaseService: Query returned ${maps.length} segments');
+      
+      if (maps.isEmpty) {
+        print('DatabaseService: No segments found in database');
+        return [];
+      }
       
       print('DatabaseService: Loading segments from database:');
       print('  Found ${maps.length} segments');
       
       final segments = List.generate(maps.length, (i) {
+        print('DatabaseService: Processing segment ${i + 1}/${maps.length}');
         final points = jsonDecode(maps[i]['points'] as String) as List;
+        print('DatabaseService: Decoded ${points.length} points');
+        
         final segment = Segment(
           id: maps[i]['id'] as String,
           name: maps[i]['name'] as String,
@@ -337,9 +346,11 @@ class DatabaseService {
         return segment;
       });
       
+      print('DatabaseService: Successfully loaded all segments');
       return segments;
     } catch (e, stackTrace) {
       print('DatabaseService: Failed to load segments: $e');
+      print('DatabaseService: Stack trace: $stackTrace');
       rethrow;
     }
   }

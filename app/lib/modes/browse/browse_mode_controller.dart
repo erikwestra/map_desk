@@ -5,9 +5,14 @@ import '../../core/interfaces/mode_controller.dart';
 import '../../core/interfaces/mode_ui_context.dart';
 import '../../core/services/mode_service.dart';
 import '../../core/services/menu_service.dart';
+import '../../core/services/segment_service.dart';
+import '../../core/models/segment.dart';
+import '../../main.dart';
 
 /// Controller for the Browse mode, which handles segment library browsing.
-class BrowseModeController extends ModeController {
+class BrowseModeController extends ModeController with ChangeNotifier {
+  String _searchText = '';
+
   BrowseModeController(ModeUIContext uiContext) : super(uiContext);
 
   @override
@@ -36,7 +41,36 @@ class BrowseModeController extends ModeController {
 
   @override
   Widget buildStatusBarContent(BuildContext context) {
-    return const Text('Browse Mode');
+    final segmentService = Provider.of<ServiceProvider>(context, listen: false).segmentService;
+    
+    return FutureBuilder<List<Segment>>(
+      future: segmentService.getAllSegments(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+
+        if (!snapshot.hasData) {
+          return const Text('Loading segments...');
+        }
+
+        final segments = snapshot.data!;
+        final matchingSegments = _searchText.isEmpty 
+            ? segments 
+            : segments.where((s) => s.name.toLowerCase().contains(_searchText.toLowerCase())).toList();
+
+        return Text(
+          _searchText.isEmpty
+              ? '${segments.length} segments'
+              : '${matchingSegments.length} matching segments',
+        );
+      },
+    );
+  }
+
+  void setSearchText(String text) {
+    _searchText = text;
+    notifyListeners();
   }
 
   @override
@@ -46,7 +80,9 @@ class BrowseModeController extends ModeController {
   void onDeactivate() {}
 
   @override
-  void dispose() {}
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Map<String, dynamic> getState() => {};
