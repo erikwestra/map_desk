@@ -12,8 +12,6 @@ import '../../main.dart';
 
 /// Controller for the Browse mode, which handles segment library browsing.
 class BrowseModeController extends ModeController with ChangeNotifier {
-  final MapController _mapController = MapController();
-
   BrowseModeController(ModeUIContext uiContext) : super(uiContext);
 
   @override
@@ -28,11 +26,13 @@ class BrowseModeController extends ModeController with ChangeNotifier {
   @override
   void onActivate() {
     _updateStatusBar();
+    _updateMapContent();
   }
 
   @override
   void onDeactivate() {
     uiContext.statusBarService.clearContent();
+    uiContext.mapViewService.clearContent();
   }
 
   void _updateStatusBar() {
@@ -46,6 +46,58 @@ class BrowseModeController extends ModeController with ChangeNotifier {
       uiContext.statusBarService.setContent(
         Text('Error: $error'),
       );
+    });
+  }
+
+  void _updateMapContent() {
+    final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
+    final segmentSidebarService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
+    
+    segmentService.getAllSegments().then((segments) {
+      final selectedSegment = segmentSidebarService.selectedSegment;
+      final theme = Theme.of(navigatorKey.currentContext!);
+      
+      // Create map content with all segments
+      final content = <Widget>[
+        // All segments layer
+        PolylineLayer(
+          polylines: segments.map((segment) {
+            final isSelected = selectedSegment != null && segment.id == selectedSegment.id;
+            return Polyline(
+              points: segment.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
+              color: theme.colorScheme.primary,
+              strokeWidth: isSelected ? 4.0 : 2.0,
+            );
+          }).toList(),
+        ),
+      ];
+
+      // Add markers for selected segment if any
+      if (selectedSegment != null) {
+        final points = selectedSegment.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+        content.add(
+          CircleLayer(
+            circles: [
+              // Start point marker (green)
+              CircleMarker(
+                point: points.first,
+                color: Colors.green,
+                radius: 8.0,
+              ),
+              // End point marker (red)
+              CircleMarker(
+                point: points.last,
+                color: Colors.red,
+                radius: 8.0,
+              ),
+            ],
+          ),
+        );
+      }
+
+      uiContext.mapViewService.setContent(content);
+    }).catchError((error) {
+      print('BrowseModeController: Failed to update map content: $error');
     });
   }
 
@@ -127,10 +179,13 @@ class BrowseModeController extends ModeController with ChangeNotifier {
     final bounds = LatLngBounds.fromPoints(points);
     
     // Fit the map to the segment bounds with padding
-    _mapController.fitBounds(
+    uiContext.mapViewService.mapController.fitBounds(
       bounds,
       options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
     );
+
+    // Update map content to highlight selected segment
+    _updateMapContent();
   }
 
   Future<void> _handleRoutePointSelection(dynamic point) async {
