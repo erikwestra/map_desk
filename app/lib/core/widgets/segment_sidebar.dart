@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/segment_sidebar_service.dart';
+import '../services/mode_service.dart';
 import '../widgets/segment_direction_indicator.dart';
+import '../models/sidebar_item.dart';
+import '../models/segment.dart';
+import '../../main.dart';
 
 /// Widget that displays the segment sidebar with search functionality.
 class SegmentSidebar extends StatefulWidget {
@@ -65,6 +69,79 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
     _searchController.clear();
     final service = context.read<SegmentSidebarService>();
     service.clearSearchQuery();
+  }
+
+  Widget _buildSidebarItem(BuildContext context, SidebarItem item, SegmentSidebarService service) {
+    final isSelected = service.selectedItem?.type == item.type && 
+                      service.selectedItem?.value == item.value;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          ),
+        ),
+      ),
+      child: ListTile(
+        key: ValueKey('sidebar_item_${item.type}_${item.type == 'segment' ? (item.value as Segment).id : item.value}'),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                item.type == 'segment' ? (item.value as Segment).name : item.value.toString(),
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: item.type == 'current_track' && service.currentTrack == null
+                      ? Theme.of(context).colorScheme.onSurface.withOpacity(0.4)
+                      : isSelected 
+                          ? Theme.of(context).colorScheme.primary 
+                          : null,
+                ),
+              ),
+            ),
+            if (item.type == 'current_track' && service.currentTrack == null)
+              TextButton(
+                onPressed: () {
+                  final modeService = Provider.of<ModeService>(context, listen: false);
+                  modeService.currentMode?.handleEvent('menu_open', null);
+                },
+                child: const Text('Open'),
+              ),
+          ],
+        ),
+        tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
+        onTap: item.selectable ? () {
+          // Clear any existing selection
+          service.clearSelection();
+          // Select this item
+          service.selectItem(item);
+          // Force a rebuild to update the selection state
+          setState(() {});
+        } : null,
+        trailing: item.type == 'segment' 
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SegmentDirectionIndicator(
+                    direction: (item.value as Segment).direction,
+                    size: 32,
+                  ),
+                ],
+              )
+            : item.type == 'current_track' && service.currentTrack != null
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SegmentDirectionIndicator(
+                        direction: service.currentTrack!.direction,
+                        size: 32,
+                      ),
+                    ],
+                  )
+                : null,
+      ),
+    );
   }
 
   @override
@@ -133,7 +210,7 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
               onSubmitted: (_) => _handleSearch(),
             ),
           ),
-          // Segment list in its own container
+          // Item list in its own container
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -143,10 +220,10 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
                   ),
                 ),
               ),
-              child: service.segments.isEmpty
+              child: service.items.isEmpty
                   ? Center(
                       child: Text(
-                        'No segments found',
+                        'No items found',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             ),
@@ -154,34 +231,10 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
                     )
                   : ListView.builder(
                       controller: _scrollController,
-                      itemCount: service.segments.length,
+                      itemCount: service.items.length,
                       itemBuilder: (context, index) {
-                        final segment = service.segments[index];
-                        final isSelected = service.selectedSegment?.id == segment.id;
-
-                        return ListTile(
-                          key: ValueKey('segment_${segment.id}'),
-                          title: Text(
-                            segment.name,
-                            style: TextStyle(
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? Theme.of(context).colorScheme.primary : null,
-                            ),
-                          ),
-                          tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : null,
-                          onTap: () {
-                            service.selectSegment(segment, shouldScroll: false);
-                          },
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SegmentDirectionIndicator(
-                                direction: segment.direction,
-                                size: 32,
-                              ),
-                            ],
-                          ),
-                        );
+                        final item = service.items[index];
+                        return _buildSidebarItem(context, item, service);
                       },
                     ),
             ),

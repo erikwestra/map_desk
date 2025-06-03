@@ -9,6 +9,8 @@ import '../../core/services/mode_service.dart';
 import '../../core/services/menu_service.dart';
 import '../../core/services/gpx_service.dart';
 import '../../core/models/simple_gpx_track.dart';
+import '../../core/models/segment.dart';
+import '../../main.dart';
 
 /// Controller for the Import mode, which handles track import and segment creation.
 class ImportModeController extends ModeController {
@@ -30,10 +32,20 @@ class ImportModeController extends ModeController {
   bool get showRightSidebar => false;
 
   @override
-  void onActivate() {}
+  void onActivate() {
+    // Show the current track in the segment sidebar
+    final segmentSidebarService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
+    segmentSidebarService.setShowCurrentTrack(true);
+    // Clear any existing selection
+    segmentSidebarService.clearSelection();
+  }
 
   @override
-  void onDeactivate() {}
+  void onDeactivate() {
+    // Hide the current track in the segment sidebar
+    final segmentSidebarService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
+    segmentSidebarService.setShowCurrentTrack(false);
+  }
 
   @override
   void dispose() {}
@@ -59,6 +71,9 @@ class ImportModeController extends ModeController {
       case 'menu_clear_track':
         await _handleClearTrack();
         break;
+      case 'track_selected':
+        await _handleTrackSelected(eventData as Segment);
+        break;
       default:
         print('ImportModeController: Unhandled event type: $eventType');
     }
@@ -82,5 +97,16 @@ class ImportModeController extends ModeController {
   Future<void> _handleClearTrack() async {
     // TODO: Implement track clearing in Import mode
     print('ImportModeController: Clear track called');
+  }
+
+  Future<void> _handleTrackSelected(Segment track) async {
+    // Update the current track in the segment sidebar service
+    final segmentSidebarService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
+    segmentSidebarService.setCurrentTrack(track);
+    
+    // Update the map view to show the track
+    uiContext.mapViewService.setContent([
+      // TODO: Add track visualization to map
+    ]);
   }
 }
