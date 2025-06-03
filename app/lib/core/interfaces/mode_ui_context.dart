@@ -5,6 +5,7 @@ import '../widgets/route_sidebar.dart';
 import '../widgets/status_bar.dart';
 import '../services/mode_service.dart';
 import '../services/map_view_service.dart';
+import '../services/status_bar_service.dart';
 import '../../main.dart';  // Import for navigatorKey and ServiceProvider
 
 /// Context object that provides access to shared UI components and services.
@@ -12,6 +13,7 @@ import '../../main.dart';  // Import for navigatorKey and ServiceProvider
 class ModeUIContext {
   final ModeService modeService;
   final MapViewService mapViewService;
+  final StatusBarService statusBarService;
   final SegmentSidebar segmentSidebar;
   final RouteSidebar routeSidebar;
   final StatusBar statusBar;
@@ -19,6 +21,7 @@ class ModeUIContext {
   ModeUIContext({
     required this.modeService,
     required this.mapViewService,
+    required this.statusBarService,
     required this.segmentSidebar,
     required this.routeSidebar,
     required this.statusBar,
@@ -28,10 +31,12 @@ class ModeUIContext {
   static ModeUIContext defaultContext({
     required ModeService modeService,
     required MapViewService mapViewService,
+    required StatusBarService statusBarService,
   }) {
     return ModeUIContext(
       modeService: modeService,
       mapViewService: mapViewService,
+      statusBarService: statusBarService,
       segmentSidebar: const SegmentSidebar(),
       routeSidebar: const RouteSidebar(),
       statusBar: const StatusBar(),

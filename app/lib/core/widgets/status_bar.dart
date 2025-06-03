@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/mode_service.dart';
-import '../interfaces/mode_controller.dart';
+import '../services/status_bar_service.dart';
 
 /// A widget that displays the status bar at the bottom of the screen.
 class StatusBar extends StatelessWidget {
@@ -9,20 +8,12 @@ class StatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final modeService = context.watch<ModeService>();
-    final currentMode = modeService.currentMode;
+    final statusBarService = context.watch<StatusBarService>();
 
     return Container(
-      height: 24,
-      color: Colors.grey[200],
-      child: Row(
-        children: [
-          const SizedBox(width: 8),
-          if (currentMode == null)
-            const Text('No mode selected')
-          else
-            Text(currentMode.modeName),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: statusBarService.content,
       ),
     );
   }

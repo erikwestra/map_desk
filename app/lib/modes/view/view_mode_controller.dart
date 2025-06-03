@@ -67,6 +67,11 @@ class ViewModeController extends ModeController {
       final contentLayer = PolylineLayer(polylines: [polyline]);
       uiContext.mapViewService.setContent([contentLayer]);
       
+      // Set status bar content
+      uiContext.statusBarService.setContent(
+        Text('Loaded track: ${currentTrack!.name}'),
+      );
+      
       // Zoom to track bounds
       final bounds = LatLngBounds.fromPoints(points);
       uiContext.mapViewService.mapController.fitBounds(
@@ -75,6 +80,9 @@ class ViewModeController extends ModeController {
       );
     } else {
       uiContext.mapViewService.clearContent();
+      uiContext.statusBarService.setContent(
+        const Text('No track loaded'),
+      );
     }
   }
 

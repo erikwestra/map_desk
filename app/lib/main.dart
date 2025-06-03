@@ -16,6 +16,7 @@ import 'modes/view/view_mode_controller.dart';
 import 'modes/import/import_mode_controller.dart';
 import 'modes/browse/browse_mode_controller.dart';
 import 'modes/create/create_mode_controller.dart';
+import 'core/services/status_bar_service.dart';
 
 /// Global navigator key for accessing context from actions
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -25,11 +26,13 @@ class ServiceProvider extends ChangeNotifier {
   late final DatabaseService databaseService;
   late final SegmentService segmentService;
   late final MapViewService mapViewService;
+  late final StatusBarService statusBarService;
 
   ServiceProvider() {
     databaseService = DatabaseService();
     segmentService = SegmentService(databaseService);
     mapViewService = MapViewService();
+    statusBarService = StatusBarService();
   }
 
   /// Initialize all services
@@ -59,6 +62,7 @@ void main() async {
   final uiContext = ModeUIContext.defaultContext(
     modeService: modeService,
     mapViewService: serviceProvider.mapViewService,
+    statusBarService: serviceProvider.statusBarService,
   );
 
   // Create mode controllers
@@ -83,6 +87,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LayoutService()),
         ChangeNotifierProvider(create: (_) => MenuService()),
         ChangeNotifierProvider.value(value: serviceProvider.mapViewService),
+        ChangeNotifierProvider.value(value: serviceProvider.statusBarService),
       ],
       child: const MapDeskApp(),
     ),
@@ -134,12 +139,14 @@ class MapDeskHome extends StatelessWidget {
               ],
             ),
             bottomNavigationBar: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               color: Colors.grey[100],
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const StatusBar(),
+                  Expanded(
+                    child: const StatusBar(),
+                  ),
                   // Mode selector
                   SegmentedButton<String>(
                     segments: const [
