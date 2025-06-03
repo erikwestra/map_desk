@@ -7,6 +7,8 @@ import '../widgets/route_sidebar.dart';
 
 /// Service that manages the state of the route sidebar
 class RouteSidebarService extends ChangeNotifier {
+  List<Segment> _segments = [];
+
   /// Get the current segments in the route
   List<Segment> get segments {
     final state = RouteSidebar.globalKey.currentState;
@@ -15,6 +17,7 @@ class RouteSidebarService extends ChangeNotifier {
 
   /// Set the segments in the route
   void setSegments(List<Segment> segments) {
+    _segments = segments;
     final state = RouteSidebar.globalKey.currentState;
     if (state != null) {
       state.setSegments(segments);

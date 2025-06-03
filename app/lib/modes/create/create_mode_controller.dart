@@ -20,10 +20,18 @@ class CreateModeController extends ModeController {
   bool get showRightSidebar => true;
 
   @override
-  void onActivate() {}
+  void onActivate() {
+    // Set segment sidebar to non-editable in Create mode
+    uiContext.segmentSidebarService.setEditable(false);
+    
+    // ... rest of activation code ...
+  }
 
   @override
-  void onDeactivate() {}
+  void onDeactivate() {
+    // Reset segment sidebar to editable when leaving Create mode
+    uiContext.segmentSidebarService.setEditable(true);
+  }
 
   @override
   void dispose() {}

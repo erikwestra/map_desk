@@ -27,6 +27,9 @@ class BrowseModeController extends ModeController with ChangeNotifier {
   void onActivate() {
     _updateStatusBar();
     _updateMapContent();
+    
+    // Set segment sidebar to editable in Browse mode
+    uiContext.segmentSidebarService.setEditable(true);
   }
 
   @override
@@ -51,12 +54,10 @@ class BrowseModeController extends ModeController with ChangeNotifier {
 
   void _updateMapContent() {
     final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
-    final segmentSidebarService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
+    final selectedSegment = uiContext.segmentSidebarService.selectedSegment;
+    final theme = Theme.of(navigatorKey.currentContext!);
     
     segmentService.getAllSegments().then((segments) {
-      final selectedSegment = segmentSidebarService.selectedSegment;
-      final theme = Theme.of(navigatorKey.currentContext!);
-      
       // Create map content with all segments
       final content = <Widget>[
         // All segments layer

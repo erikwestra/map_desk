@@ -10,6 +10,7 @@ import 'core/services/map_view_service.dart';
 import 'core/services/segment_sidebar_service.dart';
 import 'core/services/segment_import_service.dart';
 import 'core/services/segment_export_service.dart';
+import 'core/services/route_sidebar_service.dart';
 import 'core/interfaces/mode_ui_context.dart';
 import 'core/widgets/map_view.dart';
 import 'core/widgets/status_bar.dart';
@@ -33,6 +34,8 @@ class ServiceProvider extends ChangeNotifier {
   late final SegmentSidebarService segmentSidebarService;
   late final SegmentImportService segmentImportService;
   late final SegmentExportService segmentExportService;
+  late final ModeService modeService;
+  late final RouteSidebarService routeSidebarService;
 
   ServiceProvider() {
     databaseService = DatabaseService();
@@ -42,6 +45,8 @@ class ServiceProvider extends ChangeNotifier {
     segmentSidebarService = SegmentSidebarService(segmentService);
     segmentImportService = SegmentImportService(databaseService);
     segmentExportService = SegmentExportService();
+    modeService = ModeService();
+    routeSidebarService = RouteSidebarService();
   }
 
   /// Initialize all services
@@ -61,14 +66,13 @@ void main() async {
   final serviceProvider = ServiceProvider();
   await serviceProvider.initialize();
 
-  // Create mode service
-  final modeService = ModeService();
-
   // Create shared UI context
   final uiContext = ModeUIContext.defaultContext(
-    modeService: modeService,
+    modeService: serviceProvider.modeService,
     mapViewService: serviceProvider.mapViewService,
     statusBarService: serviceProvider.statusBarService,
+    segmentSidebarService: serviceProvider.segmentSidebarService,
+    routeSidebarService: serviceProvider.routeSidebarService,
   );
 
   // Create mode controllers
@@ -78,7 +82,7 @@ void main() async {
   final createModeController = CreateModeController(uiContext);
 
   // Initialize mode service with controllers
-  modeService.initializeControllers({
+  serviceProvider.modeService.initializeControllers({
     'View': viewModeController,
     'Import': importModeController,
     'Browse': browseModeController,
@@ -89,12 +93,13 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: serviceProvider),
-        ChangeNotifierProvider.value(value: modeService),
+        ChangeNotifierProvider.value(value: serviceProvider.modeService),
         ChangeNotifierProvider(create: (_) => LayoutService()),
         ChangeNotifierProvider(create: (_) => MenuService()),
         ChangeNotifierProvider.value(value: serviceProvider.mapViewService),
         ChangeNotifierProvider.value(value: serviceProvider.statusBarService),
         ChangeNotifierProvider.value(value: serviceProvider.segmentSidebarService),
+        ChangeNotifierProvider.value(value: serviceProvider.routeSidebarService),
       ],
       child: const MapDeskApp(),
     ),

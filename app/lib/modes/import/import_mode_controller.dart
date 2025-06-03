@@ -54,6 +54,9 @@ class ImportModeController extends ModeController {
     _segmentSidebarService ??= Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentSidebarService;
     _segmentService ??= Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
     
+    // Set segment sidebar to editable in Import mode
+    uiContext.segmentSidebarService.setEditable(true);
+    
     // Show the current track in the segment sidebar
     _segmentSidebarService?.setShowCurrentTrack(true);
     // Clear any existing selection

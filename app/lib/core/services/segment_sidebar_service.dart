@@ -16,6 +16,7 @@ class SegmentSidebarService extends ChangeNotifier {
   String _searchQuery = '';
   bool _showCurrentTrack = false;
   Segment? _currentTrack;
+  bool _isEditable = true;  // Default to true for backward compatibility
 
   SegmentSidebarService(this._segmentService) {
     _loadSegments();
@@ -27,6 +28,7 @@ class SegmentSidebarService extends ChangeNotifier {
   bool get showCurrentTrack => _showCurrentTrack;
   Segment? get currentTrack => _currentTrack;
   List<Segment> get segments => _segments;
+  bool get isEditable => _isEditable;
   
   // Get all items to display in the sidebar
   List<SidebarItem> get items {
@@ -156,5 +158,11 @@ class SegmentSidebarService extends ChangeNotifier {
         state.scrollToIndex(index);
       }
     }
+  }
+
+  /// Set whether segments can be edited
+  void setEditable(bool editable) {
+    _isEditable = editable;
+    notifyListeners();
   }
 } 

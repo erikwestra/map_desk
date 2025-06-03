@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/segment.dart';
 import '../services/mode_service.dart';
+import '../services/route_sidebar_service.dart';
 
 /// A sidebar widget that displays the current route.
 class RouteSidebar extends StatefulWidget {
@@ -16,6 +17,8 @@ class RouteSidebar extends StatefulWidget {
 class _RouteSidebarState extends State<RouteSidebar> {
   List<Segment> _segments = [];
 
+  List<Segment> get segments => _segments;
+
   void setSegments(List<Segment> segments) {
     setState(() {
       _segments = segments;
@@ -26,6 +29,8 @@ class _RouteSidebarState extends State<RouteSidebar> {
   Widget build(BuildContext context) {
     final modeService = context.read<ModeService>();
     final currentMode = modeService.currentMode;
+    final routeSidebarService = context.watch<RouteSidebarService>();
+    final segments = routeSidebarService.segments;
 
     return Container(
       width: 300,
@@ -47,14 +52,14 @@ class _RouteSidebarState extends State<RouteSidebar> {
           ),
           // Segments list
           Expanded(
-            child: _segments.isEmpty
+            child: segments.isEmpty
                 ? const Center(
                     child: Text('No segments in route'),
                   )
                 : ListView.builder(
-                    itemCount: _segments.length,
+                    itemCount: segments.length,
                     itemBuilder: (context, index) {
-                      final segment = _segments[index];
+                      final segment = segments[index];
                       return ListTile(
                         title: Text(segment.name),
                         subtitle: Text('${segment.points.length} points'),

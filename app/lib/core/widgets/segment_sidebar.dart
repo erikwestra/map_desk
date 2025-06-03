@@ -156,7 +156,7 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
             ? Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isSelected)
+                  if (isSelected && service.isEditable)
                     IconButton(
                       icon: const Icon(Icons.edit),
                       onPressed: () async {
