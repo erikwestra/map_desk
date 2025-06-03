@@ -25,7 +25,7 @@ class ViewModeController extends ModeController {
   String get modeName => 'View';
 
   @override
-  bool get showLeftSidebar => true;
+  bool get showLeftSidebar => false;
 
   @override
   bool get showRightSidebar => false;

@@ -6,6 +6,7 @@ import '../services/mode_service.dart';
 import '../services/map_view_service.dart';
 import '../interfaces/mode_controller.dart';
 import '../../main.dart';  // Import for ServiceProvider
+import 'map_controls.dart';  // Import for MapControls
 
 /// A widget that displays the map content.
 /// Shows content for the current mode and handles map interactions.
@@ -45,6 +46,7 @@ class MapView extends StatelessWidget {
             ...content,
           ],
         ),
+        MapControls(mapController: mapViewService.mapController),
       ],
     );
   }
