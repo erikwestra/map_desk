@@ -29,6 +29,7 @@ class ImportModeController extends ModeController {
   bool _hasZoomedToBounds = false;
   double _lastZoomLevel = 2.0;
   int _currentSegmentNumber = 1;
+  String _lastDirection = 'bidirectional';  // Default direction
 
   SimpleGpxTrack? get currentTrack => _currentTrack;
   bool get isTrackLoaded => _currentTrack != null;
@@ -101,6 +102,12 @@ class ImportModeController extends ModeController {
         break;
       case 'create_segment':
         await _handleCreateSegment();
+        break;
+      case 'edit_segment':
+        await _handleEditSegment(eventData);
+        break;
+      case 'delete_segment':
+        await _handleDeleteSegment(eventData as Segment);
         break;
       case 'key_enter':
         // Only handle if both points are selected
@@ -322,6 +329,7 @@ class ImportModeController extends ModeController {
   }
 
   void _updateStatusBar() {
+    // Case 1: No track loaded
     if (_selectableTrack == null) {
       uiContext.statusBarService.setContent(
         Row(
@@ -338,70 +346,75 @@ class ImportModeController extends ModeController {
       return;
     }
 
-    if (_selectableTrack!.startPointIndex == null) {
-      uiContext.statusBarService.setContent(
-        Text('Track loaded: ${_currentTrack!.name}. Click on the track to select start point.'),
-      );
+    // Case 2: No sidebar selection
+    if (_segmentSidebarService?.selectedItem == null) {
+      uiContext.statusBarService.clearContent();
       return;
     }
 
-    if (_selectableTrack!.endPointIndex == null) {
-      uiContext.statusBarService.setContent(
-        const Text('Click on end of segment'),
-      );
+    // Case 3: Current track is selected
+    if (_segmentSidebarService?.selectedItem?.type == 'current_track') {
+      if (_selectableTrack!.endPointIndex == null) {
+        uiContext.statusBarService.setContent(
+          const Text('Click on end of segment'),
+        );
+      } else {
+        // Show distance and action buttons
+        final selectedPoints = _selectableTrack!.selectedPoints;
+        final distance = Distance();
+        var totalDistance = 0.0;
+        for (var i = 0; i < selectedPoints.length - 1; i++) {
+          totalDistance += distance.as(LengthUnit.Meter, selectedPoints[i], selectedPoints[i + 1]);
+        }
+
+        uiContext.statusBarService.setContent(
+          Row(
+            children: [
+              Text('Selected segment: ${(totalDistance / 1000).toStringAsFixed(2)} km'),
+              const SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: () {
+                  // Clear end point selection
+                  _selectableTrack!.clearEndPoint();
+                  _updateMapContent();
+                  _updateStatusBar();
+                },
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  // Remove points up to but not including the end point
+                  _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex! - 1);
+                  // Set the end point as the new start point
+                  _selectableTrack!.selectStartPoint(0);
+                  _updateMapContent();
+                  _updateStatusBar();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.error.withOpacity(0.8),
+                  foregroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.onError,
+                ),
+                child: const Text('Delete'),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () => _handleCreateSegment(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.primary.withOpacity(0.8),
+                  foregroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.onPrimary,
+                ),
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        );
+      }
       return;
     }
 
-    // If we have both start and end points, show distance and action buttons
-    final selectedPoints = _selectableTrack!.selectedPoints;
-    final distance = Distance();
-    var totalDistance = 0.0;
-    for (var i = 0; i < selectedPoints.length - 1; i++) {
-      totalDistance += distance.as(LengthUnit.Meter, selectedPoints[i], selectedPoints[i + 1]);
-    }
-
-    uiContext.statusBarService.setContent(
-      Row(
-        children: [
-          Text('Selected segment: ${(totalDistance / 1000).toStringAsFixed(2)} km'),
-          const SizedBox(width: 20),
-          ElevatedButton(
-            onPressed: () {
-              // Clear end point selection
-              _selectableTrack!.clearEndPoint();
-              _updateMapContent();
-              _updateStatusBar();
-            },
-            child: const Text('Cancel'),
-          ),
-          const SizedBox(width: 10),
-          ElevatedButton(
-            onPressed: () {
-              // Remove points up to but not including the end point
-              _selectableTrack!.removePointsUpTo(_selectableTrack!.endPointIndex! - 1);
-              // Set the end point as the new start point
-              _selectableTrack!.selectStartPoint(0);
-              _updateMapContent();
-              _updateStatusBar();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.error.withOpacity(0.8),
-              foregroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.onError,
-            ),
-            child: const Text('Delete'),
-          ),
-          const SizedBox(width: 10),
-          ElevatedButton(
-            onPressed: () => _handleCreateSegment(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.primary.withOpacity(0.8),
-              foregroundColor: Theme.of(navigatorKey.currentContext!).colorScheme.onPrimary,
-            ),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
+    // Case 4: A segment is selected
+    uiContext.statusBarService.clearContent();
   }
 
   Future<void> _handleOpen() async {
@@ -596,7 +609,7 @@ class ImportModeController extends ModeController {
         context: navigatorKey.currentContext!,
         builder: (context) => EditSegmentDialog(
           name: 'Segment $_currentSegmentNumber',
-          direction: 'bidirectional',
+          direction: _lastDirection,
           showDeleteButton: false,
           title: 'Create Segment',
           onDelete: () {
@@ -620,6 +633,7 @@ class ImportModeController extends ModeController {
       // Create segment from selected points with the edited name and direction
       final Map<String, dynamic> segmentData = result as Map<String, dynamic>;
       final String newName = segmentData['name'] as String;
+      _lastDirection = segmentData['direction'] as String;  // Save the direction for next time
       
       // Check if segment name already exists
       final existingSegments = await _segmentService?.getAllSegments() ?? [];
@@ -673,6 +687,64 @@ class ImportModeController extends ModeController {
       _showSuccess('Segment created successfully');
     } catch (e) {
       _showError('Failed to create segment: $e');
+    }
+  }
+
+  Future<void> _handleEditSegment(Map<String, dynamic> data) async {
+    final segment = data['segment'] as Segment;
+    final name = data['name'] as String;
+    final direction = data['direction'] as String;
+
+    try {
+      // Check if segment name already exists (excluding the current segment)
+      final existingSegments = await _segmentService?.getAllSegments() ?? [];
+      if (existingSegments.any((s) => s.name == name && s.id != segment.id)) {
+        _showError('A segment with this name already exists. Please choose a different name.');
+        return;
+      }
+
+      // Update the segment in the database
+      final updatedSegment = segment.copyWith(
+        name: name,
+        direction: direction,
+      );
+      await _segmentService?.updateSegment(updatedSegment);
+
+      // Refresh the segment list in the sidebar
+      await _segmentSidebarService?.refreshSegments();
+
+      // Update the UI
+      _updateStatusBar();
+      _updateMapContent();
+
+      // Show success message
+      _showSuccess('Segment updated successfully');
+    } catch (error) {
+      print('ImportModeController: Failed to update segment: $error');
+      _showError('Failed to update segment: $error');
+    }
+  }
+
+  Future<void> _handleDeleteSegment(Segment segment) async {
+    try {
+      // Delete the segment from the database
+      await _segmentService?.deleteSegment(segment.id);
+
+      // Clear the selection
+      _segmentSidebarService?.clearSelection();
+
+      // Refresh the segment list in the sidebar
+      await _segmentSidebarService?.refreshSegments();
+
+      // Update the UI
+      _updateStatusBar();
+      _updateMapContent();
+
+      // Show success message
+      _showSuccess('Segment deleted successfully');
+    } catch (error) {
+      print('ImportModeController: Failed to delete segment: $error');
+      _showError('Failed to delete segment: $error');
     }
   }
 

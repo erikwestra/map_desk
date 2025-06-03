@@ -147,7 +147,7 @@ class _SegmentSidebarState extends State<SegmentSidebar> {
                             // Handle delete
                             final modeService = Provider.of<ModeService>(context, listen: false);
                             await modeService.currentMode?.handleEvent('delete_segment', segment);
-                          } else if (result is Map<String, String>) {
+                          } else if (result is Map<String, dynamic>) {
                             // Handle edit
                             final modeService = Provider.of<ModeService>(context, listen: false);
                             await modeService.currentMode?.handleEvent('edit_segment', {
