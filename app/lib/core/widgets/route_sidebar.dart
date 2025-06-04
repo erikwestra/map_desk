@@ -64,21 +64,8 @@ class _RouteSidebarState extends State<RouteSidebar> {
                       final segmentInRoute = segments[index];
                       return ListTile(
                         title: Text(segmentInRoute.segment.name),
-                        subtitle: Row(
-                          children: [
-                            Text('${segmentInRoute.segment.points.length} points'),
-                            const SizedBox(width: 8),
-                            Text(
-                              segmentInRoute.direction == 'forward' ? '→' : '←',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
                         trailing: SegmentDirectionIndicator(
-                          direction: segmentInRoute.direction,
+                          direction: segmentInRoute.direction == 'forward' ? 'oneWay' : 'backward',
                           size: 32,
                         ),
                       );
