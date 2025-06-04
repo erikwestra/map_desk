@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:xml/xml.dart';
+import 'dart:io';
 import '../../core/interfaces/mode_controller.dart';
 import '../../core/interfaces/mode_ui_context.dart';
 import '../../core/services/mode_service.dart';
@@ -10,7 +13,9 @@ import '../../core/services/segment_service.dart';
 import '../../core/services/route_sidebar_service.dart';
 import '../../core/models/segment.dart';
 import '../../core/models/segment_in_route.dart';
+import '../../core/models/simple_gpx_track.dart';
 import '../../main.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Internal state enum for the create mode
 enum _CreateState {
@@ -297,8 +302,108 @@ class CreateModeController extends ModeController {
       return;
     }
 
-    // TODO: Implement save route in Create mode
-    print('CreateModeController: Save route called');
+    try {
+      // Combine all segments into a single list of points
+      final allPoints = <GpxPoint>[];
+      GpxPoint? lastPoint;
+
+      for (final segmentInRoute in _routeSegments) {
+        final points = segmentInRoute.direction == 'forward'
+            ? segmentInRoute.segment.points
+            : segmentInRoute.segment.points.reversed;
+
+        for (final point in points) {
+          final gpxPoint = GpxPoint(
+            latitude: point.latitude,
+            longitude: point.longitude,
+            elevation: point.elevation,
+          );
+
+          // Skip duplicate consecutive points
+          if (lastPoint == null ||
+              lastPoint.latitude != gpxPoint.latitude ||
+              lastPoint.longitude != gpxPoint.longitude) {
+            allPoints.add(gpxPoint);
+            lastPoint = gpxPoint;
+          }
+        }
+      }
+
+      // Create the track
+      final track = SimpleGpxTrack(
+        name: 'Created Route',
+        points: allPoints,
+      );
+
+      // Prompt user for save location
+      final saveLocation = await getSaveLocation(
+        acceptedTypeGroups: [
+          const XTypeGroup(
+            label: 'GPX Files',
+            extensions: ['gpx'],
+          ),
+        ],
+        suggestedName: '${track.name}.gpx',
+      );
+
+      if (saveLocation == null) {
+        return; // User cancelled
+      }
+
+      // Create GPX document
+      final builder = XmlBuilder();
+      builder.processing('xml', 'version="1.0" encoding="UTF-8"');
+      builder.element('gpx', nest: () {
+        builder.attribute('version', '1.1');
+        builder.attribute('creator', 'MapDesk');
+        builder.attribute('xmlns', 'http://www.topografix.com/GPX/1/1');
+        builder.attribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+        builder.attribute('xsi:schemaLocation', 
+          'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd');
+        
+        // Add track
+        builder.element('trk', nest: () {
+          builder.element('name', nest: track.name);
+          builder.element('trkseg', nest: () {
+            for (final point in track.points) {
+              builder.element('trkpt', nest: () {
+                builder.attribute('lat', point.latitude.toString());
+                builder.attribute('lon', point.longitude.toString());
+                if (point.elevation != null) {
+                  builder.element('ele', nest: point.elevation.toString());
+                }
+              });
+            }
+          });
+        });
+      });
+
+      // Write to file
+      final file = File(saveLocation.path);
+      await file.writeAsString(builder.buildDocument().toString());
+      
+      // Show success message
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Route saved successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error message
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save route: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _handleUndo() async {
