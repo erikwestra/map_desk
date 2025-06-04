@@ -288,6 +288,48 @@ class Segment {
     return minDistance;
   }
 
+  /// Calculates the distance to the start of the segment
+  /// 
+  /// For one-way segments, the start is always the first point.
+  /// For bidirectional segments, the start is whichever endpoint is closest.
+  /// 
+  /// [point] The point to check
+  /// Returns a Map with:
+  ///   - 'distance': The distance in meters to the start point
+  ///   - 'direction': "forward" if using the first point as start, "backward" if using the last point
+  Map<String, dynamic> calcDistanceToStart(LatLng point) {
+    final Distance distance = Distance();
+    
+    // Calculate distance to first point
+    final firstPoint = LatLng(startLat, startLng);
+    final distanceToFirst = distance.as(LengthUnit.Meter, point, firstPoint);
+    
+    // For one-way segments, only check first point
+    if (direction != 'bidirectional') {
+      return {
+        'distance': distanceToFirst,
+        'direction': 'forward',
+      };
+    }
+    
+    // For bidirectional segments, check both ends
+    final lastPoint = LatLng(endLat, endLng);
+    final distanceToLast = distance.as(LengthUnit.Meter, point, lastPoint);
+    
+    // Return the closer endpoint
+    if (distanceToFirst <= distanceToLast) {
+      return {
+        'distance': distanceToFirst,
+        'direction': 'forward',
+      };
+    } else {
+      return {
+        'distance': distanceToLast,
+        'direction': 'backward',
+      };
+    }
+  }
+
   /// Converts the segment to a Map for storage
   Map<String, dynamic> toMap() {
     return {

@@ -18,12 +18,20 @@ enum _CreateState {
   awaitingNextSegment
 }
 
+/// Represents a segment that could be added to the route, along with its direction
+class PossibleSegment {
+  final Segment segment;
+  final String direction;  // "forward" or "backward"
+
+  PossibleSegment(this.segment, this.direction);
+}
+
 /// Controller for the Create mode, which handles route creation.
 class CreateModeController extends ModeController {
   _CreateState _currentState = _CreateState.awaitingStartPoint;
   LatLng? _startPoint;
   List<Segment> _routeSegments = [];
-  List<Segment> _possibleSegments = [];
+  List<PossibleSegment> _possibleSegments = [];
   final Distance _distance = Distance();
 
   CreateModeController(ModeUIContext uiContext) : super(uiContext);
@@ -98,19 +106,13 @@ class CreateModeController extends ModeController {
     final allSegments = await segmentService.getAllSegments();
     
     _possibleSegments = allSegments.where((segment) {
-      // Get start and end points
-      final startPoint = segment.points.first.toLatLng();
-      final endPoint = segment.points.last.toLatLng();
-      
-      // Calculate distances to start and end points
-      final distanceToStart = _distance.as(LengthUnit.Meter, point, startPoint);
-      final distanceToEnd = _distance.as(LengthUnit.Meter, point, endPoint);
-      
-      // Segment is possible if:
-      // 1. Start point is within 20m of clicked point, or
-      // 2. Segment is bidirectional and end point is within 20m of clicked point
-      return distanceToStart <= 20.0 || 
-             (segment.direction == 'bidirectional' && distanceToEnd <= 20.0);
+      // Use the new calcDistanceToStart method
+      final result = segment.calcDistanceToStart(point);
+      final distance = result['distance'] as double;
+      return distance <= 20.0;
+    }).map((segment) {
+      final result = segment.calcDistanceToStart(point);
+      return PossibleSegment(segment, result['direction'] as String);
     }).toList();
   }
 
@@ -126,7 +128,7 @@ class CreateModeController extends ModeController {
       PolylineLayer(
         polylines: segments.map((segment) {
           final isInRoute = _routeSegments.any((s) => s.id == segment.id);
-          final isPossible = _possibleSegments.any((s) => s.id == segment.id);
+          final isPossible = _possibleSegments.any((ps) => ps.segment.id == segment.id);
           
           Color color;
           double strokeWidth;
@@ -170,6 +172,99 @@ class CreateModeController extends ModeController {
     uiContext.mapViewService.setContent(content);
   }
 
+  /// Finds the closest possible segment to the given point within the maximum distance
+  /// Checks the entire segment length, not just endpoints
+  PossibleSegment? _findClosestPossibleSegment(LatLng point, {double maxDistance = 20.0}) {
+    PossibleSegment? closestPossibleSegment;
+    double minDistance = double.infinity;
+
+    for (final possibleSegment in _possibleSegments) {
+      // Use calcDistanceToSegment to find closest point anywhere along the segment
+      final distance = possibleSegment.segment.calcDistanceToSegment(point, maxDistanceToCheck: maxDistance);
+      if (distance != null && distance < minDistance) {
+        minDistance = distance;
+        closestPossibleSegment = possibleSegment;
+      }
+    }
+
+    return closestPossibleSegment;
+  }
+
+  /// Determine the new start point after adding a segment to the route
+  LatLng _getNewStartPoint(PossibleSegment possibleSegment) {
+    // Use the stored direction to determine which point to use
+    return possibleSegment.direction == 'forward' 
+        ? LatLng(possibleSegment.segment.endLat, possibleSegment.segment.endLng)
+        : LatLng(possibleSegment.segment.startLat, possibleSegment.segment.startLng);
+  }
+
+  Future<void> _handleMapClick(LatLng point) async {
+    if (_currentState == _CreateState.awaitingStartPoint) {
+      // First click - set start point and find possible segments
+      _startPoint = point;
+      await _calculatePossibleSegments(point);
+      _currentState = _CreateState.awaitingFirstSegment;
+    } else {
+      // Check if we clicked near a possible segment
+      final closestPossibleSegment = _findClosestPossibleSegment(point);
+      
+      if (closestPossibleSegment != null) {
+        // Clicked near a possible segment - add it to route
+        _routeSegments.add(closestPossibleSegment.segment);
+        uiContext.routeSidebarService.setSegments(_routeSegments);
+        
+        // Move start point to the opposite end of the added segment
+        _startPoint = _getNewStartPoint(closestPossibleSegment);
+        
+        // Recalculate possible segments from new start point
+        await _calculatePossibleSegments(_startPoint!);
+        
+        // Center map on new start point
+        uiContext.mapViewService.centerOnPoint(_startPoint!);
+        
+        _currentState = _CreateState.awaitingNextSegment;
+      } else {
+        // Clicked away from possible segments - reset start point
+        _startPoint = point;
+        await _calculatePossibleSegments(point);
+        _currentState = _CreateState.awaitingFirstSegment;
+      }
+    }
+    
+    _updateMapContent();
+    _updateStatusBar();
+  }
+
+  Future<void> _handleSegmentSelected(Segment segment) async {
+    if (_currentState == _CreateState.awaitingStartPoint) return;
+
+    // Find the possible segment that matches this segment
+    final possibleSegment = _possibleSegments.firstWhere(
+      (ps) => ps.segment.id == segment.id,
+      orElse: () => PossibleSegment(segment, 'forward'), // Default to forward if not found
+    );
+
+    // Add segment to route
+    _routeSegments.add(segment);
+    uiContext.routeSidebarService.setSegments(_routeSegments);
+
+    // Move start point to the opposite end of the added segment
+    _startPoint = _getNewStartPoint(possibleSegment);
+    
+    // Recalculate possible segments from new start point
+    await _calculatePossibleSegments(_startPoint!);
+    
+    // Center map on new start point
+    uiContext.mapViewService.centerOnPoint(_startPoint!);
+
+    // Update state
+    _currentState = _CreateState.awaitingNextSegment;
+    
+    // Update UI
+    _updateMapContent();
+    _updateStatusBar();
+  }
+
   @override
   void dispose() {}
 
@@ -207,104 +302,6 @@ class CreateModeController extends ModeController {
       default:
         print('CreateModeController: Unhandled event type: $eventType');
     }
-  }
-
-  /// Finds the closest possible segment to the given point within the maximum distance
-  /// Only considers valid endpoints (start point for all segments, end point for bidirectional)
-  Segment? _findClosestPossibleSegment(LatLng point, {double maxDistance = 20.0}) {
-    Segment? closestSegment;
-    double minDistance = double.infinity;
-
-    for (final segment in _possibleSegments) {
-      // Get start and end points
-      final startPoint = segment.points.first.toLatLng();
-      final endPoint = segment.points.last.toLatLng();
-      
-      // Calculate distances to valid endpoints
-      final distanceToStart = _distance.as(LengthUnit.Meter, point, startPoint);
-      final distanceToEnd = _distance.as(LengthUnit.Meter, point, endPoint);
-      
-      // Check start point (valid for all segments)
-      if (distanceToStart <= maxDistance && distanceToStart < minDistance) {
-        minDistance = distanceToStart;
-        closestSegment = segment;
-      }
-      
-      // Check end point (only for bidirectional segments)
-      if (segment.direction == 'bidirectional' && 
-          distanceToEnd <= maxDistance && 
-          distanceToEnd < minDistance) {
-        minDistance = distanceToEnd;
-        closestSegment = segment;
-      }
-    }
-
-    return closestSegment;
-  }
-
-  /// Determine the new start point after adding a segment to the route
-  LatLng _getNewStartPoint(Segment addedSegment, LatLng currentStartPoint) {
-    final startPoint = addedSegment.points.first.toLatLng();
-    final endPoint = addedSegment.points.last.toLatLng();
-    
-    // Calculate distances from current start point to both ends of the segment
-    final distanceToStart = _distance.as(LengthUnit.Meter, currentStartPoint, startPoint);
-    final distanceToEnd = _distance.as(LengthUnit.Meter, currentStartPoint, endPoint);
-    
-    // Return the point that's furthest from our current start point
-    return distanceToStart < distanceToEnd ? endPoint : startPoint;
-  }
-
-  Future<void> _handleMapClick(LatLng point) async {
-    if (_currentState == _CreateState.awaitingStartPoint) {
-      // First click - set start point and find possible segments
-      _startPoint = point;
-      await _calculatePossibleSegments(point);
-      _currentState = _CreateState.awaitingFirstSegment;
-    } else {
-      // Check if we clicked near a possible segment
-      final closestSegment = _findClosestPossibleSegment(point);
-      
-      if (closestSegment != null) {
-        // Clicked near a possible segment - add it to route
-        _routeSegments.add(closestSegment);
-        uiContext.routeSidebarService.setSegments(_routeSegments);
-        
-        // Move start point to the opposite end of the added segment
-        _startPoint = _getNewStartPoint(closestSegment, _startPoint!);
-        
-        // Recalculate possible segments from new start point
-        await _calculatePossibleSegments(_startPoint!);
-        
-        // Center map on new start point
-        uiContext.mapViewService.centerOnPoint(_startPoint!);
-        
-        _currentState = _CreateState.awaitingNextSegment;
-      } else {
-        // Clicked away from possible segments - reset start point
-        _startPoint = point;
-        await _calculatePossibleSegments(point);
-        _currentState = _CreateState.awaitingFirstSegment;
-      }
-    }
-    
-    _updateMapContent();
-    _updateStatusBar();
-  }
-
-  Future<void> _handleSegmentSelected(Segment segment) async {
-    if (_currentState == _CreateState.awaitingStartPoint) return;
-
-    // Add segment to route
-    _routeSegments.add(segment);
-    uiContext.routeSidebarService.setSegments(_routeSegments);
-
-    // Update state
-    _currentState = _CreateState.awaitingNextSegment;
-    
-    // Update UI
-    _updateMapContent();
-    _updateStatusBar();
   }
 
   Future<void> _handleOpen() async {
