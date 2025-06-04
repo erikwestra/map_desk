@@ -1,5 +1,5 @@
 import 'package:latlong2/latlong.dart';
-import '../../../core/models/simple_gpx_track.dart';
+import 'simple_gpx_track.dart';
 
 /// A track that can be split into segments by selecting start and end points
 class SelectableTrack {

@@ -5,18 +5,18 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
-import '../../core/interfaces/mode_controller.dart';
-import '../../core/interfaces/mode_ui_context.dart';
-import '../../core/services/mode_service.dart';
-import '../../core/services/menu_service.dart';
-import '../../core/services/gpx_service.dart';
-import '../../core/services/segment_sidebar_service.dart';
-import '../../core/services/segment_service.dart';
-import '../../core/models/simple_gpx_track.dart';
-import '../../core/models/segment.dart';
-import '../../core/widgets/edit_segment_dialog.dart';
-import '../../main.dart';
-import 'models/selectable_track.dart';
+import '../interfaces/mode_controller.dart';
+import '../interfaces/mode_ui_context.dart';
+import '../services/mode_service.dart';
+import '../services/menu_service.dart';
+import '../services/gpx_service.dart';
+import '../services/segment_sidebar_service.dart';
+import '../services/segment_service.dart';
+import '../models/simple_gpx_track.dart';
+import '../models/segment.dart';
+import '../models/selectable_track.dart';
+import '../widgets/edit_segment_dialog.dart';
+import '../main.dart';
 
 /// Controller for the Import mode, which handles track import and segment creation.
 class ImportModeController extends ModeController {
@@ -210,7 +210,7 @@ class ImportModeController extends ModeController {
           .toList();
       
       // Combine end point with remaining points
-      final adjustedUnselectedPoints = [endPoint, ...remainingPoints];
+      final adjustedUnselectedPoints = [endPoint, ...remainingPoints].cast<LatLng>();
 
       uiContext.mapViewService.setContent([
         // Background segments layer

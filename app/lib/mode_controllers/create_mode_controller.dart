@@ -5,16 +5,16 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:xml/xml.dart';
 import 'dart:io';
-import '../../core/interfaces/mode_controller.dart';
-import '../../core/interfaces/mode_ui_context.dart';
-import '../../core/services/mode_service.dart';
-import '../../core/services/menu_service.dart';
-import '../../core/services/segment_service.dart';
-import '../../core/services/route_sidebar_service.dart';
-import '../../core/models/segment.dart';
-import '../../core/models/segment_in_route.dart';
-import '../../core/models/simple_gpx_track.dart';
-import '../../main.dart';
+import '../interfaces/mode_controller.dart';
+import '../interfaces/mode_ui_context.dart';
+import '../services/mode_service.dart';
+import '../services/menu_service.dart';
+import '../services/segment_service.dart';
+import '../services/route_sidebar_service.dart';
+import '../models/segment.dart';
+import '../models/segment_in_route.dart';
+import '../models/simple_gpx_track.dart';
+import '../main.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Internal state enum for the create mode

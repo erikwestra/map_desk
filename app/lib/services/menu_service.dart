@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'mode_service.dart';
-import '../../main.dart';
+import '../main.dart';
 import 'segment_import_service.dart';
 import 'segment_export_service.dart';
 import 'database_service.dart';
