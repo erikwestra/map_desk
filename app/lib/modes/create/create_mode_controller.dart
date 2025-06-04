@@ -23,6 +23,8 @@ class CreateModeController extends ModeController {
   _CreateState _currentState = _CreateState.awaitingStartPoint;
   LatLng? _startPoint;
   List<Segment> _routeSegments = [];
+  List<Segment> _possibleSegments = [];
+  final Distance _distance = Distance();
 
   CreateModeController(ModeUIContext uiContext) : super(uiContext);
 
@@ -66,6 +68,7 @@ class CreateModeController extends ModeController {
     _currentState = _CreateState.awaitingStartPoint;
     _startPoint = null;
     _routeSegments = [];
+    _possibleSegments = [];
     uiContext.routeSidebarService.setSegments([]);
   }
 
@@ -78,7 +81,7 @@ class CreateModeController extends ModeController {
         break;
       case _CreateState.awaitingFirstSegment:
         uiContext.statusBarService.setContent(
-          const Text('Select the first segment to add to your route'),
+          Text('${_possibleSegments.length} possible segments found. Select one to add to your route'),
         );
         break;
       case _CreateState.awaitingNextSegment:
@@ -87,6 +90,27 @@ class CreateModeController extends ModeController {
         );
         break;
     }
+  }
+
+  Future<void> _calculatePossibleSegments(LatLng point) async {
+    final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
+    final allSegments = await segmentService.getAllSegments();
+    
+    _possibleSegments = allSegments.where((segment) {
+      // Get start and end points
+      final startPoint = segment.points.first.toLatLng();
+      final endPoint = segment.points.last.toLatLng();
+      
+      // Calculate distances
+      final distanceToStart = _distance.as(LengthUnit.Meter, point, startPoint);
+      final distanceToEnd = _distance.as(LengthUnit.Meter, point, endPoint);
+      
+      // Segment is possible if:
+      // 1. Start point is within 20m of clicked point, or
+      // 2. Segment is bidirectional and end point is within 20m of clicked point
+      return distanceToStart <= 20.0 || 
+             (segment.direction == 'bidirectional' && distanceToEnd <= 20.0);
+    }).toList();
   }
 
   void _updateMapContent() async {
@@ -101,12 +125,26 @@ class CreateModeController extends ModeController {
       PolylineLayer(
         polylines: segments.map((segment) {
           final isInRoute = _routeSegments.any((s) => s.id == segment.id);
+          final isPossible = _possibleSegments.any((s) => s.id == segment.id);
+          
+          Color color;
+          double strokeWidth;
+          
+          if (isInRoute) {
+            color = theme.colorScheme.secondary.withOpacity(0.9);
+            strokeWidth = 8.0;
+          } else if (isPossible) {
+            color = theme.colorScheme.tertiary.withOpacity(0.7);
+            strokeWidth = 8.0;
+          } else {
+            color = theme.colorScheme.primary.withOpacity(0.8);
+            strokeWidth = 3.0;
+          }
+          
           return Polyline(
             points: segment.points.map((p) => LatLng(p.latitude, p.longitude)).toList(),
-            color: isInRoute 
-              ? theme.colorScheme.secondary.withOpacity(0.8)
-              : theme.colorScheme.primary.withOpacity(0.8),
-            strokeWidth: isInRoute ? 4.0 : 3.0,
+            color: color,
+            strokeWidth: strokeWidth,
           );
         }).toList(),
       ),
@@ -170,13 +208,63 @@ class CreateModeController extends ModeController {
     }
   }
 
+  /// Find the closest possible segment to a point, if any are within 20 meters
+  Segment? _findClosestPossibleSegment(LatLng point) {
+    if (_possibleSegments.isEmpty) return null;
+    
+    Segment? closestSegment;
+    double closestDistance = double.infinity;
+    
+    for (final segment in _possibleSegments) {
+      // Check distance to start point
+      final startPoint = segment.points.first.toLatLng();
+      final distanceToStart = _distance.as(LengthUnit.Meter, point, startPoint);
+      
+      // Check distance to end point if bidirectional
+      double distanceToEnd = double.infinity;
+      if (segment.direction == 'bidirectional') {
+        final endPoint = segment.points.last.toLatLng();
+        distanceToEnd = _distance.as(LengthUnit.Meter, point, endPoint);
+      }
+      
+      // Get the minimum distance to this segment
+      final minDistance = distanceToStart < distanceToEnd ? distanceToStart : distanceToEnd;
+      
+      // Update closest segment if this one is closer
+      if (minDistance < closestDistance && minDistance <= 20.0) {
+        closestDistance = minDistance;
+        closestSegment = segment;
+      }
+    }
+    
+    return closestSegment;
+  }
+
   Future<void> _handleMapClick(LatLng point) async {
     if (_currentState == _CreateState.awaitingStartPoint) {
+      // First click - set start point and find possible segments
       _startPoint = point;
+      await _calculatePossibleSegments(point);
       _currentState = _CreateState.awaitingFirstSegment;
-      _updateMapContent();
-      _updateStatusBar();
+    } else {
+      // Check if we clicked near a possible segment
+      final closestSegment = _findClosestPossibleSegment(point);
+      
+      if (closestSegment != null) {
+        // Clicked near a possible segment - add it to route
+        _routeSegments.add(closestSegment);
+        uiContext.routeSidebarService.setSegments(_routeSegments);
+        _currentState = _CreateState.awaitingNextSegment;
+      } else {
+        // Clicked away from possible segments - reset start point
+        _startPoint = point;
+        await _calculatePossibleSegments(point);
+        _currentState = _CreateState.awaitingFirstSegment;
+      }
     }
+    
+    _updateMapContent();
+    _updateStatusBar();
   }
 
   Future<void> _handleSegmentSelected(Segment segment) async {
@@ -223,6 +311,7 @@ class CreateModeController extends ModeController {
       if (_currentState == _CreateState.awaitingFirstSegment) {
         // If no segments but we have a start point, remove it
         _startPoint = null;
+        _possibleSegments = [];
         _currentState = _CreateState.awaitingStartPoint;
       }
     } else {
