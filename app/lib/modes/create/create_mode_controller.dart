@@ -302,27 +302,50 @@ class CreateModeController extends ModeController {
   }
 
   Future<void> _handleUndo() async {
+    if (_startPoint == null) {
+      // No start point, do nothing
+      return;
+    }
+
     if (_routeSegments.isEmpty) {
-      if (_currentState == _CreateState.awaitingFirstSegment) {
-        // If no segments but we have a start point, remove it
-        _startPoint = null;
-        _possibleSegments = [];
-        _currentState = _CreateState.awaitingStartPoint;
-      }
+      // Only start point exists, remove it
+      _startPoint = null;
+      _possibleSegments = [];
+      _currentState = _CreateState.awaitingStartPoint;
+    } else if (_routeSegments.length == 1) {
+      // Only one segment, remove it but keep start point
+      final removedSegment = _routeSegments.last;
+      _routeSegments.clear();
+      uiContext.routeSidebarService.setSegments(_routeSegments);
+      
+      // Move start point to the opposite end of the removed segment
+      _startPoint = removedSegment.direction == 'forward'
+          ? LatLng(removedSegment.segment.startLat, removedSegment.segment.startLng)
+          : LatLng(removedSegment.segment.endLat, removedSegment.segment.endLng);
+      
+      _currentState = _CreateState.awaitingFirstSegment;
     } else {
-      // Remove last segment
+      // Multiple segments, remove last one and update start point
       _routeSegments.removeLast();
       uiContext.routeSidebarService.setSegments(_routeSegments);
       
-      // Update state
-      _currentState = _routeSegments.isEmpty 
-        ? _CreateState.awaitingFirstSegment 
-        : _CreateState.awaitingNextSegment;
+      // Get the new last segment and update start point based on its direction
+      final lastSegment = _routeSegments.last;
+      _startPoint = _getNewStartPoint(lastSegment);
+      
+      // Recalculate possible segments from new start point
+      await _calculatePossibleSegments(_startPoint!);
+      _currentState = _CreateState.awaitingNextSegment;
     }
 
     // Update UI
     _updateMapContent();
     _updateStatusBar();
+
+    // Center map on new start point if it exists
+    if (_startPoint != null) {
+      uiContext.mapViewService.centerOnPoint(_startPoint!);
+    }
   }
 
   Future<void> _handleClearTrack() async {
