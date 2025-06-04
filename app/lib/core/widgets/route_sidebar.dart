@@ -75,19 +75,19 @@ class _RouteSidebarState extends State<RouteSidebar> {
               children: [
                 TextButton(
                   onPressed: () {
-                    modeService.currentMode?.handleEvent('route_undo', null);
+                    modeService.currentMode?.handleEvent('menu_undo', null);
                   },
                   child: const Text('Undo'),
                 ),
                 TextButton(
                   onPressed: () {
-                    modeService.currentMode?.handleEvent('route_clear', null);
+                    modeService.currentMode?.handleEvent('menu_clear_track', null);
                   },
                   child: const Text('Clear'),
                 ),
                 TextButton(
                   onPressed: () {
-                    modeService.currentMode?.handleEvent('route_save', null);
+                    modeService.currentMode?.handleEvent('menu_save_route', null);
                   },
                   child: const Text('Save'),
                 ),
