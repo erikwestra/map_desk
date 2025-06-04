@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 /// Service that manages the content displayed on the map.
 /// Acts as a central store for map content and notifies listeners when content changes.
@@ -29,6 +30,12 @@ class MapViewService extends ChangeNotifier {
   /// Clear the map content
   void clearContent() {
     _content = [];
+    notifyListeners();
+  }
+
+  /// Center the map on a specific point
+  void centerOnPoint(LatLng point) {
+    mapController.move(point, mapController.zoom);
     notifyListeners();
   }
 

@@ -92,6 +92,7 @@ class CreateModeController extends ModeController {
     }
   }
 
+  /// Find segments that could be added to the route based on their start/end points
   Future<void> _calculatePossibleSegments(LatLng point) async {
     final segmentService = Provider.of<ServiceProvider>(navigatorKey.currentContext!, listen: false).segmentService;
     final allSegments = await segmentService.getAllSegments();
@@ -101,7 +102,7 @@ class CreateModeController extends ModeController {
       final startPoint = segment.points.first.toLatLng();
       final endPoint = segment.points.last.toLatLng();
       
-      // Calculate distances
+      // Calculate distances to start and end points
       final distanceToStart = _distance.as(LengthUnit.Meter, point, startPoint);
       final distanceToEnd = _distance.as(LengthUnit.Meter, point, endPoint);
       
@@ -131,7 +132,7 @@ class CreateModeController extends ModeController {
           double strokeWidth;
           
           if (isInRoute) {
-            color = theme.colorScheme.secondary.withOpacity(0.9);
+            color = const Color(0xFF1A237E).withOpacity(0.9); // Dark blue
             strokeWidth = 8.0;
           } else if (isPossible) {
             color = theme.colorScheme.tertiary.withOpacity(0.7);
@@ -208,36 +209,50 @@ class CreateModeController extends ModeController {
     }
   }
 
-  /// Find the closest possible segment to a point, if any are within 20 meters
-  Segment? _findClosestPossibleSegment(LatLng point) {
-    if (_possibleSegments.isEmpty) return null;
-    
+  /// Finds the closest possible segment to the given point within the maximum distance
+  /// Only considers valid endpoints (start point for all segments, end point for bidirectional)
+  Segment? _findClosestPossibleSegment(LatLng point, {double maxDistance = 20.0}) {
     Segment? closestSegment;
-    double closestDistance = double.infinity;
-    
+    double minDistance = double.infinity;
+
     for (final segment in _possibleSegments) {
-      // Check distance to start point
+      // Get start and end points
       final startPoint = segment.points.first.toLatLng();
-      final distanceToStart = _distance.as(LengthUnit.Meter, point, startPoint);
+      final endPoint = segment.points.last.toLatLng();
       
-      // Check distance to end point if bidirectional
-      double distanceToEnd = double.infinity;
-      if (segment.direction == 'bidirectional') {
-        final endPoint = segment.points.last.toLatLng();
-        distanceToEnd = _distance.as(LengthUnit.Meter, point, endPoint);
+      // Calculate distances to valid endpoints
+      final distanceToStart = _distance.as(LengthUnit.Meter, point, startPoint);
+      final distanceToEnd = _distance.as(LengthUnit.Meter, point, endPoint);
+      
+      // Check start point (valid for all segments)
+      if (distanceToStart <= maxDistance && distanceToStart < minDistance) {
+        minDistance = distanceToStart;
+        closestSegment = segment;
       }
       
-      // Get the minimum distance to this segment
-      final minDistance = distanceToStart < distanceToEnd ? distanceToStart : distanceToEnd;
-      
-      // Update closest segment if this one is closer
-      if (minDistance < closestDistance && minDistance <= 20.0) {
-        closestDistance = minDistance;
+      // Check end point (only for bidirectional segments)
+      if (segment.direction == 'bidirectional' && 
+          distanceToEnd <= maxDistance && 
+          distanceToEnd < minDistance) {
+        minDistance = distanceToEnd;
         closestSegment = segment;
       }
     }
-    
+
     return closestSegment;
+  }
+
+  /// Determine the new start point after adding a segment to the route
+  LatLng _getNewStartPoint(Segment addedSegment, LatLng currentStartPoint) {
+    final startPoint = addedSegment.points.first.toLatLng();
+    final endPoint = addedSegment.points.last.toLatLng();
+    
+    // Calculate distances from current start point to both ends of the segment
+    final distanceToStart = _distance.as(LengthUnit.Meter, currentStartPoint, startPoint);
+    final distanceToEnd = _distance.as(LengthUnit.Meter, currentStartPoint, endPoint);
+    
+    // Return the point that's furthest from our current start point
+    return distanceToStart < distanceToEnd ? endPoint : startPoint;
   }
 
   Future<void> _handleMapClick(LatLng point) async {
@@ -254,6 +269,16 @@ class CreateModeController extends ModeController {
         // Clicked near a possible segment - add it to route
         _routeSegments.add(closestSegment);
         uiContext.routeSidebarService.setSegments(_routeSegments);
+        
+        // Move start point to the opposite end of the added segment
+        _startPoint = _getNewStartPoint(closestSegment, _startPoint!);
+        
+        // Recalculate possible segments from new start point
+        await _calculatePossibleSegments(_startPoint!);
+        
+        // Center map on new start point
+        uiContext.mapViewService.centerOnPoint(_startPoint!);
+        
         _currentState = _CreateState.awaitingNextSegment;
       } else {
         // Clicked away from possible segments - reset start point

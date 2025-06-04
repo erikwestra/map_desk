@@ -181,19 +181,13 @@ class BrowseModeController extends ModeController with ChangeNotifier {
     Segment? closestSegment;
 
     for (final segment in segments) {
-      // Check each line segment in the segment
-      for (int i = 0; i < segment.points.length - 1; i++) {
-        final p1 = segment.points[i].toLatLng();
-        final p2 = segment.points[i + 1].toLatLng();
-        
-        final distance = segment.distanceToLineSegment(point, p1, p2);
-        if (distance <= 20.0) { // Using the same 20m threshold as isPointNearSegment
-          nearbySegments.add(segment);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestSegment = segment;
-          }
-          break; // No need to check other line segments in this segment
+      // Use the new calcDistanceToSegment method
+      final distance = segment.calcDistanceToSegment(point, maxDistanceToCheck: 20.0);
+      if (distance != null) {
+        nearbySegments.add(segment);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestSegment = segment;
         }
       }
     }
@@ -209,9 +203,17 @@ class BrowseModeController extends ModeController with ChangeNotifier {
   Future<void> _handleSegmentSelection(dynamic segment) async {
     if (segment is! Segment) return;
 
+    // Calculate length in meters
+    final lengthMeters = segment.calcLength();
+
+    // Format length string based on distance
+    final lengthString = lengthMeters < 1000 
+        ? '${lengthMeters.round()} m'
+        : '${(lengthMeters / 1000.0).toStringAsFixed(2)} km';
+
     // Update status bar with segment info
     uiContext.statusBarService.setContent(
-      Text('Selected: ${segment.name} (${segment.points.length} points)'),
+      Text('Selected: ${segment.name} ($lengthString)'),
     );
 
     // Calculate bounds of the segment

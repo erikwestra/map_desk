@@ -178,8 +178,8 @@ class Segment {
     return '$pointCount points';
   }
 
-  /// Calculates the total distance of the segment in meters
-  double get distance {
+  /// Calculates the total length of the segment in meters
+  double calcLength() {
     if (points.length < 2) return 0;
     
     final Distance distance = Distance();
@@ -197,7 +197,7 @@ class Segment {
   }
 
   /// Checks if a point is within the segment's bounding box
-  bool isPointInBoundingBox(LatLng point) {
+  bool _isPointInBoundingBox(LatLng point) {
     return point.latitude >= minLat &&
            point.latitude <= maxLat &&
            point.longitude >= minLng &&
@@ -210,7 +210,7 @@ class Segment {
   /// [p1] First endpoint of the line segment
   /// [p2] Second endpoint of the line segment
   /// Returns the minimum distance in meters
-  double distanceToLineSegment(LatLng point, LatLng p1, LatLng p2) {
+  double _distanceToLineSegment(LatLng point, LatLng p1, LatLng p2) {
     final Distance distance = Distance();
     
     // Calculate distance to each endpoint
@@ -245,22 +245,19 @@ class Segment {
     }
   }
 
-  /// Checks if a point is near the segment using a two-step calculation
+  /// Calculates the minimum distance from a point to any line in the segment
   /// 
-  /// First checks if the point is within an expanded bounding box (20m buffer),
-  /// then if it is, performs a more precise distance calculation to the line segments.
-  /// 
-  /// [point] The point to check
-  /// [distanceMeters] The maximum distance in meters (default: 20.0)
-  /// Returns true if the point is within the specified distance of the segment
-  bool isPointNearSegment(LatLng point, {double distanceMeters = 20.0}) {
-    // Step 1: Calculate 10m deltas in lat/lng
+  /// [point] The point to calculate distance from
+  /// [maxDistanceToCheck] The maximum distance to check (in meters). If no line is within this distance, returns null.
+  /// Returns the minimum distance in meters, or null if no line is within maxDistanceToCheck
+  double? calcDistanceToSegment(LatLng point, {double maxDistanceToCheck = 20.0}) {
+    // Quick check using expanded bounding box
     // At the equator, 1 degree of latitude is approximately 111,320 meters
-    final latDelta = distanceMeters / 111320.0;
+    final latDelta = maxDistanceToCheck / 111320.0;
     // 1 degree of longitude varies with latitude, so we use the cosine of the latitude
-    final lngDelta = distanceMeters / (111320.0 * math.cos(point.latitude * math.pi / 180.0));
+    final lngDelta = maxDistanceToCheck / (111320.0 * math.cos(point.latitude * math.pi / 180.0));
 
-    // Step 2: Check if point is within expanded bounding box
+    // Check if point is within expanded bounding box
     final expandedMinLat = minLat - latDelta;
     final expandedMaxLat = maxLat + latDelta;
     final expandedMinLng = minLng - lngDelta;
@@ -270,22 +267,25 @@ class Segment {
         point.latitude > expandedMaxLat ||
         point.longitude < expandedMinLng ||
         point.longitude > expandedMaxLng) {
-      return false;
+      return null;
     }
-
-    // Step 3: If within expanded bounding box, check actual distance to line segments
-    double minDistance = double.infinity;
-
-    // Check distance to each line segment
+    
+    double? minDistance;
+    
+    // Check each line segment in the segment
     for (int i = 0; i < points.length - 1; i++) {
       final p1 = points[i].toLatLng();
       final p2 = points[i + 1].toLatLng();
       
-      final d = distanceToLineSegment(point, p1, p2);
-      minDistance = math.min(minDistance, d);
+      final distance = _distanceToLineSegment(point, p1, p2);
+      if (distance <= maxDistanceToCheck) {
+        if (minDistance == null || distance < minDistance) {
+          minDistance = distance;
+        }
+      }
     }
-
-    return minDistance <= distanceMeters;
+    
+    return minDistance;
   }
 
   /// Converts the segment to a Map for storage
