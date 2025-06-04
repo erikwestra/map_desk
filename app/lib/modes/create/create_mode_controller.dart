@@ -9,6 +9,7 @@ import '../../core/services/menu_service.dart';
 import '../../core/services/segment_service.dart';
 import '../../core/services/route_sidebar_service.dart';
 import '../../core/models/segment.dart';
+import '../../core/models/segment_in_route.dart';
 import '../../main.dart';
 
 /// Internal state enum for the create mode
@@ -18,20 +19,12 @@ enum _CreateState {
   awaitingNextSegment
 }
 
-/// Represents a segment that could be added to the route, along with its direction
-class PossibleSegment {
-  final Segment segment;
-  final String direction;  // "forward" or "backward"
-
-  PossibleSegment(this.segment, this.direction);
-}
-
 /// Controller for the Create mode, which handles route creation.
 class CreateModeController extends ModeController {
   _CreateState _currentState = _CreateState.awaitingStartPoint;
   LatLng? _startPoint;
-  List<Segment> _routeSegments = [];
-  List<PossibleSegment> _possibleSegments = [];
+  List<SegmentInRoute> _routeSegments = [];
+  List<SegmentInRoute> _possibleSegments = [];
   final Distance _distance = Distance();
 
   CreateModeController(ModeUIContext uiContext) : super(uiContext);
@@ -112,7 +105,7 @@ class CreateModeController extends ModeController {
       return distance <= 20.0;
     }).map((segment) {
       final result = segment.calcDistanceToStart(point);
-      return PossibleSegment(segment, result['direction'] as String);
+      return SegmentInRoute(segment, result['direction'] as String);
     }).toList();
   }
 
@@ -127,7 +120,7 @@ class CreateModeController extends ModeController {
       // All segments layer
       PolylineLayer(
         polylines: segments.map((segment) {
-          final isInRoute = _routeSegments.any((s) => s.id == segment.id);
+          final isInRoute = _routeSegments.any((s) => s.segment.id == segment.id);
           final isPossible = _possibleSegments.any((ps) => ps.segment.id == segment.id);
           
           Color color;
@@ -174,8 +167,8 @@ class CreateModeController extends ModeController {
 
   /// Finds the closest possible segment to the given point within the maximum distance
   /// Checks the entire segment length, not just endpoints
-  PossibleSegment? _findClosestPossibleSegment(LatLng point, {double maxDistance = 20.0}) {
-    PossibleSegment? closestPossibleSegment;
+  SegmentInRoute? _findClosestPossibleSegment(LatLng point, {double maxDistance = 20.0}) {
+    SegmentInRoute? closestPossibleSegment;
     double minDistance = double.infinity;
 
     for (final possibleSegment in _possibleSegments) {
@@ -191,11 +184,11 @@ class CreateModeController extends ModeController {
   }
 
   /// Determine the new start point after adding a segment to the route
-  LatLng _getNewStartPoint(PossibleSegment possibleSegment) {
+  LatLng _getNewStartPoint(SegmentInRoute segmentInRoute) {
     // Use the stored direction to determine which point to use
-    return possibleSegment.direction == 'forward' 
-        ? LatLng(possibleSegment.segment.endLat, possibleSegment.segment.endLng)
-        : LatLng(possibleSegment.segment.startLat, possibleSegment.segment.startLng);
+    return segmentInRoute.direction == 'forward' 
+        ? LatLng(segmentInRoute.segment.endLat, segmentInRoute.segment.endLng)
+        : LatLng(segmentInRoute.segment.startLat, segmentInRoute.segment.startLng);
   }
 
   Future<void> _handleMapClick(LatLng point) async {
@@ -210,7 +203,7 @@ class CreateModeController extends ModeController {
       
       if (closestPossibleSegment != null) {
         // Clicked near a possible segment - add it to route
-        _routeSegments.add(closestPossibleSegment.segment);
+        _routeSegments.add(closestPossibleSegment);
         uiContext.routeSidebarService.setSegments(_routeSegments);
         
         // Move start point to the opposite end of the added segment
@@ -236,33 +229,13 @@ class CreateModeController extends ModeController {
   }
 
   Future<void> _handleSegmentSelected(Segment segment) async {
-    if (_currentState == _CreateState.awaitingStartPoint) return;
-
-    // Find the possible segment that matches this segment
-    final possibleSegment = _possibleSegments.firstWhere(
-      (ps) => ps.segment.id == segment.id,
-      orElse: () => PossibleSegment(segment, 'forward'), // Default to forward if not found
+    // Just zoom to show the segment
+    final points = segment.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+    final bounds = LatLngBounds.fromPoints(points);
+    uiContext.mapViewService.mapController.fitBounds(
+      bounds,
+      options: const FitBoundsOptions(padding: EdgeInsets.all(50)),
     );
-
-    // Add segment to route
-    _routeSegments.add(segment);
-    uiContext.routeSidebarService.setSegments(_routeSegments);
-
-    // Move start point to the opposite end of the added segment
-    _startPoint = _getNewStartPoint(possibleSegment);
-    
-    // Recalculate possible segments from new start point
-    await _calculatePossibleSegments(_startPoint!);
-    
-    // Center map on new start point
-    uiContext.mapViewService.centerOnPoint(_startPoint!);
-
-    // Update state
-    _currentState = _CreateState.awaitingNextSegment;
-    
-    // Update UI
-    _updateMapContent();
-    _updateStatusBar();
   }
 
   @override

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/segment.dart';
+import '../models/segment_in_route.dart';
 import '../services/mode_service.dart';
 import '../services/route_sidebar_service.dart';
+import '../widgets/segment_direction_indicator.dart';
 
 /// A sidebar widget that displays the current route.
 class RouteSidebar extends StatefulWidget {
@@ -15,11 +17,11 @@ class RouteSidebar extends StatefulWidget {
 }
 
 class _RouteSidebarState extends State<RouteSidebar> {
-  List<Segment> _segments = [];
+  List<SegmentInRoute> _segments = [];
 
-  List<Segment> get segments => _segments;
+  List<SegmentInRoute> get segments => _segments;
 
-  void setSegments(List<Segment> segments) {
+  void setSegments(List<SegmentInRoute> segments) {
     setState(() {
       _segments = segments;
     });
@@ -59,10 +61,26 @@ class _RouteSidebarState extends State<RouteSidebar> {
                 : ListView.builder(
                     itemCount: segments.length,
                     itemBuilder: (context, index) {
-                      final segment = segments[index];
+                      final segmentInRoute = segments[index];
                       return ListTile(
-                        title: Text(segment.name),
-                        subtitle: Text('${segment.points.length} points'),
+                        title: Text(segmentInRoute.segment.name),
+                        subtitle: Row(
+                          children: [
+                            Text('${segmentInRoute.segment.points.length} points'),
+                            const SizedBox(width: 8),
+                            Text(
+                              segmentInRoute.direction == 'forward' ? '→' : '←',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: SegmentDirectionIndicator(
+                          direction: segmentInRoute.direction,
+                          size: 32,
+                        ),
                       );
                     },
                   ),
